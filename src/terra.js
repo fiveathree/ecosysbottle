@@ -23,7 +23,7 @@ function terraEnsure(t){
   for(let i=0;i<T.h.length;i++)if(!T.m[i]){T.m[i]=id;T.h[i]=Math.max(T.h[i],1.5);}
   delete T._info;buildJar({keepCam:true});
 }
-const BRUSH_TOOLS=[['raise',['堆高','Raise']],['lower',['挖低','Dig']],['smooth',['抹平','Smooth']],['water',['水區','Water']],['erase',['清走','Clear']],['view',['淨係睇','View only']]];
+const BRUSH_TOOLS=[['raise',['堆高','Raise']],['lower',['挖低','Dig']],['smooth',['抹平','Smooth']],['water',['水區','Water']],['erase',['清走','Clear']],['view',['只看','View only']]];
 let buildTool='paint',paintMat=1,brushSize=.18,terraDirty=false;
 function applyBrush(x,z){
   const T=S.terra;if(!T)return;const n=T.n,Rf=floorR()*.985,cu=(x/Rf+1)/2*(n-1),cv=(z/Rf+1)/2*(n-1),br=brushSize*(n-1)/2;
@@ -71,16 +71,16 @@ function enterBuild(){
   if(!S.terra){initTerra();buildJar({keepCam:true});}
   S._wasRunning=S.running;S.running=false;S.buildDay=true;$('#playBtn').classList.remove('primary');renderChrome();
   S.build=true;closePop();issueOpen=false;renderIssuePop();buildTool='paint';paintMat=S.mode==='rain'?3:(S.water==='salt'?5:1);
-  renderChrome();  renderBuildBar();toast(L('一隻手指／左鍵：砌（同一位置撳多幾下會疊高）；兩隻手指或右鍵：轉視角；捏或滾輪：縮放。','One finger or left click builds (tap the same spot to stack higher); two fingers or right-drag rotates; pinch or scroll zooms.'));
+  renderChrome();  renderBuildBar();toast(L('一指／左鍵：造景（同一位置多按幾下會疊高）；兩指或右鍵：轉視角；捏合或滾輪：縮放。','One finger or left click builds (tap the same spot to stack higher); two fingers or right-drag rotates; pinch or scroll zooms.'));
 }
-function exitBuild(){S.build=false;setTimeout(renderChrome,0);S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));if(S.terra)unlock('builder');}
+function exitBuild(){S.build=false;setTimeout(renderChrome,0);S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('完成了','Build saved'));if(S.terra)unlock('builder');}
 function renderBuildBar(){
   const b=$('#buildBar');b.hidden=!S.build;$('#meters').hidden=!!S.build;if(!S.build)return;
   const lvl=S.mode==='rain'?`<label class="bb-sl">${L('水位','Water')} <output id="bbLvO">${S.level} cm</output><input type="range" id="bbLv" min="0" max="14" step="1" value="${S.level}"></label>`:'';
-  b.innerHTML=`<div class="bb-head"><b>${L('材質','Material')}</b><span class="lede">${L('揀一樣再喺瓶底掃；同一位置撳多幾下會疊高。砌緊時間暫停、日頭、冇特殊天氣、鏡頭唔會自己轉。','Pick one, then brush the floor; tap the same spot again to stack higher. While building, time is paused, it is daytime, weather is clear and the camera stays still.')}</span></div>
+  b.innerHTML=`<div class="bb-head"><b>${L('材質','Material')}</b><span class="lede">${L('選一種材質再在瓶底刷上；在同一位置多按幾下會疊高。造景時時間暫停、維持白天、沒有特殊天氣，鏡頭也不會自動旋轉。','Pick one, then brush the floor; tap the same spot again to stack higher. While building, time is paused, it is daytime, weather is clear and the camera stays still.')}</span></div>
     <div class="bb-tools mats" role="group" aria-label="${L('材質','Material')}">${Object.entries(TMATS).map(([id,t])=>`<button data-mat="${id}" aria-pressed="${buildTool==='paint'&&paintMat==id}"><i class="sw2" style="background:#${t.c.toString(16).padStart(6,'0')}"></i>${N(t.n)}</button>`).join('')}</div>
     <div class="bb-tools" role="group" aria-label="${L('地形工具','Shape tools')}">${BRUSH_TOOLS.filter(([k])=>k!=='water'||S.mode==='rain').map(([k,n])=>`<button data-tool="${k}" aria-pressed="${buildTool===k}"><i class="sw2 t-${k}"></i>${N(n)}</button>`).join('')}
-      <span class="bb-cam"><button data-cam="l" aria-label="${L('向左轉','Rotate left')}">⟲</button><button data-cam="r" aria-label="${L('向右轉','Rotate right')}">⟳</button><button data-cam="top">${L('俯視','Top')}</button><button data-cam="side">${L('側視','Side')}</button><button id="bbDay" aria-pressed="${S.buildDay}">${S.buildDay?L('日頭','Day'):L('夜晚','Night')}</button></span></div>
+      <span class="bb-cam"><button data-cam="l" aria-label="${L('向左轉','Rotate left')}">⟲</button><button data-cam="r" aria-label="${L('向右轉','Rotate right')}">⟳</button><button data-cam="top">${L('俯視','Top')}</button><button data-cam="side">${L('側視','Side')}</button><button id="bbDay" aria-pressed="${S.buildDay}">${S.buildDay?L('白天','Day'):L('夜晚','Night')}</button></span></div>
     <div class="bb-row"><label class="bb-sl">${L('筆刷','Brush')} <input type="range" id="bbSz" min=".06" max=".45" step=".01" value="${brushSize}"></label>${lvl}
     <button class="btn" id="bbFlat">${L('全部鋪平','Flatten all')}</button><button class="btn" id="bbReset">${L('還原','Reset')}</button><button class="btn primary" id="bbDone">${L('完成','Done')}</button></div>`;
   b.querySelectorAll('[data-tool]').forEach(x=>x.onclick=()=>{buildTool=x.dataset.tool;renderBuildBar();});
@@ -93,4 +93,4 @@ function renderBuildBar(){
   $('#bbReset').onclick=()=>{exitBuild();resetTerra();};
   $('#bbDone').onclick=exitBuild;
 }
-function resetTerra(){S.terra=null;buildJar({keepCam:true});renderAll();save();toast(L('已還原做一層層嘅底材','Back to simple substrate layers'));}
+function resetTerra(){S.terra=null;buildJar({keepCam:true});renderAll();save();toast(L('已還原為一層層的底材','Back to simple substrate layers'));}

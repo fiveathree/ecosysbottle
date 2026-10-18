@@ -8,6 +8,8 @@ A 3D ecosystem-jar simulator, delivered as one self-contained HTML page.
 - The owner speaks Cantonese and is not technical. Reply in Cantonese (繁體中文), not in English.
 - Explain anything they must do themselves step by step, using the exact current button and menu names.
 - Every user-facing string is bilingual: use `L('中文','English')`, or `N([zh,en])` for name arrays.
+- The Chinese UI text is written Traditional Chinese (書面語), not Cantonese: write 的／是／不／了／在／這／看／按／選, not 嘅／係／唔／咗／喺／呢／睇／撳／揀. Code comments can stay in Cantonese. (Talking to the owner is still in Cantonese.)
+- The build feature is called 「自訂造景」 in Chinese (`#buildHdr`).
 - Fonts are Google Noto (Sans / Sans TC / Serif / Serif TC / Sans Mono).
 
 ## Build

@@ -500,7 +500,7 @@ function camStop(){
   if(typeof renderCamBar==='function')renderCamBar();}
 function camTrack(dt){
   const it=camF.it;if(!it)return false;
-  if(!it.alive||!it.m||!S.items.includes(it)){const n=label(it);camStop();toast(L(`${n} 已經唔喺度，鏡頭返回原位`,`${n} is gone; camera reset`));return false;}
+  if(!it.alive||!it.m||!S.items.includes(it)){const n=label(it);camStop();toast(L(`${n} 已經不在了，鏡頭返回原位`,`${n} is gone; camera reset`));return false;}
   if(camF.mode==='follow'){cam.target.lerp(it.m.p,Math.min(1,dt*4));return false;}
   const v=it.m.v;if(v.lengthSq()>1e-6){const h=new THREE.Vector3(v.x,v.y*.5,v.z).normalize();camF.dir.lerp(h,Math.min(1,dt*2.5)).normalize();}
   if(!ptrs.size){camF.yaw*=1-Math.min(1,dt*.8);camF.pitch*=1-Math.min(1,dt*.8);}

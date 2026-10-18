@@ -47,7 +47,7 @@ function die(it,why,st,by){
   const k=CAT[it.type].kind,c=st.c,wL=wLOf(st);
   if(why!=='eaten'){if(isWater(it)&&wL>0)c.detritus+=k==='plant'?5:k==='animal'?3:0;else if(st.mode==='rain')c.waste+=k==='plant'?3:k==='animal'?2:0;}
   if(st.trial){st.deaths.push({type:it.type,why,uid:it.uid});return;}
-  const zh=`${label(it)}${it.name?'（'+CAT[it.type].name[0]+'）':''} ${k==='microbe'?'失效':'死亡'}（${why==='eaten'&&by?'俾'+by+'食咗':why==='attacked'&&by?'俾'+by+'咬死':STR[why]?STR[why][0]:why}）`;
+  const zh=`${label(it)}${it.name?'（'+CAT[it.type].name[0]+'）':''} ${k==='microbe'?'失效':'死亡'}（${why==='eaten'&&by?'被'+by+'吃了':why==='attacked'&&by?'被'+by+'咬死':STR[why]?STR[why][0]:why}）`;
   const en=`${it.name||CAT[it.type].name[1]+' #'+it.n}${it.name?' ('+CAT[it.type].name[1]+')':''} ${k==='microbe'?'stopped working':'died'} (${why==='eaten'&&by?'eaten by '+by:why==='attacked'&&by?'killed by '+by:STR[why]?STR[why][1]:why})`;
   logEv(zh,en,'bad');if(k==='animal')S.deathN=(S.deathN||0)+1;
   if(S.sel===it)renderEditor();
@@ -171,7 +171,7 @@ function stepWater(st,c,wL,light,lm,q,E,w){
   c.O2+=(sv*wL-c.O2)*k;c.CO2+=(.6*wL-c.CO2)*k;
   if(st.pump){const kp=st.mode==='aqua'&&st.sealed?.04:.15;c.O2+=(sv*wL-c.O2)*kp;c.CO2+=(.6*wL-c.CO2)*kp;}
   if(!st.sealed&&w.rain){const f=.01*w.rain*op;c.NH3*=1-f;c.NO3*=1-f;}
-  if(st.wc>0&&st.day%7===0&&st.hour===10){const f=st.wc/100;c.NH3*=1-f;c.NO3*=1-f;c.detritus*=1-f*.5;c.algae*=1-f*.3;if(!st.trial)logEv(`換咗 ${st.wc}% 水`,`Changed ${st.wc}% of the water`,'muted');}
+  if(st.wc>0&&st.day%7===0&&st.hour===10){const f=st.wc/100;c.NH3*=1-f;c.NO3*=1-f;c.detritus*=1-f*.5;c.algae*=1-f*.3;if(!st.trial)logEv(`換了 ${st.wc}% 水`,`Changed ${st.wc}% of the water`,'muted');}
   c.O2=clamp(c.O2,0,sv*1.7*wL);for(const key of ['CO2','NH3','NO3','algae','flake','detritus'])c[key]=Math.max(0,c[key]);
   return{o2p,o2u,grown};
 }
@@ -241,7 +241,7 @@ function predation(st){
     for(const [t,dmg] of Object.entries(C.attacks)){if(Math.random()>.15)continue;
       const tg=st.items.filter(i=>i.alive&&i.type===t&&i!==it);if(!tg.length)continue;
       const v=tg[Math.floor(Math.random()*tg.length)];v.health=clamp(v.health-dmg,0,1);v.atkT=6;
-      if(!st.trial){it.chase=v;it.chaseT=4;v.fleeT=4;if(Math.random()<.1){const lz=x=>x.name||`${CAT[x.type].name[0]} #${x.n}`,le=x=>x.name||`${CAT[x.type].name[1]} #${x.n}`;logEv(`${lz(it)} 攻擊咗 ${lz(v)}`,`${le(it)} attacked ${le(v)}`,'warn');}}
+      if(!st.trial){it.chase=v;it.chaseT=4;v.fleeT=4;if(Math.random()<.1){const lz=x=>x.name||`${CAT[x.type].name[0]} #${x.n}`,le=x=>x.name||`${CAT[x.type].name[1]} #${x.n}`;logEv(`${lz(it)} 攻擊了 ${lz(v)}`,`${le(it)} attacked ${le(v)}`,'warn');}}
       if(v.health<=0)die(v,'attacked',st,st.trial?'':label(it));}
   }
   for(const it of aliveIn(st,'animal')){const C=CAT[it.type];if(!C.preys||it.satiety>.6||Math.random()>.03)continue;
@@ -269,7 +269,7 @@ function breedStep(st){const cap=breedCap(st);
         if(st.trial){const b=makeItem(t,p);S.uid--;b.age=0;b.satiety=.8;st.items.push(b);}
         else{const b=addItem(t,Object.assign({},p),true);b.age=0;b.satiety=.8;}
       }
-      if(!st.trial){if(!S.real)unlock('baby');logEv(`${CAT[t].name[0]}生咗 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
+      if(!st.trial){if(!S.real)unlock('baby');logEv(`${CAT[t].name[0]}生了 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
     }
   }
 }
@@ -345,7 +345,7 @@ function autoBalance(){
     sealed:v=>v?L('密封','Seal the jar'):L('打開瓶口通風','Open the lid'),mist:v=>L(`每日噴霧 ${S.mist} → ${v} 次`,`Misting ${S.mist} → ${v} a day`),heat:v=>v?L('開加熱燈','Heat lamp on'):L('關加熱燈','Heat lamp off'),
     wc:v=>L(`每週換水 ${S.wc}% → ${v}%`,`Weekly water change ${S.wc}% → ${v}%`)};
   for(const k of Object.keys(e))if(e[k]!==base[k])envCh.push(lab[k](e[k]));
-  if(cfg.wcNow)envCh.unshift(L('即刻換 30% 水','Change 30% of the water now'));
+  if(cfg.wcNow)envCh.unshift(L('立即換 30% 水','Change 30% of the water now'));
   const beforeDead=deadNames(before.deaths),afterDead=deadNames(best.deaths);
   const nDead=r=>r.deaths.filter(d=>CAT[d.type].kind==='animal').length;if(!real&&nDead(best)<nDead(before))unlock('saved');
   if(!real){
@@ -360,10 +360,10 @@ function autoBalance(){
   taskFlag('bal');
   S.reportOpen=true;S.report={suggest:real,pre,plantCh,envCh,beforeDead,afterDead,doomed,changes:[...pre,...plantCh,...envCh]};
   const all=S.report.changes;
-  logEv((real?'一鍵平衡建議：':'一鍵平衡：')+(all.length?all.map(x=>x).join('、'):'冇需要改'),(real?'Auto-balance suggestions: ':'Auto-balance: ')+(all.length?all.join(', '):'nothing to change'),real?'muted':'good');
+  logEv((real?'一鍵平衡建議：':'一鍵平衡：')+(all.length?all.map(x=>x).join('、'):'沒有需要改'),(real?'Auto-balance suggestions: ':'Auto-balance: ')+(all.length?all.join(', '):'nothing to change'),real?'muted':'good');
   renderAll();save();showTab('bal');
-  toast(beforeDead.length?L(`原本 ${before.deaths.filter(d=>CAT[d.type].kind==='animal').length} 隻會死，而家 ${best.deaths.filter(d=>CAT[d.type].kind==='animal').length} 隻`,`${before.deaths.filter(d=>CAT[d.type].kind==='animal').length} were going to die; now ${best.deaths.filter(d=>CAT[d.type].kind==='animal').length}`)
-    :all.length?L(`一鍵平衡：${real?'建議':'改咗'} ${all.length} 樣嘢`,`Auto-balance: ${all.length} ${real?'suggestions':'changes'}`):L('而家已經係最平衡','Already as balanced as it gets'));
+  toast(beforeDead.length?L(`原本 ${before.deaths.filter(d=>CAT[d.type].kind==='animal').length} 隻會死，現在 ${best.deaths.filter(d=>CAT[d.type].kind==='animal').length} 隻`,`${before.deaths.filter(d=>CAT[d.type].kind==='animal').length} were going to die; now ${best.deaths.filter(d=>CAT[d.type].kind==='animal').length}`)
+    :all.length?L(`一鍵平衡：${real?'建議':'改了'} ${all.length} 樣東西`,`Auto-balance: ${all.length} ${real?'suggestions':'changes'}`):L('現在已經是最平衡','Already as balanced as it gets'));
 }
 function fillWaterQuiet(){S.filled=true;const c=S.c;['O2','CO2','NH3','NO3','algae','flake','detritus'].forEach(k=>c[k]=0);buildJar({keepChem:true,keepCam:true});freshWater(c,wLOf(S),true);S._lastWL=wLOf(S);}
 function addSubstrate(t){if(S.terra){terraEnsure(t);return;}addItem(t,null,true);}
