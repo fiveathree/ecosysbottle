@@ -48,6 +48,8 @@ button{cursor:pointer}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:13px}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.build{border-color:#b08a5a;color:#8a6232;font-weight:700}
+.btn.build.on{background:#b08a5a;color:#fff}
 .btn.magic{border-color:var(--accent);color:var(--accent);font-weight:700}
 .btn.danger{color:var(--bad)}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
@@ -300,6 +302,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <button class="btn primary" id="playBtn"></button>
       <div class="seg" id="speedSeg" role="group" aria-label="Speed"></div>
       <button class="btn" id="feedBtn"></button>
+      <button class="btn build" id="buildHdr"></button>
       <button class="btn magic" id="balBtn"></button>
       <button class="btn lang" id="langBtn"></button>
     </div>
@@ -1467,7 +1470,7 @@ function swimTarget(m,lo,hi){const p=waterPoint(.06);if(!p){m.tgt.copy(m.p);retu
 const SWIMMERS=['swim','swarm','jelly','seahorse','aqturtle'],BOTTOM=['crawl','pleco','crab'];
 function animate(dt,hf){
   if(terraDirty){terraDirty=false;buildTerraMesh();}if(S.build)cam.idle=0;
-  tAll+=dt;const lv=S.build?(S.buildDay?1:0):lightLevel(hf),w=WX[S.wx]||WX.cloudy,c=S.c,wL=wLOf(S);
+  tAll+=dt;const lv=S.build?(S.buildDay?1:0):lightLevel(hf),w=S.build?WX.sunny:(WX[S.wx]||WX.cloudy),c=S.c,wL=wLOf(S);
   flash=Math.max(0,flash-dt*3);boltT=Math.max(0,boltT-dt);bolt.visible=boltT>0;
   if(w.bolt&&Math.random()<dt*.35){flash=1;boltT=.18;makeBolt();}
   dayCol.copy(cDay).lerp(cGray,(1-w.light)*.85);
@@ -1628,7 +1631,7 @@ function animate(dt,hf){
     else if(k==='microbe'||k==='sub'){ring.position.set(0,J.sTop+.02,0);ring.scale.setScalar(floorR()*.7);}
     else{ring.position.set(it.g.position.x,it.g.position.y+.02,it.g.position.z);ring.scale.setScalar(k==='decor'?.25*it.params.size*J.k:it.type==='duckweed'?.26:.16);}
     ring.material.opacity=.55+.35*Math.sin(tAll*4);} else ring.visible=false;
-  if(!ptrs.size){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
+  if(!ptrs.size&&!S.build){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
   updateCam();
 }
 function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
@@ -1706,13 +1709,13 @@ function enterBuild(){
   if(!S.terra){initTerra();buildJar({keepCam:true});}
   S._wasRunning=S.running;S.running=false;S.buildDay=true;$('#playBtn').classList.remove('primary');renderChrome();
   S.build=true;closePop();issueOpen=false;renderIssuePop();buildTool='paint';paintMat=S.mode==='rain'?3:(S.water==='salt'?5:1);
-  renderBuildBar();toast(L('一隻手指／左鍵：砌（同一位置撳多幾下會疊高）；兩隻手指或右鍵：轉視角；捏或滾輪：縮放。','One finger or left click builds (tap the same spot to stack higher); two fingers or right-drag rotates; pinch or scroll zooms.'));
+  renderChrome();  renderBuildBar();toast(L('一隻手指／左鍵：砌（同一位置撳多幾下會疊高）；兩隻手指或右鍵：轉視角；捏或滾輪：縮放。','One finger or left click builds (tap the same spot to stack higher); two fingers or right-drag rotates; pinch or scroll zooms.'));
 }
-function exitBuild(){S.build=false;S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));}
+function exitBuild(){S.build=false;setTimeout(renderChrome,0);S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));}
 function renderBuildBar(){
   const b=$('#buildBar');b.hidden=!S.build;$('#meters').hidden=!!S.build;if(!S.build)return;
   const lvl=S.mode==='rain'?`<label class="bb-sl">${L('水位','Water')} <output id="bbLvO">${S.level} cm</output><input type="range" id="bbLv" min="0" max="14" step="1" value="${S.level}"></label>`:'';
-  b.innerHTML=`<div class="bb-head"><b>${L('材質','Material')}</b><span class="lede">${L('揀一樣再喺瓶底掃；同一位置撳多幾下會疊高。砌緊時間會暫停。','Pick one, then brush the floor; tap the same spot again to stack higher. Time is paused while you build.')}</span></div>
+  b.innerHTML=`<div class="bb-head"><b>${L('材質','Material')}</b><span class="lede">${L('揀一樣再喺瓶底掃；同一位置撳多幾下會疊高。砌緊時間暫停、日頭、冇特殊天氣、鏡頭唔會自己轉。','Pick one, then brush the floor; tap the same spot again to stack higher. While building, time is paused, it is daytime, weather is clear and the camera stays still.')}</span></div>
     <div class="bb-tools mats" role="group" aria-label="${L('材質','Material')}">${Object.entries(TMATS).map(([id,t])=>`<button data-mat="${id}" aria-pressed="${buildTool==='paint'&&paintMat==id}"><i class="sw2" style="background:#${t.c.toString(16).padStart(6,'0')}"></i>${N(t.n)}</button>`).join('')}</div>
     <div class="bb-tools" role="group" aria-label="${L('地形工具','Shape tools')}">${BRUSH_TOOLS.filter(([k])=>k!=='water'||S.mode==='rain').map(([k,n])=>`<button data-tool="${k}" aria-pressed="${buildTool===k}"><i class="sw2 t-${k}"></i>${N(n)}</button>`).join('')}
       <span class="bb-cam"><button data-cam="l" aria-label="${L('向左轉','Rotate left')}">⟲</button><button data-cam="r" aria-label="${L('向右轉','Rotate right')}">⟳</button><button data-cam="top">${L('俯視','Top')}</button><button data-cam="side">${L('側視','Side')}</button><button id="bbDay" aria-pressed="${S.buildDay}">${S.buildDay?L('日頭','Day'):L('夜晚','Night')}</button></span></div>
@@ -1787,7 +1790,7 @@ function renderChrome(){
   document.documentElement.lang=LANG==='en'?'en':'zh-Hant';
   $('#brandT').textContent=L('生態瓶實驗室','Eco Jar Lab');$('#brandS').textContent=L('ECO JAR LAB','生態瓶實驗室');
   $('#playBtn').textContent=S.running?L('暫停','Pause'):L('繼續','Play');
-  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#balBtn').textContent=L('一鍵平衡','Auto-balance');
+  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');
   $('#langBtn').textContent=LANG==='en'?'中文':'EN';$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank']};
@@ -1806,6 +1809,7 @@ $('#feedBtn').onclick=()=>{const n=Math.max(1,S.feed),wL=wLOf(S);
   if(S.mode==='aqua'){if(!wL){toast(L('未注水，餵唔到','No water to feed into'));return;}S.c.flake+=n;feedFx(n);}
   else{const hasW=wL>0&&S.items.some(i=>i.alive&&isWater(i)&&CAT[i.type].kind==='animal');if(hasW){S.c.flake+=n/2;S.c.feed+=n/2;feedFx(n/2);}else S.c.feed+=n;}
   toast(L(`餵咗 ${n} 份`,`Fed ${n} portion${n>1?'s':''}`));};
+$('#buildHdr').onclick=()=>{if(S.build)exitBuild();else enterBuild();renderChrome();};
 $('#balBtn').onclick=()=>{toast(L('計緊最平衡嘅設定…','Working out the most balanced setup…'));setTimeout(autoBalance,30);};
 $('#langBtn').onclick=()=>{LANG=LANG==='en'?'zh':'en';try{localStorage.setItem('ecojar.lang',LANG);}catch(e){}$('#pane-ana').innerHTML='';renderAll();if(curTab==='ana')renderAnalyze();};
 let clearArm=0;

@@ -70,13 +70,13 @@ function enterBuild(){
   if(!S.terra){initTerra();buildJar({keepCam:true});}
   S._wasRunning=S.running;S.running=false;S.buildDay=true;$('#playBtn').classList.remove('primary');renderChrome();
   S.build=true;closePop();issueOpen=false;renderIssuePop();buildTool='paint';paintMat=S.mode==='rain'?3:(S.water==='salt'?5:1);
-  renderBuildBar();toast(L('一隻手指／左鍵：砌（同一位置撳多幾下會疊高）；兩隻手指或右鍵：轉視角；捏或滾輪：縮放。','One finger or left click builds (tap the same spot to stack higher); two fingers or right-drag rotates; pinch or scroll zooms.'));
+  renderChrome();  renderBuildBar();toast(L('一隻手指／左鍵：砌（同一位置撳多幾下會疊高）；兩隻手指或右鍵：轉視角；捏或滾輪：縮放。','One finger or left click builds (tap the same spot to stack higher); two fingers or right-drag rotates; pinch or scroll zooms.'));
 }
-function exitBuild(){S.build=false;S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));}
+function exitBuild(){S.build=false;setTimeout(renderChrome,0);S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));}
 function renderBuildBar(){
   const b=$('#buildBar');b.hidden=!S.build;$('#meters').hidden=!!S.build;if(!S.build)return;
   const lvl=S.mode==='rain'?`<label class="bb-sl">${L('水位','Water')} <output id="bbLvO">${S.level} cm</output><input type="range" id="bbLv" min="0" max="14" step="1" value="${S.level}"></label>`:'';
-  b.innerHTML=`<div class="bb-head"><b>${L('材質','Material')}</b><span class="lede">${L('揀一樣再喺瓶底掃；同一位置撳多幾下會疊高。砌緊時間會暫停。','Pick one, then brush the floor; tap the same spot again to stack higher. Time is paused while you build.')}</span></div>
+  b.innerHTML=`<div class="bb-head"><b>${L('材質','Material')}</b><span class="lede">${L('揀一樣再喺瓶底掃；同一位置撳多幾下會疊高。砌緊時間暫停、日頭、冇特殊天氣、鏡頭唔會自己轉。','Pick one, then brush the floor; tap the same spot again to stack higher. While building, time is paused, it is daytime, weather is clear and the camera stays still.')}</span></div>
     <div class="bb-tools mats" role="group" aria-label="${L('材質','Material')}">${Object.entries(TMATS).map(([id,t])=>`<button data-mat="${id}" aria-pressed="${buildTool==='paint'&&paintMat==id}"><i class="sw2" style="background:#${t.c.toString(16).padStart(6,'0')}"></i>${N(t.n)}</button>`).join('')}</div>
     <div class="bb-tools" role="group" aria-label="${L('地形工具','Shape tools')}">${BRUSH_TOOLS.filter(([k])=>k!=='water'||S.mode==='rain').map(([k,n])=>`<button data-tool="${k}" aria-pressed="${buildTool===k}"><i class="sw2 t-${k}"></i>${N(n)}</button>`).join('')}
       <span class="bb-cam"><button data-cam="l" aria-label="${L('向左轉','Rotate left')}">⟲</button><button data-cam="r" aria-label="${L('向右轉','Rotate right')}">⟳</button><button data-cam="top">${L('俯視','Top')}</button><button data-cam="side">${L('側視','Side')}</button><button id="bbDay" aria-pressed="${S.buildDay}">${S.buildDay?L('日頭','Day'):L('夜晚','Night')}</button></span></div>

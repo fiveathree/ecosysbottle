@@ -56,7 +56,7 @@ function renderChrome(){
   document.documentElement.lang=LANG==='en'?'en':'zh-Hant';
   $('#brandT').textContent=L('生態瓶實驗室','Eco Jar Lab');$('#brandS').textContent=L('ECO JAR LAB','生態瓶實驗室');
   $('#playBtn').textContent=S.running?L('暫停','Pause'):L('繼續','Play');
-  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#balBtn').textContent=L('一鍵平衡','Auto-balance');
+  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');
   $('#langBtn').textContent=LANG==='en'?'中文':'EN';$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank']};
@@ -75,6 +75,7 @@ $('#feedBtn').onclick=()=>{const n=Math.max(1,S.feed),wL=wLOf(S);
   if(S.mode==='aqua'){if(!wL){toast(L('未注水，餵唔到','No water to feed into'));return;}S.c.flake+=n;feedFx(n);}
   else{const hasW=wL>0&&S.items.some(i=>i.alive&&isWater(i)&&CAT[i.type].kind==='animal');if(hasW){S.c.flake+=n/2;S.c.feed+=n/2;feedFx(n/2);}else S.c.feed+=n;}
   toast(L(`餵咗 ${n} 份`,`Fed ${n} portion${n>1?'s':''}`));};
+$('#buildHdr').onclick=()=>{if(S.build)exitBuild();else enterBuild();renderChrome();};
 $('#balBtn').onclick=()=>{toast(L('計緊最平衡嘅設定…','Working out the most balanced setup…'));setTimeout(autoBalance,30);};
 $('#langBtn').onclick=()=>{LANG=LANG==='en'?'zh':'en';try{localStorage.setItem('ecojar.lang',LANG);}catch(e){}$('#pane-ana').innerHTML='';renderAll();if(curTab==='ana')renderAnalyze();};
 let clearArm=0;

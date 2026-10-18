@@ -41,6 +41,8 @@ button{cursor:pointer}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:13px}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.build{border-color:#b08a5a;color:#8a6232;font-weight:700}
+.btn.build.on{background:#b08a5a;color:#fff}
 .btn.magic{border-color:var(--accent);color:var(--accent);font-weight:700}
 .btn.danger{color:var(--bad)}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}

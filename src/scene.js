@@ -512,7 +512,7 @@ function swimTarget(m,lo,hi){const p=waterPoint(.06);if(!p){m.tgt.copy(m.p);retu
 const SWIMMERS=['swim','swarm','jelly','seahorse','aqturtle'],BOTTOM=['crawl','pleco','crab'];
 function animate(dt,hf){
   if(terraDirty){terraDirty=false;buildTerraMesh();}if(S.build)cam.idle=0;
-  tAll+=dt;const lv=S.build?(S.buildDay?1:0):lightLevel(hf),w=WX[S.wx]||WX.cloudy,c=S.c,wL=wLOf(S);
+  tAll+=dt;const lv=S.build?(S.buildDay?1:0):lightLevel(hf),w=S.build?WX.sunny:(WX[S.wx]||WX.cloudy),c=S.c,wL=wLOf(S);
   flash=Math.max(0,flash-dt*3);boltT=Math.max(0,boltT-dt);bolt.visible=boltT>0;
   if(w.bolt&&Math.random()<dt*.35){flash=1;boltT=.18;makeBolt();}
   dayCol.copy(cDay).lerp(cGray,(1-w.light)*.85);
@@ -673,7 +673,7 @@ function animate(dt,hf){
     else if(k==='microbe'||k==='sub'){ring.position.set(0,J.sTop+.02,0);ring.scale.setScalar(floorR()*.7);}
     else{ring.position.set(it.g.position.x,it.g.position.y+.02,it.g.position.z);ring.scale.setScalar(k==='decor'?.25*it.params.size*J.k:it.type==='duckweed'?.26:.16);}
     ring.material.opacity=.55+.35*Math.sin(tAll*4);} else ring.visible=false;
-  if(!ptrs.size){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
+  if(!ptrs.size&&!S.build){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
   updateCam();
 }
 function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
