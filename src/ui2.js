@@ -26,28 +26,26 @@ function renderModeSeg(){$('#modeSeg').innerHTML=[['aqua',['水族','Aquatic']],
 
 /* ================= 疊加清單（左：平衡；右：生物） ================= */
 let ovOpen={L:innerWidth>=920,R:innerWidth>=920};
-try{const o=JSON.parse(localStorage.getItem('ecojar.ov')||'null');if(o)ovOpen=o;}catch(e){}
+{const o=pref.json('ecojar.ov');if(o)ovOpen=o;}
 function renderOvToggles(){
-  const l=$('#tglL'),r=$('#tglR');l.textContent=L('平衡分析','Balance');r.textContent=L('清單','List');
-  l.setAttribute('aria-pressed',ovOpen.L);r.setAttribute('aria-pressed',ovOpen.R);
   const eL=$('#edgeL'),eR=$('#edgeR');eL.textContent=ovOpen.L?'‹':'›';eR.textContent=ovOpen.R?'›':'‹';
   eL.classList.toggle('open',!!ovOpen.L);eR.classList.toggle('open',!!ovOpen.R);
   eL.setAttribute('aria-label',ovOpen.L?L('收埋平衡分析','Hide balance'):L('打開平衡分析','Show balance'));eR.setAttribute('aria-label',ovOpen.R?L('收埋清單','Hide list'):L('打開清單','Show list'));
   eL.setAttribute('aria-expanded',!!ovOpen.L);eR.setAttribute('aria-expanded',!!ovOpen.R);
 }
-$('#tglL').onclick=()=>{ovOpen.L=!ovOpen.L;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();if(ovOpen.L)renderBalance();};
-$('#edgeL').onclick=()=>$('#tglL').click();$('#edgeR').onclick=()=>$('#tglR').click();
-$('#tglR').onclick=()=>{ovOpen.R=!ovOpen.R;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
+const saveOv=()=>pref.set('ecojar.ov',JSON.stringify(ovOpen));
+function setOv(s,v){ovOpen[s]=v;saveOv();renderOv();if(s==='L'&&v)renderBalance();}
+$('#edgeL').onclick=()=>setOv('L',!ovOpen.L);$('#edgeR').onclick=()=>setOv('R',!ovOpen.R);
 /* 跟住生物時嘅鏡頭列 */
 function renderCamBar(){const b=$('#camBar'),it=camF.it;b.hidden=!camF.mode;if(!camF.mode)return;
   b.innerHTML=`<span class="dot" style="background:${CAT[it.type].color}"></span><b>${esc(label(it))}</b><div class="seg" role="group" aria-label="${L('鏡頭','Camera')}"><button aria-pressed="${camF.mode==='follow'}" data-cm="follow">${L('以佢為中心','Centred')}</button><button aria-pressed="${camF.mode==='pov'}" data-cm="pov">${L('第一視角','Its view')}</button></div><button class="x" id="camX" aria-label="${L('停止跟住','Stop following')}">×</button>`;
   b.querySelectorAll('[data-cm]').forEach(x=>x.onclick=()=>camFollow(camF.it,x.dataset.cm));$('#camX').onclick=camStop;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&camF.mode&&!document.querySelector('dialog[open]'))camStop();});
 /* 日夜畫面鎖定：只改 3D 畫面嘅光暗，模擬入面嘅光照同光合作用照舊 */
-let viewLight='auto';try{const v=localStorage.getItem('ecojar.dn');if(v==='day'||v==='night')viewLight=v;}catch(e){}
+let viewLight=['day','night'].includes(pref.get('ecojar.dn'))?pref.get('ecojar.dn'):'auto';
 const DN={auto:['☀︎☾ 日夜自動','☀︎☾ Auto day/night'],day:['☀︎ 一直日頭','☀︎ Always day'],night:['☾ 一直夜晚','☾ Always night']};
 function renderDn(){const b=$('#dnBtn');b.textContent=N(DN[viewLight]);b.setAttribute('aria-pressed',viewLight!=='auto');b.title=L('只改畫面，唔影響模擬嘅光照同光合作用','Only changes the view; simulated light and photosynthesis are unchanged');}
-$('#dnBtn').onclick=()=>{viewLight={auto:'day',day:'night',night:'auto'}[viewLight];try{localStorage.setItem('ecojar.dn',viewLight);}catch(e){}renderDn();
+$('#dnBtn').onclick=()=>{viewLight={auto:'day',day:'night',night:'auto'}[viewLight];pref.set('ecojar.dn',viewLight);renderDn();
   toast(viewLight==='auto'?L('畫面跟返模擬時間轉日夜','The view follows the simulated time again'):L('只係鎖住畫面；模擬照樣有日夜','Only the view is locked; the simulation still has day and night'));};
 /* 頂部「預設組合」：揀一個取代而家呢個瓶 */
 $('#presetBtn').onclick=()=>{const ps=PRESETS[S.mode],real=S.real;
@@ -61,8 +59,8 @@ function renderOvL(){
   const el=$('#ovL');el.hidden=!ovOpen.L;$('#ovLT').textContent=L('平衡分析','Balance');
   $('#ovLX').setAttribute('aria-label',L('收起平衡分析','Close balance'));
 }
-function openBal(){ovOpen.L=true;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();renderBalance();$('#ovL').scrollTop=0;}
-$('#ovLX').onclick=()=>{ovOpen.L=false;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
+function openBal(){setOv('L',true);$('#ovL').scrollTop=0;}
+$('#ovLX').onclick=()=>setOv('L',false);
 function renderOvR(){
   const el=$('#ovR');el.hidden=!ovOpen.R;if(!ovOpen.R)return;
   const its=S.items.filter(i=>['plant','animal'].includes(CAT[i.type].kind)).sort((a,b)=>(CAT[a.type].kind==='animal'?0:1)-(CAT[b.type].kind==='animal'?0:1)||a.uid-b.uid);
@@ -118,7 +116,6 @@ function renderPop(){
   if(!S.items.includes(it)){closePop();return;}
   const c=CAT[it.type],k=c.kind,[t,cls]=statusOf(it),deco=['sub','decor'].includes(k);
   const rows=[];
-  if(false)rows.push([L('健康','Health'),Math.round(it.health*100)+'%']);
   if(k==='animal'&&it.alive){rows.push([L('飽肚','Fullness'),Math.round(it.satiety*100)+'%']);rows.push([L('下次去廁所','Next poop'),L(`${Math.max(0,it.params.wasteEvery-it.wt)} 小時後`,`in ${Math.max(0,it.params.wasteEvery-it.wt)} h`)]);}
   if(k==='plant'&&it.alive)rows.push([L('而家產氧','O₂ now'),fx(it.lastProd,2)+' mg/h']);
   pop.innerHTML=`<div class="ed-head"><span class="dot" style="background:${c.color}"></span><b style="margin-right:auto">${esc(label(it))}</b><button class="x" id="popX" aria-label="${L('關閉','Close')}">×</button></div>

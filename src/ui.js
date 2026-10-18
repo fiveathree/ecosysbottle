@@ -77,7 +77,7 @@ $('#feedBtn').onclick=()=>{const n=Math.max(1,S.feed),wL=wLOf(S);
   toast(L(`餵咗 ${n} 份`,`Fed ${n} portion${n>1?'s':''}`));};
 $('#buildHdr').onclick=()=>{if(S.build)exitBuild();else enterBuild();renderChrome();};
 $('#balBtn').onclick=()=>{toast(L('計緊最平衡嘅設定…','Working out the most balanced setup…'));setTimeout(autoBalance,30);};
-$('#langBtn').onclick=()=>{LANG=LANG==='en'?'zh':'en';try{localStorage.setItem('ecojar.lang',LANG);}catch(e){}$('#pane-ana').innerHTML='';renderAll();if(curTab==='ana')renderAnalyze();};
+$('#langBtn').onclick=()=>{LANG=LANG==='en'?'zh':'en';pref.set('ecojar.lang',LANG);$('#pane-ana').innerHTML='';renderAll();if(curTab==='ana')renderAnalyze();};
 let clearArm=0;
 $('#clearBtn').onclick=()=>{const b=$('#clearBtn');
   if(!clearArm){b.textContent=L('再撳一次確認','Tap again to confirm');b.classList.add('arm');clearArm=setTimeout(()=>{clearArm=0;b.classList.remove('arm');renderChrome();},3000);return;}
@@ -454,8 +454,8 @@ function renderEnv(){
    <div data-sec="jar">${sw('e-S',S.sealed,aq?L('密封瓶口','Sealed'):L('密封（唔用網蓋）','Sealed (no mesh lid)'),aq?L('密封＝完全靠瓶內循環；開口＝空氣會補氧。','Sealed relies on its own cycles; open lets air add oxygen.'):L('密封＝濕度高、空氣唔流通；網蓋＝通風。','Sealed keeps humidity high but traps air; a mesh lid ventilates.'))}
    ${sw('e-Real',S.real,L('呢個係真實嘅瓶','This is a real tank'),L('一鍵平衡只會俾建議，唔會自動改或者刪任何嘢。','Auto-balance only suggests; it never changes or removes anything.'))}</div>
    <div data-sec="care">${sw('e-B',S.breed,L('生物繁殖','Breeding'),L('健康、食得飽、有伴嘅動物會生BB，BB會慢慢長大。','Healthy, well-fed animals with a partner have young that grow up.'))}</div>
-   <section class="presets" data-sec="preset"><h3>${L('預設組合','Presets')}</h3>${Object.entries(PRESETS[S.mode]).map(([k,p])=>`<button class="preset" data-p="${k}"><b>${N(p.n)}</b><span>${N(p.d)}</span></button>`).join('')}</section>
-   <div class="ed-actions" data-sec="preset"><button class="btn" id="e-restart">${L('保留生物，重新開始時間','Keep everything, restart time')}</button></div>`;
+   <section class="presets" data-sec="preset"><h3>${L('預設組合','Presets')}</h3><p class="lede">${L(`呢個模式有 ${Object.keys(PRESETS[S.mode]).length} 個預設，亦可以喺頂部「預設組合」揀。`,`${Object.keys(PRESETS[S.mode]).length} presets for this mode; also under Presets at the top.`)}</p></section>
+   <div class="ed-actions" data-sec="preset"><button class="btn primary" id="e-presets">${L('揀預設組合','Choose a preset')}</button><button class="btn" id="e-restart">${L('保留生物，重新開始時間','Keep everything, restart time')}</button></div>`;
   const bind=(id,f,u)=>{const e=$('#'+id);if(!e)return;e.oninput=()=>{$('#o'+id).textContent=e.value+' '+u;f(+e.value,false);save();};e.onchange=()=>f(+e.value,true);};
   bind('e-V',(v,done)=>{if(!done)return;const r=v/S.V;['O2','CO2','NH3','NO3','aO2','aCO2','waste'].forEach(k=>{if(S.c[k]!=null)S.c[k]*=r;});S.V=v;buildJar({keepChem:S.mode==='aqua'});renderEnv();},'L');
   bind('e-L',v=>S.light=v,L('小時','h'));bind('e-F',v=>S.feed=v,L('份',''));bind('e-M',v=>S.mist=v,L('次','×'));bind('e-WC',v=>S.wc=v,'%');
@@ -471,7 +471,7 @@ function renderEnv(){
   pe.querySelectorAll('[data-water]').forEach(b=>b.onclick=()=>{S.water=b.dataset.water;renderAll();save();toast(S.water==='salt'?L('轉咗做海水','Switched to salt water'):L('轉咗做淡水','Switched to fresh water'));});
   pe.querySelectorAll('[data-shape]').forEach(b=>b.onclick=()=>{S.shape=b.dataset.shape;buildJar();renderEnv();renderJarList();renderEditor();save();toast(L('換咗做','Changed to ')+N(SHAPES[S.shape].n));});
   pe.querySelectorAll('[data-mat]').forEach(b=>b.onclick=()=>{S.mat=b.dataset.mat;buildJar({keepCam:true});renderEnv();save();toast(L('換咗做','Changed to ')+N(MATS[S.mat].n));});
-  pe.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>loadPreset(b.dataset.p));
+  $('#e-presets').onclick=()=>$('#presetBtn').click();
   $('#e-restart').onclick=()=>{S.items=S.items.filter(i=>{if(!i.alive){disposeObj(i.g);return false;}return true;});resetChem(S);S.hour=6;S.day=1;S.log=[];S.items.forEach(i=>{i.health=1;i.satiety=1;});renderAll();toast(L('時間重新開始','Time restarted'));};
 }
 function renderAll(){if(S.build)renderBuildBar();if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(ovOpen.L)renderBalance();}
@@ -495,7 +495,7 @@ function switchJar(i){if(i===S.cur)return;S.jars[S.cur]=snapshot();S.cur=i;resto
 const KEY='ecojar.v4';
 let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{const jars=S.jars.slice();jars[S.cur]=snapshot();S.jars=jars;localStorage.setItem(KEY,JSON.stringify({cur:S.cur,jars,ana:S.ana}));}catch(e){}},500);}
 function load(){
-  try{const l=localStorage.getItem('ecojar.lang');if(l==='en'||l==='zh')LANG=l;}catch(e){}
+  {const l=pref.get('ecojar.lang');if(l==='en'||l==='zh')LANG=l;}
   try{const d=JSON.parse(localStorage.getItem(KEY)||'null');
     if(d&&Array.isArray(d.jars)){S.jars=[0,1,2].map(i=>d.jars[i]||null);S.cur=clamp(d.cur|0,0,2);S.ana=d.ana||null;const j=S.jars[S.cur];if(j){restoreSnap(j);return true;}return false;}
     const o=JSON.parse(localStorage.getItem('ecojar.v2')||'null');

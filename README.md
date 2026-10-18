@@ -12,4 +12,6 @@
 
 ## 開發
 
-源碼喺 `src/`，執行 `python3 build.py` 會砌出 `index.html`（GitHub Pages）同 `dist/artifact.html`。
+源碼喺 `src/`，執行 `node build.js`（或者 `python3 build.py`）會砌出 `index.html`（GitHub Pages）同 `dist/artifact.html`。
+
+第一次先 `npm install`，之後 `npm test` 會 build 再行自動測試（預設撐到 6 日、一鍵平衡、分享連結等）。npm 只係開發用，網頁本身唔使。

@@ -1,6 +1,8 @@
 /* ================= 工具 & 語言 ================= */
 const $=s=>document.querySelector(s);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+/* 每個瀏覽器自己嘅偏好（語言、左右欄、日夜）；私隱模式讀唔到都唔會出錯 */
+const pref={get:k=>{try{return localStorage.getItem(k);}catch(e){return null;}},set:(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}},json:k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}}};
 const fx=(x,d=1)=>(Math.abs(x)<1e-9||!isFinite(x)?0:x).toFixed(d);
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const esc=t=>String(t).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));

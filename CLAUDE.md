@@ -12,8 +12,10 @@ A 3D ecosystem-jar simulator, delivered as one self-contained HTML page.
 
 ## Build
 ```
-python3 build.py
+node build.js        # or: npm run build   (python3 build.py gives the same output)
+npm test             # build + automated tests (needs `npm install` once)
 ```
+- `build.js` also syntax-checks the bundle. Python is not installed on the owner's PC, so prefer the Node build.
 - The script concatenates `src/head.html`, `style.css`, `body.html` and the JS files, in this order:
   `data.js, sim.js, scene.js, terra.js, ui.js, ui2.js, main.js`
 - The JS is wrapped in one IIFE `(()=>{ ... })()`, so every function shares one scope.
@@ -21,26 +23,26 @@ python3 build.py
   - `index.html`: GitHub Pages, with the full doctype wrapper.
   - `dist/artifact.html`: the claude.ai artifact version.
 - Always commit `src/`, `index.html` and `dist/` together.
-- Syntax check after building:
-  `node -e "const s=require('fs').readFileSync('dist/artifact.html','utf8');const m=s.match(/<script>([\s\S]*)<\/script>/g);new Function(m[m.length-1].replace(/<\/?script>/g,''));console.log('ok')"`
-- Simulation logic can be tested headlessly in Node with a stubbed `THREE`/DOM (run it with a `timeout`).
+- `tests/sim.test.js` runs the whole page in jsdom with real three.js r128 (dev dependencies only; the page itself has none). It checks:
+  every preset survives 6 days, auto-balance on presets, the messy-paludarium + move-to-empty-jar flow, hunger recovery, and share-link round trip.
+  `RUNS=10 npm test` runs each preset more times.
 - Visuals, dragging and popover placement need a real browser.
 
 ## Modules
 | File | What lives there |
 |---|---|
 | `data.js` | Helpers: `$`, `clamp`, `L`, `N`, `esc`<br>Param defs `PD`<br>Species catalogue `CAT`: hab water/land/amph, `w` fresh/salt, roots, preys/attacks<br>`BREED`, `LIMIT`, `SHAPES`, `MATS` (with `therm`), weather `WX`, `REGIONS`<br>`REGIONS` types: `city` (incl. `custom`) and `biome`, with `modes`<br>Also `PRESETS` per mode, `TAGS` |
-| `sim.js` | Global state `S`<br>Hourly `step` covers:<br>• water chemistry O2/CO2/NH3/NO3/algae/detritus, in mg over water volume `wL`<br>• land/air humidity, waste, mould<br>• temperature, predation, breeding<br>`forecast`/`runTrial`<br>`autoBalance`: staged greedy; protects animals first and never removes them; a real tank gets suggestions only (`S.report`) |
-| `scene.js` | Renderer, camera, jar geometry, terrain helpers (`groundY`, `inWater`, `fitInJar`, `clampInR`, so nothing passes through the glass)<br>Creature and decor models<br>Weather visuals<br>Pointer input<br>`animate()` |
+| `sim.js` | Global state `S` (incl. `fan`: cools 2–3°C when the lid is open)<br>Hourly `step` covers:<br>• water chemistry O2/CO2/NH3/NO3/algae/detritus, in mg over water volume `wL`<br>• land/air humidity, waste, mould<br>• temperature, predation, breeding<br>`forecast`/`runTrial`<br>`autoBalance`: staged greedy, scored with a fixed random seed (`seeded`) so options are compared fairly; protects animals first and never removes them; animals it still cannot save are listed in `S.report.doomed` for the "move to an empty jar" button; a real tank gets suggestions only (`S.report`)<br>`eat`: hungry animals eat up to 3× so fullness can recover |
+| `scene.js` | Renderer, camera, jar geometry, terrain helpers (`groundY`, `inWater`, `fitInJar`, `clampInR`, so nothing passes through the glass)<br>Creature and decor models<br>Weather visuals<br>Pointer input (touch: vertical swipe scrolls the page)<br>Camera follow / first-person view (`camF`, `camFollow`, `camStop`)<br>`animate()` |
 | `terra.js` | Build-your-own terrain:<br>• heightmap `S.terra={n:24,h[],m[]}`<br>• 11 materials `TMATS`<br>• brushes and stacking<br>• `enterBuild`/`exitBuild` (build mode: paused, daytime, clear weather, no auto-rotate)<br>• build toolbar |
 | `ui.js` | Right panel tabs (Add / Jar / Env / Analysis, each with tag filters)<br>Header chrome (`renderChrome`), meters, balance budgets, environment pane<br>Save/load, 3 jars (snapshot/restore) |
-| `ui2.js` | Mode switching aqua/rain/palu, which keeps the items<br>Left (balance) and right (list) overlays<br>Object popover: draggable, sits beside the object; decor rotation and size<br>Issue pill with one-tap fixes<br>Auto-balance report |
+| `ui2.js` | Mode switching aqua/rain/palu, which keeps the items<br>Left (balance) and right (list) overlays, opened/closed by the edge arrows (`setOv`)<br>Camera bar, day/night view lock (`viewLight`, view only)<br>Presets dialog, share link (`#s=` deflate + base64url) and "copy this jar"<br>Object popover: draggable, sits beside the object; decor rotation and size<br>Issue pill with one-tap fixes<br>Auto-balance report |
 | `main.js` | Boot and the frame loop: sim step, render, and throttled UI refresh |
 
 ## Persistence
 - `localStorage['ecojar.v4']` = `{cur, jars[3], ana}`, with migration from v2.
 - Overlay prefs: `ecojar.ov`.
-- Language: `ecojar.lang`.
+- Language: `ecojar.lang`. Day/night view lock: `ecojar.dn`. Use the `pref` helper (data.js) for these per-viewer settings.
 - New per-jar state must be added to `SNAP_KEYS` in `ui.js`.
 
 ## Conventions
@@ -48,4 +50,5 @@ python3 build.py
 - External scripts come only from cdnjs, and stylesheets only from Google Fonts.
 - Colours are CSS tokens on `:root`, with light and dark themes. Layout must work at phone width.
 - Real-tank jars (`S.real`): never auto-delete or auto-change anything; give suggestions only.
-- After changes, check that every preset except 「失衡示範」 survives about 6 simulated days.
+- After changes, run `npm test`; every preset except 「失衡示範」 must survive about 6 simulated days.
+- `.stage>canvas` styles target only the 3D canvas; other canvases (the trend chart) live inside overlays.

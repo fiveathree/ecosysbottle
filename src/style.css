@@ -37,7 +37,8 @@ button{cursor:pointer}
 .clock b{font-weight:500;font-size:15px}
 .tag{font-family:var(--f-body);font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);background:var(--surface);white-space:nowrap}
 .tag.day{color:var(--warn)} .tag.night{color:var(--o2)}
-.ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.grp{display:flex;gap:6px;align-items:center}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:13px}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -179,7 +180,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .jars button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
 .btn.lang{font-family:var(--f-mono);font-weight:500;min-width:52px}
 .hud-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:0}
-.clearbtn{pointer-events:auto;font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;border:1px solid var(--line);background:var(--glass);color:var(--bad);backdrop-filter:blur(6px)}
+.clearbtn{white-space:nowrap;pointer-events:auto;font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;border:1px solid var(--line);background:var(--glass);color:var(--bad);backdrop-filter:blur(6px)}
 .clearbtn.arm{background:var(--bad);border-color:var(--bad);color:var(--on-accent)}
 .hint{max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ctr button.wide{width:auto;padding:0 12px;font-size:13px}
