@@ -36,41 +36,43 @@
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55}
 *{box-sizing:border-box}
-button,input{font:inherit;color:inherit}
+button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 
 .app{display:flex;flex-direction:column;gap:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 20px}
-.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
-.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto;min-width:0}
-.brand h1{font-family:var(--f-display);font-size:22px;font-weight:700;margin:0;letter-spacing:.02em;text-wrap:balance}
-.brand small{color:var(--muted);font-size:12px;letter-spacing:.06em}
-.clock{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand h1{font-family:var(--f-display);font-size:22px;font-weight:700;margin:0;letter-spacing:.02em}
+.brand small{color:var(--muted);font-size:11px;letter-spacing:.08em}
+.clock{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-variant-numeric:tabular-nums;margin-right:auto;flex-wrap:wrap}
 .clock b{font-weight:500;font-size:15px}
-.tag{font-family:var(--f-body);font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);background:var(--surface)}
-.tag.day{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
-.tag.night{color:var(--o2);border-color:color-mix(in srgb,var(--o2) 40%,var(--line))}
+.tag{font-family:var(--f-body);font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);background:var(--surface);white-space:nowrap}
+.tag.day{color:var(--warn)} .tag.night{color:var(--o2)}
 .ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:13px}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.magic{border-color:var(--accent);color:var(--accent);font-weight:700}
 .btn.danger{color:var(--bad)}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
 .seg button{border:0;background:none;padding:6px 10px;font-size:12px}
 .seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.seg.mode button{font-size:13px;padding:6px 14px}
 
 .main{display:flex;flex-direction:column;gap:12px}
 .stage{position:relative;height:56vh;min-height:320px;border-radius:14px;overflow:hidden;background:#0f1d22;border:1px solid var(--line)}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 .stage canvas:active{cursor:grabbing}
 .hud{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}
-.pill{pointer-events:auto;font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(6px);display:flex;gap:6px;align-items:center}
+.hud-l{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(6px);display:flex;gap:6px;align-items:center;white-space:nowrap}
 .pill i{width:8px;height:8px;border-radius:50%;background:var(--good);display:inline-block}
 .pill.warn i{background:var(--warn)} .pill.bad i{background:var(--bad)}
+.pill.wx{font-weight:500}
 .hint{font-size:11px;color:var(--muted);background:var(--glass);padding:3px 9px;border-radius:99px;border:1px solid var(--line)}
-.meters{position:absolute;left:10px;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;pointer-events:none}
-.meter{background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px;padding:6px 9px;min-width:0}
+.meters{position:absolute;left:10px;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px;pointer-events:none}
+.meter{background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px;padding:5px 9px;min-width:0}
 .meter .l{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .meter .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px;font-weight:500}
 .meter .v small{font-size:10px;color:var(--muted);margin-left:2px}
@@ -93,9 +95,11 @@ button{cursor:pointer}
 .card .nm{font-weight:700;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
 .card .nm em{font-weight:400;font-size:11px;color:var(--muted)}
 .card p{margin:0;font-size:12.5px;color:var(--muted);grid-column:1/2}
-.card .add{grid-row:1/3;grid-column:2;align-self:center;display:flex;flex-direction:column;align-items:center;gap:2px}
-.card .add button{width:40px;height:40px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:20px;line-height:1}
-.card .add span{font-size:10.5px;color:var(--muted)}
+.ctr{grid-row:1/3;grid-column:2;align-self:center;display:flex;align-items:center;gap:4px}
+.ctr button{width:34px;height:34px;border-radius:9px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:18px;line-height:1}
+.ctr button.minus{background:var(--surface);color:var(--accent)}
+.ctr button:disabled{opacity:.35;cursor:default}
+.ctr output{min-width:22px;text-align:center;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:500}
 .chips{display:flex;flex-wrap:wrap;gap:4px;grid-column:1/-1}
 .chip{font-size:11px;padding:1px 7px;border-radius:5px;background:var(--surface);border:1px solid var(--line);font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .dot{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
@@ -132,14 +136,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .bud .bh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .bud .bh b{font-size:13px}
 .bud .bh span{font-family:var(--f-mono);font-size:12px;font-variant-numeric:tabular-nums}
-.pair{display:grid;grid-template-columns:44px minmax(0,1fr) 74px;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
-.pair .track{height:8px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.pair{display:grid;grid-template-columns:52px minmax(0,1fr) 84px;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.pair .track{height:8px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;position:relative}
 .pair .track span{display:block;height:100%}
+.pair .track i{position:absolute;top:-2px;bottom:-2px;width:3px;border-radius:2px;background:var(--ink)}
 .pair .n{font-family:var(--f-mono);text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
 .bud p{margin:0;font-size:12.5px}
 .bud.good{border-left:4px solid var(--good)} .bud.warn{border-left:4px solid var(--warn)} .bud.bad{border-left:4px solid var(--bad)}
-.verdict{padding:12px 14px;border-radius:10px;background:var(--accent-soft);font-size:13.5px}
-.verdict b{font-family:var(--f-display);font-size:16px;display:block;margin-bottom:2px}
+.verdict{padding:12px 14px;border-radius:10px;background:var(--accent-soft);font-size:13.5px;display:flex;flex-direction:column;gap:8px}
+.verdict b{font-family:var(--f-display);font-size:16px;display:block}
+.report{border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px}
+.report ul{margin:6px 0 0;padding-left:18px}
 .chartbox{border:1px solid var(--line);border-radius:10px;padding:10px}
 .chartbox canvas{width:100%;height:170px;display:block}
 .legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted);margin-top:4px;flex-wrap:wrap}
@@ -150,8 +157,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 .field{display:flex;flex-direction:column;gap:4px}
 .switch{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.switch input{width:20px;height:20px;accent-color:var(--accent)}
+.switch input{width:20px;height:20px;accent-color:var(--accent);flex:none}
 .presets{display:grid;gap:8px}
+.preset{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.preset:hover{border-color:var(--accent)}
+.preset b{display:block}
+.preset span{font-size:12px;color:var(--muted)}
 .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;margin-top:6px}
 .opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:12px}
 .opt:hover{border-color:var(--accent)}
@@ -159,12 +170,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .opt svg{width:32px;height:40px;fill:color-mix(in srgb,var(--o2) 18%,transparent);stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
 .opt .sw{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:block;margin:4px 0}
 .opt em{font-style:normal;font-size:10.5px;color:var(--muted);font-weight:400;font-family:var(--f-mono)}
-.preset{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:10px 12px}
-.preset:hover{border-color:var(--accent)}
-.preset b{display:block}
-.preset span{font-size:12px;color:var(--muted)}
 
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:99px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:99px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90vw}
 .toast.on{opacity:1}
 
 @media (min-width:920px){
@@ -172,7 +179,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   .app{height:100%;padding-block:14px}
   .main{flex-direction:row;flex:1;min-height:0}
   .stage{flex:1;height:auto;min-width:0}
-  .panel{width:400px;flex:none}
+  .panel{width:410px;flex:none}
   .pane{flex:1}
 }
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
@@ -180,26 +187,28 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 <div class="app">
   <header class="top">
-    <div class="brand"><h1>生態瓶實驗室</h1><small>CLOSED ECOSYSTEM BENCH</small></div>
+    <div class="brand"><h1>生態瓶實驗室</h1><small>ECOSYSTEM BENCH</small></div>
+    <div class="seg mode" id="modeSeg" role="group" aria-label="模式"></div>
     <div class="clock"><b id="clkDay">第 1 日</b><b id="clkTime">06:00</b><span id="lightTag" class="tag night">熄燈</span></div>
     <div class="ctrls">
       <button class="btn primary" id="playBtn">暫停</button>
       <div class="seg" id="speedSeg" role="group" aria-label="模擬速度"></div>
       <button class="btn" id="feedBtn">即刻餵食</button>
+      <button class="btn magic" id="balBtn">一鍵平衡</button>
     </div>
   </header>
   <div class="main">
     <section class="stage" id="stage">
       <canvas id="c" aria-label="3D 生態瓶，拖動旋轉，撳生物睇參數"></canvas>
-      <div class="hud"><div class="pill" id="status"><i></i><span>穩定</span></div><span class="hint">拖動旋轉 · 撳生物睇參數</span></div>
+      <div class="hud"><div class="hud-l"><div class="pill" id="status"><i></i><span>穩定</span></div><div class="pill wx" id="wxPill">晴天</div></div><span class="hint">拖動旋轉 · 撳生物睇參數</span></div>
       <div class="meters" id="meters"></div>
     </section>
     <aside class="panel">
       <nav class="tabs" role="tablist">
-        <button role="tab" data-tab="add" aria-selected="true">加入生物</button>
+        <button role="tab" data-tab="add" aria-selected="true">加入</button>
         <button role="tab" data-tab="jar" aria-selected="false" id="tabJarBtn">瓶內</button>
         <button role="tab" data-tab="bal" aria-selected="false">平衡分析</button>
-        <button role="tab" data-tab="env" aria-selected="false">環境</button>
+        <button role="tab" data-tab="env" aria-selected="false">環境同天氣</button>
       </nav>
       <div class="pane" id="pane-add"></div>
       <div class="pane" id="pane-jar" hidden></div>
@@ -217,37 +226,81 @@ const $=s=>document.querySelector(s);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const fx=(x,d=1)=>(Math.abs(x)<1e-9?0:x).toFixed(d);
 const rnd=(a,b)=>a+Math.random()*(b-a);
+const P=(l,u,min,max,step,h)=>({l,u,min,max,step,h:h||''});
 
-/* ---------- 物種資料 ---------- */
-const CAT={
-  hornwort:{name:'金魚藻',kind:'plant',sci:'Ceratophyllum',color:'#4f8f2c',desc:'生長快、產氧多，吸收養分能力強，係生態瓶嘅主力水草。',params:{o2Prod:0.8,resp:0.10,uptake:0.012}},
-  vallis:{name:'苦草',kind:'plant',sci:'Vallisneria',color:'#6aa33a',desc:'長條葉子，產氧穩定，適合做背景。',params:{o2Prod:0.6,resp:0.08,uptake:0.010}},
-  moss:{name:'莫絲',kind:'plant',sci:'Java moss',color:'#3d6b25',desc:'貼住石頭生長，產氧少但好耐命，俾蝦同螺藏身。',params:{o2Prod:0.3,resp:0.04,uptake:0.004}},
-  duckweed:{name:'浮萍',kind:'plant',sci:'Lemna',color:'#8fc13f',desc:'浮喺水面，一半氧氣散去空氣，但吸收養分快，可以壓制藻類。',params:{o2Prod:0.3,resp:0.03,uptake:0.016}},
-  guppy:{name:'孔雀魚',kind:'animal',move:'swim',sci:'Poecilia reticulata',color:'#e89a3c',desc:'活潑耐養，但食量大、排泄多，要定時餵飼料。',diet:{flake:1,algae:0.3},params:{resp:0.10,food:1.0,wasteEvery:6,wasteAmt:0.05,o2Min:3,nh3Tol:0.4}},
-  minnow:{name:'白雲山魚',kind:'animal',move:'swim',sci:'Tanichthys',color:'#c9d3c2',desc:'香港原生小魚，耐低溫、耐低氧，比孔雀魚易養。',diet:{flake:1,algae:0.4,detritus:0.2},params:{resp:0.12,food:1.1,wasteEvery:8,wasteAmt:0.06,o2Min:2.5,nh3Tol:0.5}},
-  shrimp:{name:'米蝦',kind:'animal',move:'hop',sci:'Neocaridina',color:'#d9452f',desc:'食藻類同殘渣，清潔工；對氨好敏感。',diet:{algae:1,detritus:0.7,flake:0.6},params:{resp:0.04,food:0.4,wasteEvery:8,wasteAmt:0.012,o2Min:4,nh3Tol:0.2}},
-  snail:{name:'石田螺',kind:'animal',move:'crawl',sci:'Sinotaia',color:'#7a5532',desc:'食殘渣同藻類，好頑強，係生態瓶嘅清道夫。',diet:{detritus:1,algae:0.8,flake:0.4},params:{resp:0.03,food:0.5,wasteEvery:10,wasteAmt:0.015,o2Min:2,nh3Tol:0.6}},
-  bacteria:{name:'硝化菌群',kind:'microbe',sci:'Nitrosomonas + Nitrobacter',color:'#d8c27a',desc:'住喺沙底，將有毒嘅氨變成水草食得嘅硝酸鹽，但過程要用氧。',params:{cap:0.03,o2PerN:3.4}}
-};
+/* ================= 參數定義 ================= */
+const AN_COMMON={
+  food:P('每日食量','份/日',0,3,.1,'1 份 ≈ 一撮飼料；冇得食會慢慢餓'),
+  wasteEvery:P('幾耐去一次廁所','小時',1,48,1,'排泄嘅時間間隔'),
+  tMin:P('最低溫度','°C',0,35,1,'低過呢個溫度會凍親'),
+  tMax:P('最高溫度','°C',5,40,1,'高過呢個溫度會熱親')};
 const DEFS={
-  plant:[
-    {k:'o2Prod',l:'光照時產氧',u:'mg/小時',min:0,max:3,step:0.05,h:'開燈時每小時製造幾多氧氣'},
-    {k:'resp',l:'呼吸耗氧',u:'mg/小時',min:0,max:0.5,step:0.01,h:'水草日夜都要呼吸，夜晚只用氧唔產氧'},
-    {k:'uptake',l:'吸收養分',u:'mg/小時',min:0,max:0.05,step:0.001,h:'吸收氨同硝酸鹽，即係食咗動物排泄物分解出嚟嘅嘢'}],
-  animal:[
-    {k:'resp',l:'呼吸耗氧',u:'mg/小時',min:0,max:0.5,step:0.005,h:'每小時用幾多氧氣'},
-    {k:'food',l:'每日食量',u:'份/日',min:0,max:3,step:0.1,h:'1 份 ≈ 一撮飼料；冇得食會慢慢餓'},
-    {k:'wasteEvery',l:'幾耐去一次廁所',u:'小時',min:1,max:48,step:1,h:'排泄嘅時間間隔'},
-    {k:'wasteAmt',l:'每次排泄量',u:'mg 氨',min:0,max:0.3,step:0.005,h:'一半即刻變氨，一半變殘渣慢慢分解'},
-    {k:'o2Min',l:'最少要幾多氧',u:'mg/L',min:0.5,max:8,step:0.1,h:'水中溶氧低過呢個數就會缺氧受傷'},
-    {k:'nh3Tol',l:'氨耐受上限',u:'mg/L',min:0.05,max:2,step:0.05,h:'氨濃度高過呢個數就會中毒'}],
-  microbe:[
-    {k:'cap',l:'分解氨能力',u:'mg/小時',min:0,max:0.15,step:0.005,h:'每小時最多將幾多氨變成硝酸鹽'},
-    {k:'o2PerN',l:'分解耗氧',u:'mg 氧 / mg 氨',min:0,max:6,step:0.1,h:'每分解 1 mg 氨要用幾多氧氣'}]
+  aplant:{o2Prod:P('光照時產氧','mg/小時',0,3,.05,'開燈時每小時製造幾多氧氣'),resp:P('呼吸耗氧','mg/小時',0,.5,.01,'日夜都要呼吸，夜晚只用氧唔產氧'),uptake:P('吸收養分','mg/小時',0,.05,.001,'吸收氨同硝酸鹽，即係動物排泄物分解出嚟嘅嘢')},
+  aanimal:{resp:P('呼吸耗氧','mg/小時',0,.5,.005,'25°C 時每小時用幾多氧；水越暖用得越多'),food:AN_COMMON.food,wasteEvery:AN_COMMON.wasteEvery,
+    wasteAmt:P('每次排泄量','mg 氨',0,.3,.005,'一半即刻變氨，一半變殘渣慢慢分解'),o2Min:P('最少要幾多氧','mg/L',.5,8,.1,'溶氧低過呢個數就會缺氧'),
+    nh3Tol:P('氨耐受上限','mg/L',.05,2,.05,'氨濃度高過呢個數就會中毒'),tMin:AN_COMMON.tMin,tMax:AN_COMMON.tMax},
+  nitri:{cap:P('分解氨能力','mg/小時',0,.15,.005,'每小時最多將幾多氨變成硝酸鹽；底沙同石頭越多，細菌住得越多'),o2PerN:P('分解耗氧','mg 氧/mg 氨',0,6,.1,'每分解 1 mg 氨要用幾多氧')},
+  decomp:{rate:P('分解殘渣','份/小時',0,.5,.01,'加快分解飼料殘渣同屍體，分解出嚟嘅氨要靠硝化菌處理'),o2Per:P('分解耗氧','mg/份',0,2,.05,'')},
+  rplant:{o2Prod:P('光照時產氧','mg/小時',0,5,.1,'開燈時每小時製造幾多氧氣，同時食走二氧化碳'),resp:P('呼吸耗氧','mg/小時',0,1,.01,''),
+    uptake:P('吸收養分','份/小時',0,.1,.002,'吸收泥土入面分解咗嘅排泄物'),transp:P('蒸散加濕','%/小時',0,2,.05,'葉子散出水汽，提高濕度'),humMin:P('最低濕度','%',0,100,1,'低過呢個濕度葉子會乾')},
+  ranimal:{resp:P('呼吸耗氧','mg/小時',0,8,.1,'密封瓶入面會令二氧化碳上升'),food:AN_COMMON.food,wasteEvery:AN_COMMON.wasteEvery,
+    wasteAmt:P('每次排泄量','份',0,2,.05,'排泄物落喺泥土上，靠分解者處理'),humMin:P('最低濕度','%',0,100,1,''),humMax:P('最高濕度','%',0,100,1,'長期太濕會生病'),tMin:AN_COMMON.tMin,tMax:AN_COMMON.tMax},
+  soilm:{rate:P('分解排泄物','份/小時',0,.5,.01,'將排泄物變成植物食得嘅養分；泥土同石頭越多住得越多'),o2Per:P('分解耗氧','mg/份',0,5,.1,'')},
+  decor:{x:P('左右位置','',-1,1,.05),z:P('前後位置','',-1,1,.05),rot:P('旋轉','°',0,360,5),size:P('大細','×',.4,2,.05)},
+  sub:{depth:P('厚度','cm',1,8,.5,'越厚越多細菌住，但會佔空間')},
+  pool:{x:P('左右位置','',-1,1,.05),z:P('前後位置','',-1,1,.05),size:P('水池大細','×',.5,2,.05,'水池越大，越多水蒸發提高濕度，亦都越耐先變污糟')}
 };
-const POOLNAME={flake:'飼料',algae:'藻類',detritus:'殘渣'};
-/* 瓶形狀：prof = [半徑比例, 高度比例]，由底到頂 */
+DEFS.turtle=Object.assign({},DEFS.ranimal,{nh3Tol:P('水池氨耐受','mg/L',.1,3,.05,'水池入面氨高過呢個數會生病')});
+
+/* ================= 物種同造景 ================= */
+const CAT={
+  // 水族植物
+  hornwort:{m:'aqua',kind:'plant',g:'aplant',name:'金魚藻',sci:'Ceratophyllum',color:'#4f8f2c',root:'none',desc:'生長快、產氧多，唔使生根，浮喺水中都得。',params:{o2Prod:.8,resp:.1,uptake:.012}},
+  elodea:{m:'aqua',kind:'plant',g:'aplant',name:'水蘊草',sci:'Egeria densa',color:'#5c9a33',root:'sand',desc:'葉密生長快，產氧大戶，要種喺沙入面。',params:{o2Prod:.7,resp:.09,uptake:.011}},
+  vallis:{m:'aqua',kind:'plant',g:'aplant',name:'苦草',sci:'Vallisneria',color:'#6aa33a',root:'sand',desc:'長條葉子，產氧穩定，要有底沙生根。',params:{o2Prod:.6,resp:.08,uptake:.01}},
+  javafern:{m:'aqua',kind:'plant',g:'aplant',name:'黑木蕨',sci:'Microsorum',color:'#2f6b33',root:'rock',desc:'綁喺石頭或沉木上，唔使強光，好難養死。',params:{o2Prod:.35,resp:.05,uptake:.005}},
+  moss:{m:'aqua',kind:'plant',g:'aplant',name:'莫絲',sci:'Java moss',color:'#3d6b25',root:'rock',desc:'依附石頭生長，俾蝦同螺藏身。',params:{o2Prod:.3,resp:.04,uptake:.004}},
+  marimo:{m:'aqua',kind:'plant',g:'aplant',name:'綠藻球',sci:'Aegagropila',color:'#3e7d2c',root:'none',desc:'慢慢生長嘅毛球，產氧唔多，但蝦好鍾意喺上面揾食。',params:{o2Prod:.12,resp:.02,uptake:.003}},
+  duckweed:{m:'aqua',kind:'plant',g:'aplant',name:'浮萍',sci:'Lemna',color:'#8fc13f',root:'none',floating:1,desc:'浮喺水面，一半氧氣散去空氣，但吸收養分快，壓制藻類。',params:{o2Prod:.3,resp:.03,uptake:.016}},
+  // 水族動物
+  guppy:{m:'aqua',kind:'animal',g:'aanimal',move:'swim',name:'孔雀魚',sci:'Poecilia',color:'#e89a3c',diet:{flake:1,algae:.3},desc:'活潑耐養，但食量大、排泄多，要定時餵。',params:{resp:.1,food:1,wasteEvery:6,wasteAmt:.05,o2Min:3,nh3Tol:.4,tMin:22,tMax:30}},
+  medaka:{m:'aqua',kind:'animal',g:'aanimal',move:'swim',name:'青鱂魚',sci:'Oryzias',color:'#e6d3a3',diet:{flake:1,algae:.4},desc:'耐冷耐熱，好適合露台生態缸。',params:{resp:.08,food:.8,wasteEvery:8,wasteAmt:.04,o2Min:2.5,nh3Tol:.5,tMin:8,tMax:32}},
+  minnow:{m:'aqua',kind:'animal',g:'aanimal',move:'swim',name:'白雲山魚',sci:'Tanichthys',color:'#c9d3c2',diet:{flake:1,algae:.4,detritus:.2},desc:'香港原生小魚，耐低溫、耐低氧。',params:{resp:.12,food:1.1,wasteEvery:8,wasteAmt:.06,o2Min:2.5,nh3Tol:.5,tMin:10,tMax:26}},
+  betta:{m:'aqua',kind:'animal',g:'aanimal',move:'swim',name:'鬥魚',sci:'Betta splendens',color:'#3b4fd1',diet:{flake:1},desc:'識得浮上水面吸空氣，唔怕缺氧，但怕凍。',params:{resp:.12,food:1,wasteEvery:8,wasteAmt:.06,o2Min:.8,nh3Tol:.4,tMin:24,tMax:30}},
+  shrimp:{m:'aqua',kind:'animal',g:'aanimal',move:'hop',name:'米蝦',sci:'Neocaridina',color:'#d9452f',diet:{algae:1,detritus:.7,flake:.6},desc:'食藻類同殘渣嘅清潔工，對氨好敏感。',params:{resp:.04,food:.4,wasteEvery:8,wasteAmt:.012,o2Min:4,nh3Tol:.2,tMin:18,tMax:28}},
+  amano:{m:'aqua',kind:'animal',g:'aanimal',move:'hop',name:'大和藻蝦',sci:'Caridina',color:'#b9b2a0',diet:{algae:1,detritus:.6,flake:.5},desc:'食藻最勁嘅蝦，可以壓制藻類爆發。',params:{resp:.06,food:.6,wasteEvery:8,wasteAmt:.018,o2Min:4,nh3Tol:.25,tMin:18,tMax:28}},
+  snail:{m:'aqua',kind:'animal',g:'aanimal',move:'crawl',name:'石田螺',sci:'Sinotaia',color:'#7a5532',diet:{detritus:1,algae:.8,flake:.4},desc:'食殘渣同藻類，好頑強，係清道夫。',params:{resp:.03,food:.5,wasteEvery:10,wasteAmt:.015,o2Min:2,nh3Tol:.6,tMin:10,tMax:30}},
+  nerite:{m:'aqua',kind:'animal',g:'aanimal',move:'crawl',name:'斑馬螺',sci:'Neritina',color:'#3a3420',diet:{algae:1,detritus:.5},desc:'專食玻璃同石頭上嘅藻，淡水唔會繁殖過多。',params:{resp:.03,food:.5,wasteEvery:12,wasteAmt:.012,o2Min:2,nh3Tol:.5,tMin:20,tMax:28}},
+  daphnia:{m:'aqua',kind:'animal',g:'aanimal',move:'swarm',name:'水蚤群',sci:'Daphnia',color:'#d9b46a',diet:{algae:1},desc:'一群細小浮游動物，濾食綠水，令水變清。',params:{resp:.02,food:.3,wasteEvery:6,wasteAmt:.004,o2Min:3,nh3Tol:.3,tMin:8,tMax:26}},
+  // 水族微生物
+  nitri:{m:'aqua',kind:'microbe',g:'nitri',name:'硝化菌群',sci:'Nitrosomonas',color:'#d8c27a',desc:'住喺沙底同石頭，將有毒嘅氨變成水草食得嘅硝酸鹽，過程要用氧。',params:{cap:.03,o2PerN:3.4}},
+  decomp:{m:'aqua',kind:'microbe',g:'decomp',name:'分解菌',sci:'Bacillus',color:'#c9a96a',desc:'加快分解殘渣同屍體，令底沙乾淨啲。',params:{rate:.1,o2Per:.3}},
+  // 雨林植物
+  fern:{m:'rain',kind:'plant',g:'rplant',name:'腎蕨',sci:'Nephrolepis',color:'#3f8a3a',desc:'雨林經典植物，蒸散多，幫手保持濕度。',params:{o2Prod:1.5,resp:.2,uptake:.02,transp:.6,humMin:55}},
+  cmoss:{m:'rain',kind:'plant',g:'rplant',name:'苔蘚',sci:'Bryophyta',color:'#5aa03a',desc:'鋪滿地面，保濕又好睇，太乾會變黃。',params:{o2Prod:.6,resp:.08,uptake:.008,transp:.3,humMin:70}},
+  pothos:{m:'rain',kind:'plant',g:'rplant',name:'黃金葛',sci:'Epipremnum',color:'#8fbf3a',desc:'最易養嘅爬藤，產氧多，吸收養分快。',params:{o2Prod:2,resp:.25,uptake:.025,transp:.5,humMin:40}},
+  bromeliad:{m:'rain',kind:'plant',g:'rplant',name:'鳳梨',sci:'Bromeliaceae',color:'#c0392b',desc:'葉心會積水，箭毒蛙鍾意喺入面休息。',params:{o2Prod:1,resp:.12,uptake:.01,transp:.3,humMin:45}},
+  fittonia:{m:'rain',kind:'plant',g:'rplant',name:'網紋草',sci:'Fittonia',color:'#c8607a',desc:'葉脈有網紋，太乾會即刻垂低。',params:{o2Prod:.8,resp:.1,uptake:.012,transp:.5,humMin:65}},
+  // 雨林動物
+  turtle:{m:'rain',kind:'animal',g:'turtle',move:'turtle',name:'麝香龜',sci:'Sternotherus',color:'#5a5a34',pool:1,diet:{feed:1},desc:'細隻嘅半水棲龜，一定要有水池，排泄物會落水池。',params:{resp:3,food:1.5,wasteEvery:8,wasteAmt:.6,humMin:50,humMax:98,tMin:22,tMax:30,nh3Tol:1}},
+  gecko:{m:'rain',kind:'animal',g:'ranimal',move:'climb',name:'睫角守宮',sci:'Correlophus',color:'#c9893f',diet:{feed:1},desc:'識爬玻璃嘅蜥蜴，要通風，唔可以長期太濕或太熱。',params:{resp:4,food:1,wasteEvery:24,wasteAmt:.8,humMin:50,humMax:85,tMin:20,tMax:27}},
+  frog:{m:'rain',kind:'animal',g:'ranimal',move:'frog',name:'箭毒蛙',sci:'Dendrobates',color:'#2a6fd6',diet:{feed:1},desc:'人工繁殖嘅冇毒，需要好高濕度，怕熱。',params:{resp:.8,food:.5,wasteEvery:12,wasteAmt:.15,humMin:75,humMax:100,tMin:20,tMax:27}},
+  isopod:{m:'rain',kind:'animal',g:'ranimal',move:'colony',name:'鼠婦群',sci:'Porcellio',color:'#6f6a66',mouldOK:1,diet:{waste:1,mould:.8,feed:.5},desc:'一群清道夫，食排泄物同腐葉。',params:{resp:.3,food:.6,wasteEvery:12,wasteAmt:.05,humMin:60,humMax:100,tMin:15,tMax:30}},
+  springtail:{m:'rain',kind:'animal',g:'ranimal',move:'spring',name:'跳蟲群',sci:'Collembola',color:'#d6d4c8',mouldOK:1,diet:{mould:1,waste:.7},desc:'細到好似白色粉粒，專食霉菌，防止生霉。',params:{resp:.1,food:.4,wasteEvery:24,wasteAmt:.01,humMin:70,humMax:100,tMin:15,tMax:30}},
+  soilmic:{m:'rain',kind:'microbe',g:'soilm',name:'土壤菌群',sci:'Soil microbes',color:'#8a6a3a',desc:'住喺泥土，將排泄物分解成植物養分。',params:{rate:.06,o2Per:2}},
+  // 造景
+  sand:{m:'both',kind:'sub',g:'sub',name:'細沙',sci:'底材',color:'#cab68c',desc:'水草要種喺沙入面先生到根，細菌亦都住喺沙粒之間。',params:{depth:3}},
+  gravel:{m:'both',kind:'sub',g:'sub',name:'碎石',sci:'底材',color:'#8f8a80',desc:'通水性好，住得多細菌。',params:{depth:3}},
+  soil:{m:'both',kind:'sub',g:'sub',name:'泥土',sci:'底材',color:'#5b4030',desc:'雨林植物一定要有泥土，保濕又有養分。',params:{depth:4}},
+  stone:{m:'both',kind:'decor',g:'decor',name:'石頭',sci:'裝飾',color:'#7d786f',rock:1,desc:'增加細菌附著面積，黑木蕨同莫絲可以依附。',params:{x:.45,z:.3,rot:0,size:1}},
+  rockmtn:{m:'both',kind:'decor',g:'decor',name:'假山',sci:'裝飾',color:'#8a857c',rock:1,desc:'層層疊嘅石山，俾生物躲藏，細菌都住得多。',params:{x:-.4,z:-.3,rot:0,size:1}},
+  bridge:{m:'both',kind:'decor',g:'decor',name:'假橋',sci:'裝飾',color:'#9b3b2a',desc:'純裝飾，蝦同蜥蜴可以行過。',params:{x:0,z:.25,rot:20,size:1}},
+  driftwood:{m:'both',kind:'decor',g:'decor',name:'沉木',sci:'裝飾',color:'#5b3a22',rock:1,desc:'天然木頭，植物可以依附，守宮可以攀爬。',params:{x:.2,z:-.35,rot:40,size:1}},
+  pool:{m:'rain',kind:'pool',g:'pool',name:'水池',sci:'造景',color:'#5fa8c4',desc:'龜一定要有水池；水會蒸發，提高濕度。',params:{x:.45,z:.35,size:1}}
+};
+const POOLNAME={flake:'飼料',algae:'藻類',detritus:'殘渣',feed:'飼料／昆蟲',waste:'排泄物',mould:'霉菌'};
+const KIND_ORDER=['sub','decor','pool','plant','animal','microbe'];
+
 const SHAPES={
   jar:{n:'梅森罐',R:1,H:2.25,w:.8,prof:[[.95,0],[1,.04],[1,.8],[.9,.87],[.82,.92],[.82,1]]},
   cyl:{n:'圓柱瓶',R:.95,H:2.4,w:.82,prof:[[1,0],[1,.5],[1,1]]},
@@ -255,280 +308,546 @@ const SHAPES={
   flask:{n:'燒瓶',R:1.2,H:2.7,w:.6,prof:[[.88,0],[.98,.06],[1,.2],[.94,.4],[.72,.55],[.4,.67],[.32,.74],[.32,.97],[.36,1]]},
   box:{n:'方缸',R:1,H:1.9,w:.85,box:true,prof:[[1,0],[1,1]]}
 };
-/* 瓶材質：tr = 透光率，影響水草同藻類光合作用 */
 const MATS={
   glass:{n:'透明玻璃',c:0xdcefff,op:.14,sh:120,tr:1,d:'最常見，透光最好'},
   acrylic:{n:'亞克力',c:0xeaf6ff,op:.09,sh:45,tr:.92,d:'輕身唔易爛，但會刮花、慢慢變黃'},
   green:{n:'綠玻璃',c:0x5f9a6a,op:.28,sh:110,tr:.8,d:'濾走部份光，藻類生長慢啲'},
-  amber:{n:'茶色玻璃',c:0xb0702a,op:.32,sh:110,tr:.62,d:'擋光多，水草產氧會明顯減少'},
+  amber:{n:'茶色玻璃',c:0xb0702a,op:.32,sh:110,tr:.62,d:'擋光多，植物產氧會明顯減少'},
   frosted:{n:'磨砂玻璃',c:0xf2f5f5,op:.48,sh:5,tr:.75,d:'光線柔和，但睇唔清入面'}
 };
+const WX={
+  sunny:{n:'晴天',light:1,t:27,hum:58},
+  cloudy:{n:'多雲',light:.65,t:25,hum:72},
+  rain:{n:'落雨',light:.45,t:22,hum:92,rain:1},
+  storm:{n:'雷暴',light:.3,t:21,hum:96,rain:2,bolt:1},
+  fog:{n:'起霧',light:.5,t:19,hum:98,fog:1}
+};
+const WXNEXT={sunny:[['sunny',.5],['cloudy',.35],['fog',.15]],cloudy:[['sunny',.35],['cloudy',.25],['rain',.3],['fog',.1]],rain:[['cloudy',.45],['rain',.3],['storm',.25]],storm:[['rain',.6],['cloudy',.4]],fog:[['sunny',.4],['cloudy',.6]]};
 
-/* ---------- 狀態 ---------- */
-const S={V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,feedHour:9,hour:6,day:1,O2:0,CO2:0,NH3:0,NO3:0,algae:3,flake:0,detritus:0,
-  items:[],hist:[],log:[],running:true,speed:4,uid:1,sel:null};
-const isLight=h=>{const on=7,off=7+S.light;return S.light>=24||(h>=on&&h<off)||(off>24&&h<off-24);};
-const alive=k=>S.items.filter(i=>i.alive&&CAT[i.type].kind===k);
+const PRESETS={
+  aqua:{
+    eco:{n:'密封生態瓶',d:'4L 梅森罐密封：細沙、石頭、金魚藻、莫絲、苦草、米蝦、石田螺、硝化菌，唔使餵。',V:4,shape:'jar',sealed:true,light:12,feed:0,
+      items:[['sand',1],['stone',1],['hornwort',2],['moss',1],['vallis',1],['shrimp',5],['snail',2],['nitri',1]]},
+    tank:{n:'開口小魚缸',d:'10L 方缸，有氧氣泵同過濾，碎石、假山、假橋、孔雀魚 4 條。',V:10,shape:'box',sealed:false,light:10,feed:3,pump:true,filter:true,
+      items:[['gravel',1],['rockmtn',1],['bridge',1],['hornwort',2],['vallis',2],['duckweed',1],['guppy',4],['snail',1],['nitri',1],['decomp',1]]},
+    bad:{n:'失衡示範',d:'3L 密封金魚缸，5 條孔雀魚只得一撮莫絲，冇硝化菌。',V:3,shape:'bowl',sealed:true,light:12,feed:2,items:[['moss',1],['guppy',5]]},
+    zero:{n:'由零開始',d:'一個空嘅瓶，由鋪沙、擺石頭開始自己砌。',V:4,shape:'jar',sealed:true,light:12,feed:0,items:[]}
+  },
+  rain:{
+    forest:{n:'雨林生態瓶',d:'6L 密封圓柱瓶：泥土、沉木、苔蘚、腎蕨、網紋草、鳳梨、箭毒蛙同清道夫。',V:6,shape:'cyl',sealed:true,light:12,feed:.5,mist:1,
+      items:[['soil',1],['driftwood',1],['cmoss',1],['fern',1],['fittonia',1],['bromeliad',1],['frog',1],['isopod',1],['springtail',1],['soilmic',1]]},
+    turtle:{n:'龜池雨林',d:'20L 方缸開口：泥土、水池、石頭、黃金葛、腎蕨同一隻麝香龜，有加熱燈同水池過濾。',V:20,shape:'box',sealed:false,light:12,feed:1.5,heat:true,filter:true,
+      items:[['soil',1],['pool',1,{size:1.7,x:.35,z:.25}],['stone',1,{x:-.5,z:.4}],['pothos',1],['fern',2],['turtle',1],['isopod',1],['soilmic',1]]},
+    gecko:{n:'守宮攀爬缸',d:'12L 開口圓柱瓶：泥土、沉木、假橋、黃金葛、睫角守宮同清道夫。',V:12,shape:'cyl',sealed:false,light:12,feed:1,mist:1,
+      items:[['soil',1],['driftwood',1],['bridge',1],['pothos',2],['fern',1],['gecko',1],['isopod',1],['springtail',1],['soilmic',1]]},
+    zero:{n:'由零開始',d:'一個空嘅瓶，由鋪泥土、擺沉木開始自己砌。',V:6,shape:'cyl',sealed:false,light:12,feed:0,items:[]}
+  }
+};
 
-function resetChem(){const V=S.V;Object.assign(S,{O2:7.5*V,CO2:1.5*V,NH3:0.02*V,NO3:2*V,algae:3,flake:0,detritus:0.5,hist:[],log:[],hour:6,day:1});}
+/* ================= 狀態 ================= */
+const S={mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,feedHour:9,pump:false,filter:false,mist:0,heat:false,
+  wxMode:'auto',wx:'sunny',wxLeft:6,hour:6,day:1,c:{},items:[],hist:[],log:[],running:true,speed:4,uid:1,sel:null,report:null};
+const isLight=(st,h)=>{const on=7,off=7+st.light;return st.light>=24||(h>=on&&h<off)||(off>24&&h<off-24);};
+const aliveIn=(st,k)=>st.items.filter(i=>i.alive&&CAT[i.type].kind===k);
+const sat=T=>468/(31.6+T);
+const airL=st=>st.V*.75;
 
-function addItem(type,params,silent){
-  const c=CAT[type];const n=S.items.filter(i=>i.type===type).length+1;
-  const it={uid:S.uid++,type,n,params:Object.assign({},c.params,params||{}),health:1,satiety:1,wt:Math.floor(Math.random()*6),nShort:0,alive:true,stress:'',lastProd:0,
-    rx:0,rz:0,deadT:0};
-  const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*0.75;it.rx=Math.cos(a)*r;it.rz=Math.sin(a)*r;
-  S.items.push(it);buildItem(it);
-  if(!silent){renderJarList();renderCatalog();save();toast('已加入 '+c.name);}
+function resetChem(st){
+  const V=st.V;st.hist=[];st.hour=st.hour??6;
+  if(st.mode==='aqua')st.c={T:24,O2:sat(24)*.95*V,CO2:1.5*V,NH3:.02*V,NO3:2*V,algae:3,flake:0,detritus:.5};
+  else{const a=airL(st);st.c={T:24,O2:21*13.3*a,CO2:600*a*.0018,hum:75,waste:1,soilN:2,mould:0,feed:0,pNH3:0};}
+}
+function envInfo(st){
+  const E={sub:0,subTypes:{},rocks:0,pool:null,poolSize:0};
+  for(const it of st.items){if(!it.alive)continue;const c=CAT[it.type];
+    if(c.kind==='sub'){E.sub+=it.params.depth;E.subTypes[it.type]=1;}
+    if(c.rock)E.rocks++;
+    if(c.kind==='pool'){E.pool=it;E.poolSize+=it.params.size;}}
+  E.surf=clamp(1+.2*Math.min(4,E.rocks)+.12*Math.min(6,E.sub),1,2.5);
+  return E;
+}
+
+function makeItem(type,params){
+  const c=CAT[type];
+  const it={uid:S.uid++,type,n:0,name:'',params:Object.assign({},c.params,params||{}),health:1,satiety:1,wt:Math.floor(Math.random()*6),nShort:0,alive:true,stress:'',lastProd:0,rx:0,rz:0,deadT:0};
+  const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*.75;it.rx=Math.cos(a)*r;it.rz=Math.sin(a)*r;
   return it;
 }
-function removeItem(it){
-  disposeObj(it.g);S.items=S.items.filter(x=>x!==it);if(S.sel===it)S.sel=null;renderJarList();renderEditor();renderCatalog();save();
+const PET_NAMES=['波波','咕咕','豆豆','阿橙','小藍','芝麻','布甸','麻糬','珍珠','雪糕','叉燒','菠蘿包','奶茶','湯圓','花生','檸檬','蛋撻','咖喱','鴛鴦','雞蛋仔','魚蛋','燒賣','西多','菠菜','番薯','栗子','紅豆','綠豆','椰子','QQ'];
+const esc=t=>String(t).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const label=it=>it.name||`${CAT[it.type].name} #${it.n}`;
+function randName(){const used=new Set(S.items.map(i=>i.name));const free=PET_NAMES.filter(n=>!used.has(n));const L=free.length?free:PET_NAMES;return L[Math.floor(Math.random()*L.length)];}
+function nextN(type){return Math.max(0,...S.items.filter(i=>i.type===type).map(i=>i.n))+1;}
+function addItem(type,params,silent){
+  const it=makeItem(type,params);it.n=nextN(type);S.items.push(it);
+  const k=CAT[type].kind;
+  if(k==='sub')buildJar();else buildItem(it);
+  if(!silent){refreshLists();save();toast('已加入 '+CAT[type].name);}
+  return it;
 }
-function die(it,why){
+function removeItem(it,silent){
+  const wasSub=CAT[it.type].kind==='sub';
+  disposeObj(it.g);S.items=S.items.filter(x=>x!==it);if(S.sel===it)S.sel=null;
+  if(wasSub)buildJar();
+  if(!silent){refreshLists();renderEditor();save();}
+}
+function removeOne(type){
+  const list=S.items.filter(i=>i.type===type);if(!list.length)return;
+  const dead=list.find(i=>!i.alive);const it=dead||list[list.length-1];
+  removeItem(it);toast('已移走 '+CAT[type].name);
+}
+function die(it,why,st){
   if(!it.alive)return;it.alive=false;it.deadT=0;it.why=why;
-  const k=CAT[it.type].kind;S.detritus+=k==='plant'?5:k==='animal'?3:0;
-  logEv(`${CAT[it.type].name} #${it.n} ${k==='microbe'?'失效':'死亡'}（${why}）`,'bad');
+  const k=CAT[it.type].kind,c=st.c;
+  if(st.mode==='aqua')c.detritus+=k==='plant'?5:k==='animal'?3:0;else c.waste+=k==='plant'?3:k==='animal'?2:0;
+  if(st.trial){st.deaths=(st.deaths||[]);st.deaths.push({type:it.type,h:st.t||0,why});return;}
+  logEv(`${label(it)}${it.name?'（'+CAT[it.type].name+'）':''} ${k==='microbe'?'失效':'死亡'}（${why}）`,'bad');
   if(S.sel===it)renderEditor();
   dirtyList=true;
 }
-function logEv(t,c){S.log.unshift({t,c,d:S.day,h:S.hour});if(S.log.length>40)S.log.pop();}
+function logEv(t,c){S.log.unshift({t,c,d:S.day,h:S.hour});if(S.log.length>50)S.log.pop();}
 
-/* ---------- 每小時模擬 ---------- */
+/* ================= 模擬（每小時） ================= */
 let wasteFx=[];
-function step(){
-  const V=S.V,light=isLight(S.hour);
-  const co2c=S.CO2/V,co2f=co2c/(co2c+0.4);
+function step(st){
+  const c=st.c,light=isLight(st,st.hour),w=WX[st.wx],tr=MATS[st.mat].tr,lm=light?w.light*tr:0;
+  const E=envInfo(st);
+  const amb=w.t+(st.hour>=8&&st.hour<18?2:-2);
+  const tgt=amb+(light?1.5:0)+(st.mode==='rain'&&st.heat&&light?5:0)+(st.sealed?.5:0);
+  c.T+=(tgt-c.T)*.15;
+  const q=clamp(1+.04*(c.T-25),.5,1.6);
+  if(st.mode==='aqua')stepAqua(st,c,light,lm,q,E,w);else stepRain(st,c,light,lm,q,E,w);
+  st.hour++;if(st.hour>=24){st.hour=0;st.day++;}
+  st.t=(st.t||0)+1;
+  if(!st.trial&&st.wxMode==='auto'){st.wxLeft--;if(st.wxLeft<=0){
+    let r=Math.random(),nx=st.wx;for(const [k,p] of WXNEXT[st.wx]){r-=p;if(r<=0){nx=k;break;}}
+    if(nx!==st.wx)logEv('天氣轉為'+WX[nx].n,'muted');st.wx=nx;st.wxLeft=Math.round(rnd(3,9));}}
+}
+function animalHealth(it,dh,st){
+  it.health=clamp(it.health+dh,0,1);if(it.health<=0)die(it,it.stress||'衰弱',st);
+}
+function eat(it,st,c){
+  const p=it.params,per=p.food/24;if(per<=0)return 1;
+  let need=per,got=0;
+  for(const [pool,w] of Object.entries(CAT[it.type].diet).sort((a,b)=>b[1]-a[1])){
+    if(need<=1e-9)break;const take=Math.min(c[pool]||0,need/w);c[pool]-=take;got+=take*w;need-=take*w;}
+  it.satiety=clamp(it.satiety+(got/per-1)/36,0,1);return got/per;
+}
+function stepAqua(st,c,light,lm,q,E,w){
+  const V=st.V,sv=sat(c.T),co2f=(c.CO2/V)/((c.CO2/V)+.4);
   let o2p=0,o2u=0,grown=0;
-  const useO2=x=>{const t=Math.min(S.O2,x);S.O2-=t;S.CO2+=t*1.375;o2u+=t;return t;};
-  for(const it of alive('plant')){
-    const p=it.params,h=it.health;
-    useO2(p.resp*Math.max(.3,h));
-    if(light){
-      const prod=p.o2Prod*h*co2f*MATS[S.mat].tr, kept=it.type==='duckweed'?0.5:1;
-      S.O2+=prod*kept;S.CO2=Math.max(0,S.CO2-prod*1.375);o2p+=prod*kept;it.lastProd=prod*kept;
-      let need=p.uptake*h;const a=Math.min(S.NH3,need);S.NH3-=a;need-=a;const b=Math.min(S.NO3,need);S.NO3-=b;need-=b;
-      it.nShort=need>p.uptake*h*0.7?it.nShort+1:Math.max(0,it.nShort-2);
+  const useO2=x=>{const t=Math.min(c.O2,x);c.O2-=t;c.CO2+=t*1.375;o2u+=t;return t;};
+  for(const it of aliveIn(st,'plant')){
+    const p=it.params,h=it.health,C=CAT[it.type];
+    useO2(p.resp*Math.max(.3,h)*q);
+    if(lm>0){
+      const prod=p.o2Prod*h*co2f*lm,kept=C.floating?.5:1;
+      c.O2+=prod*kept;c.CO2=Math.max(0,c.CO2-prod*1.375);o2p+=prod*kept;it.lastProd=prod*kept;
+      let need=p.uptake*h;const a=Math.min(c.NH3,need);c.NH3-=a;need-=a;const b=Math.min(c.NO3,need);c.NO3-=b;need-=b;
+      it.nShort=need>p.uptake*h*.7?it.nShort+1:Math.max(0,it.nShort-2);
     } else it.lastProd=0;
-    let dh=0.003;it.stress='';
-    if(it.nShort>60){dh=-0.004;it.stress='缺養分';}
-    if(S.light<5){dh=-0.005;it.stress='光照不足';}
-    if(S.NH3/V>3){dh-=0.004;it.stress='氨太高';}
-    it.health=clamp(it.health+dh,0,1);if(it.health<=0)die(it,it.stress||'衰弱');
+    let dh=.003;it.stress='';
+    if(it.nShort>60){dh=-.004;it.stress='缺養分';}
+    if(st.light<5){dh=-.005;it.stress='光照不足';}
+    if(c.NH3/V>3){dh-=.004;it.stress='氨太高';}
+    if(C.root==='sand'&&!E.sub){dh=Math.min(dh,0)-.004;it.stress='冇底沙生根';}
+    if(C.root==='rock'&&!E.rocks){dh=Math.min(dh,0)-.002;it.stress='冇石或沉木依附';}
+    it.health=clamp(it.health+dh,0,1);if(it.health<=0)die(it,it.stress||'衰弱',st);
   }
-  for(const it of alive('animal')){
-    const p=it.params,c=CAT[it.type];
-    useO2(p.resp);
-    const per=p.food/24;
-    if(per>0){
-      let need=per,got=0;
-      for(const [pool,w] of Object.entries(c.diet).sort((a,b)=>b[1]-a[1])){
-        if(need<=1e-9)break;const take=Math.min(S[pool],need/w);S[pool]-=take;got+=take*w;need-=take*w;
-      }
-      it.satiety=clamp(it.satiety+(got/per-1)/36,0,1);
-    }
-    it.wt+=1;
-    if(it.wt>=p.wasteEvery){it.wt=0;S.NH3+=p.wasteAmt*0.5;S.detritus+=p.wasteAmt*0.5/0.1;wasteFx.push(it);}
-    const oc=S.O2/V,nc=S.NH3/V;let dh=0.004;it.stress='';
-    if(oc<p.o2Min){dh=-0.03*(1+(p.o2Min-oc));it.stress='缺氧';}
-    if(nc>p.nh3Tol){dh=Math.min(dh,0)-0.012*(nc/p.nh3Tol);it.stress=it.stress||'氨中毒';}
-    if(it.satiety<=0){dh=Math.min(dh,0)-0.006;it.stress=it.stress||'飢餓';}
-    it.health=clamp(it.health+dh,0,1);if(it.health<=0)die(it,it.stress||'衰弱');
+  for(const it of aliveIn(st,'animal')){
+    const p=it.params;useO2(p.resp*q);eat(it,st,c);
+    it.wt+=1;if(it.wt>=p.wasteEvery){it.wt=0;c.NH3+=p.wasteAmt*.5;c.detritus+=p.wasteAmt*.5/.1;if(!st.trial)wasteFx.push(it);}
+    const oc=c.O2/V,nc=c.NH3/V;let dh=.004;it.stress='';
+    if(oc<p.o2Min){dh=-.03*(1+(p.o2Min-oc));it.stress='缺氧';}
+    if(nc>p.nh3Tol){dh=Math.min(dh,0)-.012*(nc/p.nh3Tol);it.stress=it.stress||'氨中毒';}
+    if(c.T<p.tMin||c.T>p.tMax){dh=Math.min(dh,0)-.008*(1+Math.max(p.tMin-c.T,c.T-p.tMax));it.stress=it.stress||(c.T<p.tMin?'水溫太凍':'水溫太熱');}
+    if(it.satiety<=0){dh=Math.min(dh,0)-.006;it.stress=it.stress||'飢餓';}
+    animalHealth(it,dh,st);
   }
-  for(const it of alive('microbe')){
-    const p=it.params;let conv=Math.min(S.NH3,p.cap*it.health);
-    if(p.o2PerN>0)conv=Math.min(conv,S.O2/p.o2PerN);
-    S.NH3-=conv;S.NO3+=conv;S.O2-=conv*p.o2PerN;o2u+=conv*p.o2PerN;S.CO2=Math.max(0,S.CO2-conv*0.5);
-    it.stress=S.O2/V<1?'缺氧':'';it.health=clamp(it.health+(S.O2/V<1?-0.01:0.005),0,1);
-    if(it.health<=0)die(it,'缺氧');
+  for(const it of aliveIn(st,'microbe')){
+    const p=it.params;
+    if(it.type==='nitri'){
+      let conv=Math.min(c.NH3,p.cap*it.health*E.surf);if(p.o2PerN>0)conv=Math.min(conv,c.O2/p.o2PerN);
+      c.NH3-=conv;c.NO3+=conv;c.O2-=conv*p.o2PerN;o2u+=conv*p.o2PerN;c.CO2=Math.max(0,c.CO2-conv*.5);
+    } else {const d=Math.min(c.detritus,p.rate*it.health*E.surf);c.detritus-=d;c.NH3+=d*.1;useO2(d*p.o2Per);}
+    it.stress=c.O2/V<1?'缺氧':'';it.health=clamp(it.health+(c.O2/V<1?-.01:.005),0,1);if(it.health<=0)die(it,'缺氧',st);
   }
-  // 藻類
-  if(light){
-    const no3c=S.NO3/V;let g=(0.04*S.algae+0.01)*(no3c/(no3c+1.5))*Math.max(0,1-S.algae/60)*co2f*MATS[S.mat].tr;
-    g=Math.max(0,Math.min(g,S.NO3/0.01));S.algae+=g;S.NO3-=g*0.01;S.O2+=g*0.6;S.CO2=Math.max(0,S.CO2-g*0.8);o2p+=g*0.6;grown=g;
+  if(st.filter){
+    let conv=Math.min(c.NH3,.012*V,c.O2/3.4);c.NH3-=conv;c.NO3+=conv;c.O2-=conv*3.4;o2u+=conv*3.4;
+    const d=c.detritus*.04;c.detritus-=d;c.NO3+=d*.1;useO2(d*.1*3.4);
   }
-  useO2(0.003*S.algae);
-  const ad=S.algae*0.004;S.algae-=ad;S.detritus+=ad;
-  // 餵食 & 分解
-  if(S.hour===S.feedHour&&S.feed>0){S.flake+=S.feed;feedFx(S.feed);}
-  let d=S.flake*0.04;S.flake-=d;S.detritus+=d;
-  d=S.detritus*0.02;S.detritus-=d;S.NH3+=d*0.1;useO2(d*0.3);
-  // 氣體交換
-  const k=S.sealed?0.002:0.06*J.open;S.O2+=(8*V-S.O2)*k;S.CO2+=(0.6*V-S.CO2)*k;
-  S.O2=clamp(S.O2,0,14*V);for(const key of ['CO2','NH3','NO3','algae','flake','detritus'])S[key]=Math.max(0,S[key]);
-  S.hist.push({o2:S.O2/V,nh3:S.NH3/V,no3:S.NO3/V,co2:S.CO2/V,algae:S.algae,light,o2p,o2u,grown});
-  if(S.hist.length>240)S.hist.shift();
-  S.hour++;if(S.hour>=24){S.hour=0;S.day++;}
-  // 警告
-  const oc=S.O2/V;
-  if(oc<2&&!S._lowO2){S._lowO2=true;logEv(`溶氧跌到 ${fx(oc)} mg/L`,'warn');} if(oc>4)S._lowO2=false;
-  if(S.NH3/V>0.5&&!S._hiN){S._hiN=true;logEv(`氨升到 ${fx(S.NH3/V,2)} mg/L`,'warn');} if(S.NH3/V<0.3)S._hiN=false;
-  if(S.algae>35&&!S._bloom){S._bloom=true;logEv('藻類爆發，水開始變綠','warn');} if(S.algae<25)S._bloom=false;
+  if(lm>0){
+    const no3c=c.NO3/V;let g=(.04*c.algae+.01)*(no3c/(no3c+1.5))*Math.max(0,1-c.algae/60)*co2f*lm;
+    g=Math.max(0,Math.min(g,c.NO3/.01));c.algae+=g;c.NO3-=g*.01;c.O2+=g*.6;c.CO2=Math.max(0,c.CO2-g*.8);o2p+=g*.6;grown=g;
+  }
+  useO2(.003*c.algae);
+  const ad=c.algae*.004;c.algae-=ad;c.detritus+=ad;
+  if(st.hour===st.feedHour&&st.feed>0){c.flake+=st.feed;if(!st.trial)feedFx(st.feed);}
+  let d=c.flake*.04;c.flake-=d;c.detritus+=d;
+  d=c.detritus*.02;c.detritus-=d;c.NH3+=d*.1;useO2(d*.3);
+  let k=st.sealed?.002:.06*J.open;if(st.filter&&!st.sealed)k+=.02;
+  c.O2+=(sv*V-c.O2)*k;c.CO2+=(.6*V-c.CO2)*k;
+  if(st.pump){const kp=st.sealed?.04:.15;c.O2+=(sv*V-c.O2)*kp;c.CO2+=(.6*V-c.CO2)*kp;}
+  if(!st.sealed&&w.rain){const f=.01*w.rain*J.open;c.NH3*=1-f;c.NO3*=1-f;}
+  c.O2=clamp(c.O2,0,sv*1.7*V);for(const key of ['CO2','NH3','NO3','algae','flake','detritus'])c[key]=Math.max(0,c[key]);
+  st.hist.push({o2:c.O2/V,nh3:c.NH3/V,no3:c.NO3/V,co2:c.CO2/V,algae:c.algae,T:c.T,light,o2p,o2u,grown});
+  if(st.hist.length>240)st.hist.shift();
+  if(!st.trial){
+    const oc=c.O2/V;
+    if(oc<2&&!st._lowO2){st._lowO2=true;logEv(`溶氧跌到 ${fx(oc)} mg/L`,'warn');}if(oc>4)st._lowO2=false;
+    if(c.NH3/V>.5&&!st._hiN){st._hiN=true;logEv(`氨升到 ${fx(c.NH3/V,2)} mg/L`,'warn');}if(c.NH3/V<.3)st._hiN=false;
+    if(c.algae>35&&!st._bloom){st._bloom=true;logEv('藻類爆發，水開始變綠','warn');}if(c.algae<25)st._bloom=false;
+  }
+}
+function stepRain(st,c,light,lm,q,E,w){
+  const V=st.V,a=airL(st),ppm=c.CO2/(a*.0018),co2f=ppm/(ppm+300),hf=Math.min(2,4/V);
+  let o2p=0,o2u=0;
+  const useO2=x=>{const t=Math.min(c.O2,x);c.O2-=t;c.CO2+=t*1.375;o2u+=t;};
+  for(const it of aliveIn(st,'plant')){
+    const p=it.params,h=it.health;useO2(p.resp*Math.max(.3,h)*q);
+    if(lm>0){const prod=p.o2Prod*h*co2f*lm;c.O2+=prod;c.CO2=Math.max(0,c.CO2-prod*1.375);o2p+=prod;it.lastProd=prod;
+      const u=Math.min(c.soilN,p.uptake*h);c.soilN-=u;it.nShort=u<p.uptake*h*.3?it.nShort+1:Math.max(0,it.nShort-2);} else it.lastProd=0;
+    c.hum+=p.transp*h*(light?1:.3)*hf;
+    let dh=.003;it.stress='';
+    if(!E.subTypes.soil){dh=-.004;it.stress='冇泥土';}
+    if(c.hum<p.humMin){dh=Math.min(dh,0)-.006*(1+(p.humMin-c.hum)/10);it.stress=it.stress||'太乾';}
+    if(c.mould>40){dh=Math.min(dh,0)-.004;it.stress=it.stress||'霉菌';}
+    if(it.nShort>72){dh=Math.min(dh,0)-.003;it.stress=it.stress||'缺養分';}
+    if(st.light<5){dh=-.005;it.stress='光照不足';}
+    it.health=clamp(it.health+dh,0,1);if(it.health<=0)die(it,it.stress||'衰弱',st);
+  }
+  const poolL=E.pool?.25*V*E.poolSize:0;
+  for(const it of aliveIn(st,'animal')){
+    const p=it.params,C=CAT[it.type];useO2(p.resp*q);eat(it,st,c);
+    it.wt+=1;if(it.wt>=p.wasteEvery){it.wt=0;if(C.pool&&E.pool)c.pNH3+=p.wasteAmt*.1;else c.waste+=p.wasteAmt;if(!st.trial)wasteFx.push(it);}
+    const o2pct=c.O2/(a*13.3),pp=c.CO2/(a*.0018);let dh=.004;it.stress='';
+    if(c.hum<p.humMin||c.hum>p.humMax){dh=-.006*(1+Math.max(p.humMin-c.hum,c.hum-p.humMax)/10);it.stress=c.hum<p.humMin?'太乾':'太濕';}
+    if(c.T<p.tMin||c.T>p.tMax){dh=Math.min(dh,0)-.008*(1+Math.max(p.tMin-c.T,c.T-p.tMax));it.stress=it.stress||(c.T<p.tMin?'太凍':'太熱');}
+    if(o2pct<17){dh=Math.min(dh,0)-.02*(17-o2pct);it.stress=it.stress||'缺氧';}
+    if(pp>5000){dh=Math.min(dh,0)-.01*(pp/5000);it.stress=it.stress||'二氧化碳過高';}
+    if(c.mould>20&&!C.mouldOK){dh=Math.min(dh,0)-.004*(c.mould/20);it.stress=it.stress||'霉菌';}
+    if(C.pool){if(!E.pool){dh=Math.min(dh,0)-.01;it.stress=it.stress||'冇水池';}
+      else if(c.pNH3/poolL>p.nh3Tol){dh=Math.min(dh,0)-.01*(c.pNH3/poolL/p.nh3Tol);it.stress=it.stress||'水池氨高';}}
+    if(it.satiety<=0){dh=Math.min(dh,0)-.006;it.stress=it.stress||'飢餓';}
+    animalHealth(it,dh,st);
+  }
+  for(const it of aliveIn(st,'microbe')){
+    const p=it.params,d=Math.min(c.waste,p.rate*it.health*E.surf);c.waste-=d;c.soilN+=d;useO2(d*p.o2Per);
+    it.stress=c.hum<40?'泥土太乾':'';it.health=clamp(it.health+(c.hum<40?-.005:.005),0,1);if(it.health<=0)die(it,'泥土太乾',st);
+  }
+  let d=c.waste*.005;c.waste-=d;c.soilN+=d;
+  if(st.hour===st.feedHour&&st.feed>0)c.feed+=st.feed;
+  d=c.feed*.04;c.feed-=d;c.waste+=d;
+  if(st.mist>0){for(let i=0;i<st.mist;i++)if(st.hour===8+Math.floor(i*12/st.mist)){c.hum+=12*hf;if(!st.trial)mistFx=1.5;}}
+  if(E.pool)c.hum+=.35*E.poolSize*hf;
+  if(st.heat&&light)c.hum-=.8;
+  const kh=st.sealed?.01:.12*Math.max(.3,J.open);c.hum+=(w.hum-c.hum)*kh;
+  if(!st.sealed&&w.rain){c.hum+=2*w.rain*J.open;if(E.pool)c.pNH3*=1-.03*w.rain*J.open;}
+  c.hum=clamp(c.hum,15,100);
+  const k=st.sealed?.003:.12*J.open;c.O2+=(a*13.3*21-c.O2)*k;c.CO2+=(a*.0018*420-c.CO2)*k;
+  if(c.hum>80)c.mould+=(.012*c.waste+.03*c.mould)*(c.hum-80)/20+.004;else c.mould-=c.mould*.03;
+  c.mould=clamp(c.mould,0,60);
+  if(E.pool)c.pNH3-=c.pNH3*(.01+(st.filter?.1:0));
+  for(const key of ['O2','CO2','waste','soilN','feed','pNH3'])c[key]=Math.max(0,c[key]);
+  st.hist.push({o2:c.O2/(a*13.3),co2:c.CO2/(a*.0018),hum:c.hum,T:c.T,waste:c.waste,mould:c.mould,pnh3:poolL?c.pNH3/poolL:0,light,o2p,o2u});
+  if(st.hist.length>240)st.hist.shift();
+  if(!st.trial){
+    if(c.mould>20&&!st._mould){st._mould=true;logEv('開始生霉','warn');}if(c.mould<10)st._mould=false;
+    if(c.CO2/(a*.0018)>5000&&!st._co2){st._co2=true;logEv('二氧化碳超過 5000 ppm','warn');}if(c.CO2/(a*.0018)<3000)st._co2=false;
+  }
 }
 
-/* ---------- 平衡分析 ---------- */
-function analyze(){
-  const V=S.V,L=Math.min(24,S.light);
-  let o2In=0,o2Out=0,wIn=0,cap=0,upt=0,need=0,o2N=3.4,hourlyResp=0;
-  alive('plant').forEach(it=>{const p=it.params,h=it.health;o2In+=p.o2Prod*h*L*MATS[S.mat].tr*(it.type==='duckweed'?.5:1);const r=p.resp*Math.max(.3,h);o2Out+=r*24;hourlyResp+=r;upt+=p.uptake*h*L;});
-  alive('animal').forEach(it=>{const p=it.params;o2Out+=p.resp*24;hourlyResp+=p.resp;wIn+=p.wasteAmt*24/p.wasteEvery;need+=p.food;});
-  alive('microbe').forEach(it=>{cap+=it.params.cap*24*it.health;o2N=it.params.o2PerN;});
-  const flakeEaters=alive('animal').reduce((s,it)=>s+(CAT[it.type].diet.flake?it.params.food:0),0);
-  wIn+=Math.max(0,S.feed-flakeEaters)*0.1;
-  const nitr=Math.min(wIn,cap);o2Out+=nitr*o2N;hourlyResp+=nitr*o2N/24;
-  const last=S.hist.slice(-24);
-  const algaeDay=last.reduce((s,h)=>s+h.grown,0);
-  const actP=last.reduce((s,h)=>s+h.o2p,0),actU=last.reduce((s,h)=>s+h.o2u,0);
-  const supply=S.feed+algaeDay+S.detritus*0.1;
-  const nightUse=hourlyResp*(24-L),stock=Math.max(0,S.O2-2*V);
-  return {o2In,o2Out,wIn,wOut:cap+upt,cap,upt,need,supply,algaeDay,nightUse,stock,actP,actU,hasHist:last.length>=24,L};
+/* ================= 試算：預測 & 一鍵平衡 ================= */
+function trialState(cfg){
+  const st={mode:S.mode,V:S.V,shape:S.shape,mat:S.mat,sealed:S.sealed,light:S.light,feed:S.feed,feedHour:S.feedHour,pump:S.pump,filter:S.filter,mist:S.mist,heat:S.heat,
+    wx:S.wxMode==='auto'?'cloudy':S.wxMode,wxMode:'fixed',hour:S.hour,day:S.day,trial:true,t:0,deaths:[],
+    c:Object.assign({},S.c),hist:[],
+    items:S.items.filter(i=>i.alive).map(i=>({type:i.type,uid:i.uid,params:Object.assign({},i.params),alive:true,health:i.health,satiety:i.satiety,wt:i.wt,nShort:i.nShort,stress:'',lastProd:0}))};
+  if(cfg){Object.assign(st,cfg.env);cfg.add.forEach(t=>{const it=makeItem(t);S.uid--;st.items.push(it);});
+    resetChem(st);st.items.forEach(i=>{i.health=1;i.satiety=1;i.nShort=0;});}
+  return st;
+}
+function forecast(h){
+  const st=trialState(null);const ks=st.mode==='aqua'?['o2','nh3','algae','T']:['o2','co2','hum','T','mould','pnh3'];
+  const mn={},mx={};ks.forEach(k=>{mn[k]=Infinity;mx[k]=-Infinity;});const stress={};
+  for(let i=0;i<h;i++){step(st);const r=st.hist[st.hist.length-1];ks.forEach(k=>{mn[k]=Math.min(mn[k],r[k]);mx[k]=Math.max(mx[k],r[k]);});
+    st.items.forEach(it=>{if(it.alive&&it.stress&&CAT[it.type].kind==='animal')stress[it.stress]=(stress[it.stress]||0)+1;});}
+  return {mn,mx,deaths:st.deaths,stress};
+}
+function score(cfg){
+  const st=trialState(cfg);let s=0;const H=120;
+  for(let i=0;i<H;i++){step(st);
+    for(const it of st.items){if(!it.alive)continue;const k=CAT[it.type].kind;if(it.stress)s+=k==='animal'?1:k==='plant'?.4:.2;}
+    const c=st.c;
+    if(st.mode==='aqua'){if(c.algae>35)s+=1;if(c.NH3/st.V>.25)s+=1;if(c.O2/st.V<3)s+=.5;}
+    else{if(c.mould>15)s+=1;}
+  }
+  s+=st.deaths.length*200;
+  s+=cfg.add.length*4+(cfg.env.pump?2:0)+(cfg.env.filter?2:0)+(cfg.env.heat?1:0)+cfg.env.feed*.3+Math.abs(cfg.env.light-12)*.3+cfg.env.mist*.4;
+  return s;
+}
+function autoBalance(){
+  const E=envInfo(S),aq=S.mode==='aqua';
+  const env={light:S.light,feed:S.feed,pump:S.pump,filter:S.filter,sealed:S.sealed,mist:S.mist,heat:S.heat};
+  let cfg={env,add:[]};
+  const alivePlants=S.items.filter(i=>i.alive&&CAT[i.type].kind==='plant');
+  const aliveAn=S.items.filter(i=>i.alive&&CAT[i.type].kind==='animal');
+  // 必需品先補
+  if(aq&&!E.sub&&alivePlants.some(i=>CAT[i.type].root==='sand'))cfg.add.push('sand');
+  if(aq&&!E.rocks&&alivePlants.some(i=>CAT[i.type].root==='rock'))cfg.add.push('stone');
+  if(!aq&&!E.subTypes.soil&&(alivePlants.length||aliveAn.length))cfg.add.push('soil');
+  if(!aq&&!E.pool&&aliveAn.some(i=>CAT[i.type].pool))cfg.add.push('pool');
+  const feeders=aliveAn.some(i=>{const d=CAT[i.type].diet;return d.flake||d.feed;});
+  const acts=c=>{const L=[],e=c.env,mk=(ch,add)=>({env:Object.assign({},e,ch),add:add?[...c.add,add]:c.add.slice()});
+    if(e.light<16)L.push(mk({light:e.light+2}));if(e.light>6)L.push(mk({light:e.light-2}));
+    if(feeders){L.push(mk({feed:e.feed+.5}));if(e.feed>0)L.push(mk({feed:Math.max(0,e.feed-.5)}));}
+    L.push(mk({sealed:!e.sealed}));
+    if(aq){L.push(mk({pump:!e.pump}));L.push(mk({filter:!e.filter}));
+      ['hornwort','nitri','duckweed','amano','snail'].forEach(t=>{if(c.add.filter(x=>x===t).length<3)L.push(mk({},t));});}
+    else{if(e.mist<6)L.push(mk({mist:e.mist+1}));if(e.mist>0)L.push(mk({mist:e.mist-1}));L.push(mk({heat:!e.heat}));
+      if(E.pool||c.add.includes('pool'))L.push(mk({filter:!e.filter}));
+      ['pothos','fern','soilmic','springtail','isopod'].forEach(t=>{if(c.add.filter(x=>x===t).length<3)L.push(mk({},t));});}
+    return L;};
+  let best=score(cfg);const start=best;
+  for(let it=0;it<14;it++){let imp=null,bs=best;for(const c2 of acts(cfg)){const s=score(c2);if(s<bs-.5){bs=s;imp=c2;}}if(!imp)break;cfg=imp;best=bs;}
+  // 套用
+  const changes=[];const e=cfg.env;
+  const lab={light:v=>`光照 ${S.light} → ${v} 小時`,feed:v=>`每日餵食 ${S.feed} → ${v} 份`,pump:v=>v?'開氧氣泵':'關氧氣泵',filter:v=>v?'開過濾':'關過濾',sealed:v=>v?'改為密封':'打開瓶口',mist:v=>`每日噴霧 ${S.mist} → ${v} 次`,heat:v=>v?'開加熱燈':'關加熱燈'};
+  for(const k of Object.keys(e))if(e[k]!==S[k]){changes.push(lab[k](e[k]));S[k]=e[k];}
+  const added={};cfg.add.forEach(t=>{added[t]=(added[t]||0)+1;});
+  Object.entries(added).forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);changes.push(`加入 ${CAT[t].name} ×${n}`);});
+  S.items=S.items.filter(i=>{if(!i.alive){disposeObj(i.g);return false;}return true;});
+  resetChem(S);S.items.forEach(i=>{i.health=1;i.satiety=1;i.nShort=0;i.stress='';});
+  buildJar();
+  const fc=forecast(120);
+  S.report={changes,ok:!fc.deaths.length,before:start,after:best,fc};
+  logEv('一鍵平衡：'+(changes.length?changes.join('、'):'冇需要改'),'good');
+  renderAll();save();showTab('bal');
+  toast(changes.length?`一鍵平衡：改咗 ${changes.length} 樣嘢`:'而家已經係最平衡');
 }
 
-/* ---------- 3D ---------- */
+/* ================= 3D ================= */
 const stage=$('#stage'),canvas=$('#c');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(38,1,0.05,100);
-const hemi=new THREE.HemisphereLight(0xdff3ff,0x3b2f22,0.6);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xfff4dc,0.9);sun.position.set(2,6,3);scene.add(sun);
-const fill=new THREE.DirectionalLight(0x8fb7ff,0.25);fill.position.set(-3,2,-2);scene.add(fill);
-const J={R:1,H:2.4,sTop:0.18,wTop:2,box:false,pts:[],open:1,minR:1};
-function rAt(y){if(J.box)return J.R;const t=clamp(y/J.H,0,1),P=J.pts;
-  for(let i=1;i<P.length;i++){if(P[i].y>=t){const a=P[i-1],b=P[i],f=(t-a.y)/((b.y-a.y)||1);return(a.x+(b.x-a.x)*f)*J.R;}}return P[P.length-1].x*J.R;}
+const camera=new THREE.PerspectiveCamera(38,1,.05,200);
+const hemi=new THREE.HemisphereLight(0xdff3ff,0x3b2f22,.6);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xfff4dc,.9);sun.position.set(2,6,3);scene.add(sun);
+const fill=new THREE.DirectionalLight(0x8fb7ff,.25);fill.position.set(-3,2,-2);scene.add(fill);
+const J={R:1,H:2.4,sTop:.02,wTop:2,box:false,pts:[],open:1,minR:1,k:1,subs:[]};
+function rAt(y){if(J.box)return J.R;const t=clamp(y/J.H,0,1),Pt=J.pts;
+  for(let i=1;i<Pt.length;i++){if(Pt[i].y>=t){const a=Pt[i-1],b=Pt[i],f=(t-a.y)/((b.y-a.y)||1);return(a.x+(b.x-a.x)*f)*J.R;}}return Pt[Pt.length-1].x*J.R;}
 function randIn(y,f){if(J.box)return[rnd(-1,1)*J.R*f,rnd(-1,1)*J.R*f];const a=rnd(0,6.28),r=Math.sqrt(Math.random())*rAt(y)*f;return[Math.cos(a)*r,Math.sin(a)*r];}
 function edgeFrac(p){return J.box?Math.max(Math.abs(p.x),Math.abs(p.z))/J.R:Math.hypot(p.x,p.z)/Math.max(.01,rAt(p.y));}
 function clampIn(p,f){if(J.box){const m=J.R*f;p.x=clamp(p.x,-m,m);p.z=clamp(p.z,-m,m);return;}const m=rAt(p.y)*f,r=Math.hypot(p.x,p.z);if(r>m){p.x*=m/r;p.z*=m/r;}}
 function shapeSamples(sh){const pts=sh.prof.map(([r,y])=>new THREE.Vector2(r,y));return pts.length>2?new THREE.SplineCurve(pts).getPoints(60):pts;}
+function floorMap(x,z){const f=(J.box?J.R:rAt(J.sTop))*.72;return[x*f,z*f];}
 const jarG=new THREE.Group();scene.add(jarG);
 const world=new THREE.Group();scene.add(world);
-let waterMat,surfMat,lid,lampMat;
+let waterMat=null,surfMat=null,lid,lampMat,glassMat,pumpG,filterG;
 const mat=(c,o)=>new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}));
+function disposeObj(o){if(!o)return;o.parent&&o.parent.remove(o);o.traverse(c=>{c.geometry&&c.geometry.dispose();if(c.material)(Array.isArray(c.material)?c.material:[c.material]).forEach(m=>m.dispose());});}
+function latheBand(y0,y1,scale,phi0,phiL){
+  const out=[new THREE.Vector2(rAt(y0)*scale,y0)];J.pts.forEach(p=>{const y=p.y*J.H;if(y>y0&&y<y1)out.push(new THREE.Vector2(p.x*scale*J.R,y));});out.push(new THREE.Vector2(rAt(y1)*scale,y1));
+  return new THREE.LatheGeometry(out,phiL?16:72,phi0||0,phiL||Math.PI*2);
+}
 
 function buildJar(){
-  while(jarG.children.length){disposeObj(jarG.children[0]);}
+  while(jarG.children.length)disposeObj(jarG.children[0]);
   const sh=SHAPES[S.shape],M=MATS[S.mat],k=Math.cbrt(S.V/4);
-  J.box=!!sh.box;J.R=sh.R*k;J.H=sh.H*k;J.sTop=0.16*k;J.wTop=J.H*sh.w;J.pts=shapeSamples(sh);
-  const {R,H}=J,seg=72;
+  J.k=k;J.box=!!sh.box;J.R=sh.R*k;J.H=sh.H*k;J.pts=shapeSamples(sh);
+  let y=.008*k;J.subs={};
+  for(const it of S.items)if(it.alive&&CAT[it.type].kind==='sub'){const d=it.params.depth*.025*k;J.subs[it.uid]=[y,y+d];y+=d;}
+  J.sTop=Math.min(y,J.H*.35);
+  J.wTop=S.mode==='aqua'?J.H*sh.w:J.H*.9;
+  const {R,H}=J;
   const maxR=J.box?R:Math.max(...J.pts.map(p=>p.x))*R;
   J.open=J.box?1:Math.pow(rAt(H)/maxR,2);
-  J.minR=J.box?R:Math.min(...[0,.2,.4,.6,.8,1].map(f=>rAt(J.sTop+f*(J.wTop-J.sTop))));
-  const glass=new THREE.MeshPhongMaterial({color:M.c,transparent:true,opacity:M.op,shininess:M.sh,specular:M.sh>20?0xffffff:0x222222,side:THREE.DoubleSide,depthWrite:false});
+  J.minR=J.box?R:Math.min(...[0,.2,.4,.6,.8,1].map(f=>rAt(J.sTop+f*(Math.min(J.wTop,H*.85)-J.sTop))));
+  glassMat=new THREE.MeshPhongMaterial({color:M.c,transparent:true,opacity:M.op,shininess:M.sh,specular:M.sh>20?0xffffff:0x222222,side:THREE.DoubleSide,depthWrite:false});
+  glassMat.userData.base=M.op;
   const hlMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:M.sh>20?.09:.02,side:THREE.DoubleSide,depthWrite:false});
-  const lathe=(pts,s0,s1,scale,phi0,phiL)=>{const out=[];const at=y=>rAt(y)/R;
-    out.push(new THREE.Vector2(at(s0)*scale*R,s0));pts.forEach(p=>{const y=p.y*H;if(y>s0&&y<s1)out.push(new THREE.Vector2(p.x*scale*R,y));});out.push(new THREE.Vector2(at(s1)*scale*R,s1));
-    return new THREE.LatheGeometry(out,phiL?16:seg,phi0||0,phiL||Math.PI*2);};
   const hidden=new THREE.MeshBasicMaterial({visible:false});
   if(J.box){
     const g=new THREE.BoxGeometry(2*R,H,2*R).translate(0,H/2,0);
-    jarG.add(new THREE.Mesh(g,[glass,glass,hidden,glass,glass,glass]));
-    const edges=new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0x2c3a3c,transparent:true,opacity:.55}));jarG.add(edges);
+    jarG.add(new THREE.Mesh(g,[glassMat,glassMat,hidden,glassMat,glassMat,glassMat]));
+    jarG.add(new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0x2c3a3c,transparent:true,opacity:.55})));
     const hl=new THREE.Mesh(new THREE.PlaneGeometry(R*.12,H*.85),hlMat);hl.position.set(R*.55,H*.5,R+.004);jarG.add(hl);
   } else {
-    jarG.add(new THREE.Mesh(lathe(J.pts,0,H,1),glass));
-    jarG.add(new THREE.Mesh(lathe(J.pts,H*.04,H*.96,1.004,.4,.24),hlMat));
-    const bot=new THREE.Mesh(new THREE.CircleGeometry(rAt(0),seg),glass);bot.rotation.x=-Math.PI/2;jarG.add(bot);
-    const rim=new THREE.Mesh(new THREE.TorusGeometry(rAt(H),0.025*k,8,seg),glass.clone());rim.material.opacity=Math.min(.6,M.op*2.5);rim.rotation.x=Math.PI/2;rim.position.y=H;jarG.add(rim);
+    jarG.add(new THREE.Mesh(latheBand(0,H,1),glassMat));
+    jarG.add(new THREE.Mesh(latheBand(H*.04,H*.96,1.004,.4,.24),hlMat));
+    const bot=new THREE.Mesh(new THREE.CircleGeometry(rAt(0),72),glassMat);bot.rotation.x=-Math.PI/2;bot.position.y=.002;jarG.add(bot);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(rAt(H),.025*k,8,72),glassMat.clone());rim.material.opacity=Math.min(.6,M.op*2.5);rim.rotation.x=Math.PI/2;rim.position.y=H;jarG.add(rim);
   }
-  // 沙
-  const sandM=mat(0xcab68c);
-  if(J.box){const s=new THREE.Mesh(new THREE.BoxGeometry(2*R*.985,J.sTop,2*R*.985),sandM);s.position.y=J.sTop/2;jarG.add(s);}
-  else{const pts=[new THREE.Vector2(0,0),new THREE.Vector2(rAt(0)*.985,0),new THREE.Vector2(rAt(J.sTop)*.985,J.sTop),new THREE.Vector2(0,J.sTop)];
-    jarG.add(new THREE.Mesh(new THREE.LatheGeometry(pts,48),sandM));}
-  const pm=[mat(0x6b665e),mat(0x8f8578),mat(0x4f4a44)];
-  for(let i=0;i<14;i++){const s=rnd(.04,.09)*k,[x,z]=randIn(J.sTop,.82);
-    const p=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),pm[i%3]);p.scale.y=.55;p.position.set(x,J.sTop+s*.3,z);p.rotation.y=i;jarG.add(p);}
-  // 水
-  waterMat=new THREE.MeshPhongMaterial({color:0x9fd6e0,transparent:true,opacity:.18,shininess:60,depthWrite:false,side:THREE.DoubleSide});
-  surfMat=new THREE.MeshPhongMaterial({color:0xbfe6ee,transparent:true,opacity:.32,shininess:140,specular:0xffffff,side:THREE.DoubleSide,depthWrite:false});
-  if(J.box){
-    const w=new THREE.Mesh(new THREE.BoxGeometry(2*R*.985,J.wTop-J.sTop,2*R*.985).translate(0,(J.wTop+J.sTop)/2,0),[waterMat,waterMat,hidden,hidden,waterMat,waterMat]);jarG.add(w);
-    const s=new THREE.Mesh(new THREE.PlaneGeometry(2*R*.985,2*R*.985),surfMat);s.rotation.x=-Math.PI/2;s.position.y=J.wTop;jarG.add(s);
-  } else {
-    jarG.add(new THREE.Mesh(lathe(J.pts,J.sTop,J.wTop,.985),waterMat));
-    const s=new THREE.Mesh(new THREE.CircleGeometry(rAt(J.wTop)*.985,seg),surfMat);s.rotation.x=-Math.PI/2;s.position.y=J.wTop;jarG.add(s);
+  waterMat=surfMat=null;
+  if(S.mode==='aqua'){
+    waterMat=new THREE.MeshPhongMaterial({color:0x9fd6e0,transparent:true,opacity:.18,shininess:60,depthWrite:false,side:THREE.DoubleSide});
+    surfMat=new THREE.MeshPhongMaterial({color:0xbfe6ee,transparent:true,opacity:.32,shininess:140,specular:0xffffff,side:THREE.DoubleSide,depthWrite:false});
+    if(J.box){
+      jarG.add(new THREE.Mesh(new THREE.BoxGeometry(2*R*.985,J.wTop-J.sTop,2*R*.985).translate(0,(J.wTop+J.sTop)/2,0),[waterMat,waterMat,hidden,hidden,waterMat,waterMat]));
+      const s=new THREE.Mesh(new THREE.PlaneGeometry(2*R*.985,2*R*.985),surfMat);s.rotation.x=-Math.PI/2;s.position.y=J.wTop;jarG.add(s);
+    } else {
+      jarG.add(new THREE.Mesh(latheBand(J.sTop,J.wTop,.985),waterMat));
+      const s=new THREE.Mesh(new THREE.CircleGeometry(rAt(J.wTop)*.985,72),surfMat);s.rotation.x=-Math.PI/2;s.position.y=J.wTop;jarG.add(s);
+    }
   }
-  // 蓋
   lid=new THREE.Group();
-  if(J.box){const l=new THREE.Mesh(new THREE.BoxGeometry(2*R+.04,.03,2*R+.04),glass.clone());l.material.opacity=Math.min(.6,M.op*2);l.position.y=H+.02;lid.add(l);}
+  if(J.box){const l=new THREE.Mesh(new THREE.BoxGeometry(2*R+.04,.03,2*R+.04),glassMat.clone());l.material.opacity=Math.min(.6,M.op*2);l.position.y=H+.02;lid.add(l);}
   else{const rt=rAt(H);const cork=new THREE.Mesh(new THREE.CylinderGeometry(rt*.97,rt*.9,Math.max(.12,rt*.25),40),mat(0xa77a4c));cork.position.y=H+.03;lid.add(cork);}
-  jarG.add(lid);lid.visible=S.sealed;
+  jarG.add(lid);
   lampMat=new THREE.MeshBasicMaterial({color:0xfff3c4});
-  const ly=H+0.9*k;
-  const lamp=new THREE.Mesh(new THREE.CylinderGeometry(maxR*.5,maxR*.5,0.04,32),lampMat);lamp.position.y=ly;jarG.add(lamp);
-  const cord=new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,3,4),mat(0x333333));cord.position.y=ly+1.5;jarG.add(cord);
-  // 重建生物（形狀變咗要重新擺）
-  S.items.forEach(it=>{if(it.g)disposeObj(it.g);if(!it.alive){it.gone=true;it.g=null;return;}buildItem(it);});
+  const ly=H+.9*k;
+  const lamp=new THREE.Mesh(new THREE.CylinderGeometry(maxR*.5,maxR*.5,.04,32),lampMat);lamp.position.y=ly;jarG.add(lamp);
+  const cord=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,3,4),mat(0x333333));cord.position.y=ly+1.5;jarG.add(cord);
+  // 氧氣泵（氣石）同過濾器
+  pumpG=new THREE.Group();
+  const [px,pz]=J.box?[-R*.7,R*.55]:[Math.cos(2.4)*rAt(J.sTop)*.75,Math.sin(2.4)*rAt(J.sTop)*.75];
+  const stoneM=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.05,12),mat(0xd9d4cc));stoneM.position.set(px,J.sTop+.025,pz);pumpG.add(stoneM);
+  const tube=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,H-J.sTop,4),mat(0x9fc6b8,{transparent:true,opacity:.6}));tube.position.set(px*1.12,(H+J.sTop)/2,pz*1.12);pumpG.add(tube);
+  pumpG.userData.src=new THREE.Vector3(px,J.sTop+.05,pz);jarG.add(pumpG);
+  filterG=new THREE.Group();
+  const [fx2,fz]=J.box?[R*.7,-R*.65]:[Math.cos(-.9)*rAt(J.sTop)*.7,Math.sin(-.9)*rAt(J.sTop)*.7];
+  const sponge=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,.22,14),mat(0x1d1f22));sponge.position.set(fx2,J.sTop+.11,fz);filterG.add(sponge);
+  const ft=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,.45,8),mat(0x6d7a80));ft.position.set(fx2,J.sTop+.4,fz);filterG.add(ft);
+  filterG.userData.src=new THREE.Vector3(fx2,J.sTop+.62,fz);jarG.add(filterG);
+  // 重建生物
+  S.items.forEach(it=>{if(it.g)disposeObj(it.g);it.g=null;if(!it.alive){it.gone=true;return;}buildItem(it);});
   S.items=S.items.filter(i=>!i.gone);
   if(S.sel&&!S.items.includes(S.sel))S.sel=null;
   dirtyList=true;
-  cam.target.set(0,H*0.45,0);cam.dist=Math.max(H,maxR*2)*2.5;
-  buildMicrobeLayer();
+  cam.target.set(0,H*.45,0);cam.dist=Math.max(H,maxR*2)*2.5;
+  buildMicrobeLayer();layoutWeather(maxR);
 }
-function disposeObj(o){if(!o)return;o.parent&&o.parent.remove(o);o.traverse(c=>{c.geometry&&c.geometry.dispose();if(c.material)(Array.isArray(c.material)?c.material:[c.material]).forEach(m=>m.dispose());});}
 
-/* 生物模型 */
-function plantHornwort(){
-  const g=new THREE.Group(),h=clamp(rnd(.65,1)*(J.wTop-J.sTop)*.8,.4,3);
+/* ---- 模型 ---- */
+function plantStem(color,leafGeo,leafN,spacing,tilt){
+  const g=new THREE.Group(),h=clamp(rnd(.65,1)*(Math.min(J.wTop,J.H*.85)-J.sTop)*.8,.3,3);
   const bb=Math.min(.2,J.minR*.15),bx=rnd(-bb,bb),bz=rnd(-bb,bb),pts=[];
   for(let i=0;i<=4;i++){const t=i/4;pts.push(new THREE.Vector3(bx*t*t,t*h,bz*t*t));}
-  const curve=new THREE.CatmullRomCurve3(pts),m=mat(CAT.hornwort.color);
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(curve,16,0.01,5,false),m));
-  const wh=Math.floor(h/0.055),nd=7,ng=new THREE.ConeGeometry(0.006,0.12,3);ng.translate(0,0.06,0);
-  const im=new THREE.InstancedMesh(ng,m,wh*nd),d=new THREE.Object3D();let k=0;
-  for(let w=0;w<wh;w++){const t=(w+1)/(wh+1),p=curve.getPoint(t),s=1.15-0.6*t;
-    for(let j=0;j<nd;j++){d.position.copy(p);d.rotation.set(0,j/nd*6.283+w*.7,0);d.rotateZ(-1.05);d.scale.setScalar(s);d.updateMatrix();im.setMatrixAt(k++,d.matrix);}}
+  const curve=new THREE.CatmullRomCurve3(pts),m=mat(color,{side:THREE.DoubleSide});
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(curve,16,.01,5,false),m));
+  const wh=Math.floor(h/spacing),im=new THREE.InstancedMesh(leafGeo,m,wh*leafN),d=new THREE.Object3D();let k=0;
+  for(let w=0;w<wh;w++){const t=(w+1)/(wh+1),p=curve.getPoint(t),s=1.15-.6*t;
+    for(let j=0;j<leafN;j++){d.position.copy(p);d.rotation.set(0,j/leafN*6.283+w*.7,0);d.rotateZ(-tilt);d.scale.setScalar(s);d.updateMatrix();im.setMatrixAt(k++,d.matrix);}}
   g.add(im);g.userData.top=h;return g;
 }
-function plantVallis(){
-  const g=new THREE.Group(),m=mat(CAT.vallis.color,{side:THREE.DoubleSide});g.userData.blades=[];let top=0;
-  for(let i=0;i<7;i++){const h=clamp(rnd(.6,.95)*(J.wTop-J.sTop)*.85,.4,3);top=Math.max(top,h);
-    const geo=new THREE.PlaneGeometry(0.03,h,1,12);geo.translate(0,h/2,0);const pos=geo.attributes.position,bend=rnd(.08,.25)*(Math.random()<.5?-1:1);
-    for(let v=0;v<pos.count;v++){const y=pos.getY(v)/h;pos.setX(v,pos.getX(v)*(1-y*.4)+bend*y*y);}geo.computeVertexNormals();
-    const b=new THREE.Mesh(geo,m);b.rotation.y=rnd(0,6.28);b.position.set(rnd(-.05,.05),0,rnd(-.05,.05));b.userData.ph=rnd(0,6);g.add(b);g.userData.blades.push(b);}
+function blades(color,n,hMul,w,bendMax){
+  const g=new THREE.Group(),m=mat(color,{side:THREE.DoubleSide});g.userData.blades=[];let top=0;
+  for(let i=0;i<n;i++){const h=clamp(rnd(.6,.95)*hMul,.08,3);top=Math.max(top,h);
+    const geo=new THREE.PlaneGeometry(w,h,1,10);geo.translate(0,h/2,0);const pos=geo.attributes.position,bend=rnd(bendMax*.3,bendMax)*(Math.random()<.5?-1:1);
+    for(let v=0;v<pos.count;v++){const y=pos.getY(v)/h;pos.setX(v,pos.getX(v)*(1-y*.5)+bend*y*y);}geo.computeVertexNormals();
+    const b=new THREE.Mesh(geo,m);b.rotation.y=rnd(0,6.28);b.position.set(rnd(-.04,.04),0,rnd(-.04,.04));b.userData.ph=rnd(0,6);g.add(b);g.userData.blades.push(b);}
   g.userData.top=top;return g;
 }
-function plantMoss(){
-  const g=new THREE.Group();
-  const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(0.12,0),mat(0x6d6a63));rock.scale.set(1.3,.6,1);rock.position.y=.04;g.add(rock);
-  const ms=[mat(0x3d6b25),mat(0x4f7d2e),mat(0x2f5a1d)];
-  for(let i=0;i<26;i++){const a=rnd(0,6.28),r=rnd(0,.16);const s=new THREE.Mesh(new THREE.IcosahedronGeometry(rnd(.03,.055),0),ms[i%3]);
-    s.position.set(Math.cos(a)*r,.07+rnd(0,.06)*(1-r*4),Math.sin(a)*r);g.add(s);}
-  g.userData.top=.15;return g;
+function fronds(color,n,len,w,arch){
+  const g=new THREE.Group(),m=mat(color,{side:THREE.DoubleSide});g.userData.blades=[];
+  for(let i=0;i<n;i++){const L=len*rnd(.75,1.1),geo=new THREE.PlaneGeometry(w,L,1,10);geo.translate(0,L/2,0);const pos=geo.attributes.position;
+    for(let v=0;v<pos.count;v++){const t=pos.getY(v)/L;pos.setX(v,pos.getX(v)*(1-t*.85));pos.setZ(v,arch*t*t*L);pos.setY(v,pos.getY(v)*(1-.35*t*t));}
+    geo.computeVertexNormals();const b=new THREE.Mesh(geo,m);b.rotation.y=i/n*6.28+rnd(-.2,.2);b.rotateX(rnd(.15,.45));b.userData.ph=rnd(0,6);g.add(b);g.userData.blades.push(b);}
+  g.userData.top=len;return g;
 }
-function plantDuck(){
-  const g=new THREE.Group(),m=mat(CAT.duckweed.color,{side:THREE.DoubleSide});
-  for(let i=0;i<14;i++){const l=new THREE.Mesh(new THREE.CircleGeometry(rnd(.025,.04),10),m);l.rotation.x=-Math.PI/2;
-    const a=rnd(0,6.28),r=rnd(0,.2);l.position.set(Math.cos(a)*r,0.004,Math.sin(a)*r);g.add(l);
-    const root=new THREE.Mesh(new THREE.CylinderGeometry(.002,.002,.08,3),mat(0xe8e2d0));root.position.set(l.position.x,-.04,l.position.z);g.add(root);}
-  g.userData.top=0;return g;
+function clump(colors,n,rad,sz,h){
+  const g=new THREE.Group(),ms=colors.map(c=>mat(c));
+  for(let i=0;i<n;i++){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*rad,s=new THREE.Mesh(new THREE.IcosahedronGeometry(rnd(sz*.6,sz),0),ms[i%ms.length]);
+    s.position.set(Math.cos(a)*r,rnd(0,h)*(1-r/rad*.6),Math.sin(a)*r);s.scale.y=.7;g.add(s);}
+  g.userData.top=h;return g;
 }
-function fishModel(body,fin,r,slim){
+function fishModel(body,fin,r,slim,bigFin){
   const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);
   const bm=mat(body,{transparent:true}),fm=mat(fin,{transparent:true,opacity:.92,side:THREE.DoubleSide});
   const b=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),bm);b.scale.set(1.9,slim?.6:.75,.5);inner.add(b);
-  const tg=new THREE.ConeGeometry(r*(slim?.7:1.05),r*1.7,12);tg.rotateZ(-Math.PI/2);
-  const tail=new THREE.Mesh(tg,fm);tail.scale.z=.18;tail.position.x=-r*2.6;inner.add(tail);
-  const dg=new THREE.ConeGeometry(r*.4,r*.8,6);const dor=new THREE.Mesh(dg,fm);dor.scale.z=.2;dor.position.set(-r*.3,r*.75,0);dor.rotation.z=.5;inner.add(dor);
+  const tg=new THREE.ConeGeometry(r*(slim?.7:1.05)*(bigFin?1.8:1),r*1.7*(bigFin?1.5:1),12);tg.rotateZ(-Math.PI/2);
+  const tail=new THREE.Mesh(tg,fm);tail.scale.z=.18;tail.position.x=-r*(bigFin?3:2.6);inner.add(tail);
+  const dor=new THREE.Mesh(new THREE.ConeGeometry(r*.4*(bigFin?2:1),r*.8*(bigFin?1.6:1),6),fm);dor.scale.z=.2;dor.position.set(-r*.3,r*.75,0);dor.rotation.z=.5;inner.add(dor);
   const em=mat(0x111111);[1,-1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(r*.16,6,6),em);e.position.set(r*1.3,r*.18,s*r*.36);inner.add(e);});
-  g.userData={inner,tail,mats:[bm,fm]};return g;
+  g.userData={inner,tail};return g;
 }
-function shrimpModel(){
+function shrimpModel(color,op){
   const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);
-  const bm=mat(CAT.shrimp.color,{transparent:true,opacity:.92});
+  const bm=mat(color,{transparent:true,opacity:op});
   const b=new THREE.Mesh(new THREE.SphereGeometry(.022,10,8),bm);b.scale.set(2.3,.85,.8);inner.add(b);
   const t=new THREE.Mesh(new THREE.ConeGeometry(.016,.04,6).rotateZ(-Math.PI/2),bm);t.position.x=-.065;t.scale.z=.4;inner.add(t);
   const am=mat(0xc8735f);[1,-1].forEach(s=>{const a=new THREE.Mesh(new THREE.CylinderGeometry(.0015,.0015,.09,3),am);a.rotation.z=-1.2;a.rotation.y=s*.4;a.position.set(.07,.02,s*.012);inner.add(a);});
-  g.userData={inner,mats:[bm]};return g;
+  g.userData={inner};return g;
 }
-function snailModel(){
+function snailModel(shell,stripe){
   const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);
-  const sm=mat(CAT.snail.color,{transparent:true}),fm=mat(0x8a8072,{transparent:true});
+  const sm=mat(shell),fm=mat(0x8a8072);
   const foot=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),fm);foot.scale.set(2,.35,.9);foot.position.y=.008;inner.add(foot);
-  const sh=new THREE.Mesh(new THREE.SphereGeometry(.042,12,10),sm);sh.position.set(-.012,.045,0);sh.scale.set(1,1.05,.9);inner.add(sh);
-  const st=new THREE.Mesh(new THREE.TorusGeometry(.028,.007,6,16),mat(0x3e2a17));st.position.set(-.012,.05,0);inner.add(st);
+  const sh=new THREE.Mesh(new THREE.SphereGeometry(.042,12,10),sm);sh.position.set(-.012,.045,0);inner.add(sh);
+  const st=new THREE.Mesh(new THREE.TorusGeometry(.028,.007,6,16),mat(stripe));st.position.set(-.012,.05,0);inner.add(st);
   const tip=new THREE.Mesh(new THREE.ConeGeometry(.02,.05,10),sm);tip.position.set(-.03,.085,0);tip.rotation.z=.6;inner.add(tip);
-  [1,-1].forEach(s=>{const t=new THREE.Mesh(new THREE.CylinderGeometry(.002,.002,.03,3),fm);t.position.set(.06,.02,s*.01);t.rotation.z=-.8;inner.add(t);});
-  g.userData={inner,mats:[sm,fm]};return g;
+  g.userData={inner};return g;
+}
+function turtleModel(){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);
+  const shell=new THREE.Mesh(new THREE.SphereGeometry(.07,16,8,0,Math.PI*2,0,Math.PI/2),mat(0x4b4a2c));shell.scale.set(1.3,.65,1);shell.position.y=.02;inner.add(shell);
+  const plates=new THREE.Mesh(new THREE.TorusGeometry(.05,.006,6,20),mat(0x2f2e1a));plates.rotation.x=Math.PI/2;plates.position.y=.045;plates.scale.set(1.3,1,1);inner.add(plates);
+  const pl=new THREE.Mesh(new THREE.CylinderGeometry(.088,.088,.02,16),mat(0x6b5a3a));pl.scale.set(1.05,1,.8);pl.position.y=.018;inner.add(pl);
+  const skin=mat(0x5d6b4a);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.025,10,8),skin);head.position.set(.12,.03,0);head.scale.set(1.3,1,1);inner.add(head);
+  [[.06,.06],[.06,-.06],[-.06,.06],[-.06,-.06]].forEach(([x,z])=>{const l=new THREE.Mesh(new THREE.SphereGeometry(.018,8,6),skin);l.position.set(x,.012,z*1.1);l.scale.set(1.4,.6,1);inner.add(l);});
+  const tl=new THREE.Mesh(new THREE.ConeGeometry(.01,.04,6).rotateZ(Math.PI/2),skin);tl.position.set(-.11,.015,0);inner.add(tl);
+  g.userData={inner};return g;
+}
+function geckoModel(){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const m=mat(0xc9893f),d=mat(0x8e5a22);
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.03,12,8),m);body.scale.set(2.3,.65,.9);body.position.y=.018;inner.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.026,12,8),m);head.position.set(.075,.022,0);head.scale.set(1.3,.8,1);inner.add(head);
+  const tail=new THREE.Mesh(new THREE.ConeGeometry(.016,.14,8).rotateZ(Math.PI/2),d);tail.position.set(-.13,.016,0);inner.add(tail);
+  [[.035,.04],[.035,-.04],[-.035,.04],[-.035,-.04]].forEach(([x,z])=>{const l=new THREE.Mesh(new THREE.CylinderGeometry(.005,.005,.04,4),m);l.position.set(x,.01,z);l.rotation.x=z>0?1.2:-1.2;inner.add(l);});
+  const em=mat(0x111111);[1,-1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.007,6,6),em);e.position.set(.09,.03,s*.017);inner.add(e);});
+  g.userData={inner};return g;
+}
+function frogModel(){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const m=mat(0x2a6fd6),k=mat(0x0d1530);
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.03,12,10),m);body.scale.set(1.25,.85,1);body.position.y=.025;inner.add(body);
+  for(let i=0;i<6;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.006,6,4),k);const a=rnd(0,6.28);s.position.set(Math.cos(a)*.022,.045,Math.sin(a)*.02);inner.add(s);}
+  [[.02,.028],[.02,-.028],[-.025,.03],[-.025,-.03]].forEach(([x,z])=>{const l=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),m);l.position.set(x,.008,z);l.scale.set(1.5,.5,1);inner.add(l);});
+  [1,-1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.008,6,6),k);e.position.set(.03,.045,s*.015);inner.add(e);});
+  g.userData={inner};return g;
+}
+function swarmPoints(n,color,size,rad){
+  const pos=new Float32Array(n*3),off=[];for(let i=0;i<n;i++){const v=new THREE.Vector3(rnd(-1,1),rnd(-1,1),rnd(-1,1)).multiplyScalar(rad);off.push(v);pos.set([v.x,v.y,v.z],i*3);}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const p=new THREE.Points(geo,new THREE.PointsMaterial({color,size,transparent:true,opacity:.9,depthWrite:false}));p.userData.off=off;p.userData.rad=rad;return p;
+}
+function decorModel(type){
+  const g=new THREE.Group();
+  if(type==='stone'){const ms=[mat(0x6b665e),mat(0x8f8578),mat(0x56514a)];[[0,0,.08],[.1,.03,.055],[-.07,.05,.05],[.02,-.09,.045]].forEach(([x,z,s],i)=>{const r=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),ms[i%3]);r.position.set(x,s*.45,z);r.scale.y=.7;r.rotation.y=i;g.add(r);});}
+  else if(type==='rockmtn'){const ms=[mat(0x7d786f),mat(0x8d877c),mat(0x6a655d)],moss=mat(0x4f7d2e);
+    [[0,0,0,.2],[.08,.16,.03,.14],[-.03,.3,-.02,.1],[.02,.42,.01,.065],[-.14,.05,.06,.1],[.15,.04,-.08,.09]].forEach(([x,y,z,s],i)=>{const r=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),ms[i%3]);r.position.set(x,y+s*.5,z);r.scale.set(1,.85,1);r.rotation.set(i,i*2,0);g.add(r);});
+    for(let i=0;i<10;i++){const s=new THREE.Mesh(new THREE.IcosahedronGeometry(.025,0),moss);s.position.set(rnd(-.12,.12),rnd(.1,.4),rnd(-.08,.08));g.add(s);}}
+  else if(type==='bridge'){const wood=mat(0x8a5a35),red=mat(0x9b3b2a);const R=.22,N=11;
+    for(let i=0;i<N;i++){const a=Math.PI*(i+.5)/N,pl=new THREE.Mesh(new THREE.BoxGeometry(.045,.012,.16),wood);pl.position.set(-Math.cos(a)*R,Math.sin(a)*R*.55,0);pl.rotation.z=Math.atan2(Math.cos(a)*.55,Math.sin(a))*-1;g.add(pl);}
+    [-.085,.085].forEach(z=>{const pts=[];for(let i=0;i<=16;i++){const a=Math.PI*i/16;pts.push(new THREE.Vector3(-Math.cos(a)*R,Math.sin(a)*R*.55+.06,z));}
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),24,.007,5,false),red));
+      for(let i=1;i<16;i+=3){const a=Math.PI*i/16,p=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.06,4),red);p.position.set(-Math.cos(a)*R,Math.sin(a)*R*.55+.03,z);g.add(p);}});}
+  else if(type==='driftwood'){const m=mat(0x5b3a22),m2=mat(0x6e4a2e);
+    const main=new THREE.CatmullRomCurve3([new THREE.Vector3(-.25,.02,0),new THREE.Vector3(-.08,.07,.03),new THREE.Vector3(.08,.16,-.02),new THREE.Vector3(.2,.32,.03)]);
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(main,20,.03,7,false),m));
+    [[.0,.11,0,.18,.3,.12],[.1,.2,0,.0,.36,-.1],[-.15,.05,0,-.28,.15,.1]].forEach(([a,b,c,d,e,f],i)=>{const cv=new THREE.CatmullRomCurve3([new THREE.Vector3(a,b,c),new THREE.Vector3((a+d)/2,(b+e)/2+.03,(c+f)/2),new THREE.Vector3(d,e,f)]);g.add(new THREE.Mesh(new THREE.TubeGeometry(cv,10,.014-i*.002,5,false),m2));});}
+  return g;
+}
+function poolModel(size){
+  const g=new THREE.Group(),r=Math.max(.12,(J.box?J.R:rAt(J.sTop))*.26*size);
+  const w=new THREE.Mesh(new THREE.CircleGeometry(r,32),new THREE.MeshPhongMaterial({color:0x4f9cb8,transparent:true,opacity:.75,shininess:120,specular:0xffffff}));w.rotation.x=-Math.PI/2;w.position.y=.006;g.add(w);
+  const ms=[mat(0x7d786f),mat(0x8f8578)];
+  for(let i=0;i<18;i++){const a=i/18*6.28,s=new THREE.Mesh(new THREE.DodecahedronGeometry(rnd(.025,.04),0),ms[i%2]);s.position.set(Math.cos(a)*r,.012,Math.sin(a)*r);s.scale.y=.6;g.add(s);}
+  g.userData.r=r;g.userData.water=w;return g;
+}
+function subModel(it){
+  const [y0,y1]=J.subs[it.uid]||[0,0],c=new THREE.Color(CAT[it.type].color),g=new THREE.Group(),m=mat(c);
+  if(J.box){const b=new THREE.Mesh(new THREE.BoxGeometry(2*J.R*.985,y1-y0,2*J.R*.985),m);b.position.y=(y0+y1)/2;g.add(b);}
+  else{const pts=[new THREE.Vector2(0,y0),new THREE.Vector2(rAt(y0)*.985,y0)];J.pts.forEach(p=>{const y=p.y*J.H;if(y>y0&&y<y1)pts.push(new THREE.Vector2(p.x*J.R*.985,y));});
+    pts.push(new THREE.Vector2(rAt(y1)*.985,y1),new THREE.Vector2(0,y1));g.add(new THREE.Mesh(new THREE.LatheGeometry(pts,56),m));}
+  if(Math.abs(y1-J.sTop)<1e-6){
+    const n=it.type==='gravel'?40:it.type==='soil'?16:10;
+    const ms=it.type==='soil'?[mat(0x3e2b1f),mat(0x6a4a2c)]:it.type==='gravel'?[mat(0x6b665e),mat(0xa39b8e),mat(0x56514a)]:[mat(0xb9a379),mat(0x8f8578)];
+    for(let i=0;i<n;i++){const [x,z]=randIn(y1,.88),s=(it.type==='gravel'?rnd(.02,.035):rnd(.012,.03))*J.k,p=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),ms[i%ms.length]);p.scale.y=.5;p.position.set(x,y1+s*.2,z);g.add(p);}
+  }
+  return g;
 }
 let microbeLayer=null;
 function buildMicrobeLayer(){
@@ -536,47 +855,107 @@ function buildMicrobeLayer(){
   const n=160,pos=new Float32Array(n*3);
   for(let i=0;i<n;i++){const [x,z]=randIn(J.sTop,.92);pos[i*3]=x;pos[i*3+1]=J.sTop+rnd(0,.05);pos[i*3+2]=z;}
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  microbeLayer=new THREE.Points(geo,new THREE.PointsMaterial({color:0xf2e2a0,size:.022,transparent:true,opacity:0,depthWrite:false}));
+  microbeLayer=new THREE.Points(geo,new THREE.PointsMaterial({color:S.mode==='aqua'?0xf2e2a0:0xd9b98a,size:.022,transparent:true,opacity:0,depthWrite:false}));
   world.add(microbeLayer);
 }
 function buildItem(it){
-  const t=it.type;let g;
-  if(t==='hornwort')g=plantHornwort();else if(t==='vallis')g=plantVallis();else if(t==='moss')g=plantMoss();else if(t==='duckweed')g=plantDuck();
+  const t=it.type,C=CAT[t],k=C.kind;let g;
+  if(k==='sub')g=subModel(it);
+  else if(k==='decor')g=decorModel(t);
+  else if(k==='pool')g=poolModel(it.params.size);
+  else if(t==='hornwort')g=plantStem(C.color,new THREE.ConeGeometry(.006,.12,3).translate(0,.06,0),7,.055,1.05);
+  else if(t==='elodea')g=plantStem(C.color,new THREE.PlaneGeometry(.018,.07).translate(0,.035,0),4,.045,.9);
+  else if(t==='vallis')g=blades(C.color,7,(J.wTop-J.sTop)*.85,.03,.22);
+  else if(t==='javafern'){g=fronds(C.color,6,.22,.06,.25);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.07,0),mat(0x6d6a63));r.scale.y=.6;r.position.y=.03;g.add(r);}
+  else if(t==='moss'){g=clump(['#3d6b25','#4f7d2e','#2f5a1d'],26,.16,.055,.12);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.12,0),mat(0x6d6a63));r.scale.set(1.3,.6,1);r.position.y=.03;g.add(r);}
+  else if(t==='marimo'){g=new THREE.Group();const s=new THREE.Mesh(new THREE.IcosahedronGeometry(.07,2),mat(C.color));s.position.y=.07;g.add(s);g.userData.top=.14;}
+  else if(t==='duckweed'){g=new THREE.Group();const m=mat(C.color,{side:THREE.DoubleSide});
+    for(let i=0;i<14;i++){const l=new THREE.Mesh(new THREE.CircleGeometry(rnd(.025,.04),10),m);l.rotation.x=-Math.PI/2;const a=rnd(0,6.28),r=rnd(0,.2);l.position.set(Math.cos(a)*r,.004,Math.sin(a)*r);g.add(l);}g.userData.top=0;}
+  else if(t==='fern')g=fronds(C.color,9,.32,.07,.5);
+  else if(t==='cmoss')g=clump(['#5aa03a','#6db246','#4a8a2e'],46,.3,.05,.05);
+  else if(t==='pothos'){g=new THREE.Group();const h=clamp(J.H*.55,.4,2),pts=[];for(let i=0;i<=6;i++){const tt=i/6;pts.push(new THREE.Vector3(Math.sin(tt*5)*.08,tt*h,Math.cos(tt*4)*.06));}
+    const cv=new THREE.CatmullRomCurve3(pts),m=mat(0x5f7d2a);g.add(new THREE.Mesh(new THREE.TubeGeometry(cv,30,.008,5,false),m));
+    const lm=mat(C.color,{side:THREE.DoubleSide});for(let i=1;i<14;i++){const p=cv.getPoint(i/14),lf=new THREE.Mesh(new THREE.CircleGeometry(.045,10),lm);lf.scale.set(.75,1,1);lf.position.copy(p);lf.rotation.set(rnd(-.6,.6),i*1.9,rnd(-.4,.4));lf.translateX(.04);g.add(lf);}
+    g.userData.top=h;}
+  else if(t==='bromeliad'){g=fronds('#3f7d35',10,.2,.04,.6);const c=fronds(C.color,5,.09,.03,.4);g.add(c);}
+  else if(t==='fittonia')g=clump(['#c8607a','#3f6f35','#d77a92'],30,.13,.04,.1);
   else if(t==='guppy')g=fishModel(0xe8a04a,[0x3a6fd8,0xd8463a,0x8a3ad8][it.n%3],.055,false);
+  else if(t==='medaka')g=fishModel(0xe6d3a3,0xf0b860,.045,true);
   else if(t==='minnow')g=fishModel(0xc9d3c2,0xd3473a,.05,true);
-  else if(t==='shrimp')g=shrimpModel();else if(t==='snail')g=snailModel();
-  else {g=new THREE.Group();const s=new THREE.Mesh(new THREE.CylinderGeometry(rAt(J.sTop)*.5,rAt(J.sTop)*.5,.02,24),new THREE.MeshBasicMaterial({visible:false}));g.add(s);}
+  else if(t==='betta')g=fishModel(0x3b4fd1,[0xd23b5a,0x3b8fd1,0x8a3ad8][it.n%3],.055,false,true);
+  else if(t==='shrimp')g=shrimpModel(0xd9452f,.92);
+  else if(t==='amano')g=shrimpModel(0xb9b2a0,.6);
+  else if(t==='snail')g=snailModel(0x7a5532,0x3e2a17);
+  else if(t==='nerite')g=snailModel(0x2d2a20,0xd8c25a);
+  else if(t==='daphnia')g=swarmPoints(40,0xd9b46a,.022,.12);
+  else if(t==='turtle')g=turtleModel();
+  else if(t==='gecko')g=geckoModel();
+  else if(t==='frog')g=frogModel();
+  else if(t==='isopod'){g=new THREE.Group();it.agents=[];const m=mat(0x6f6a66);
+    for(let i=0;i<8;i++){const b=new THREE.Mesh(new THREE.SphereGeometry(.013,8,6),m);b.scale.set(1.7,.55,1.1);g.add(b);it.agents.push({mesh:b,p:new THREE.Vector3(),hd:rnd(0,6.28)});}}
+  else if(t==='springtail')g=swarmPoints(70,0xeeeeea,.014,.2);
+  else {g=new THREE.Group();const s=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.02,24),new THREE.MeshBasicMaterial({visible:false}));g.add(s);}
   g.userData.uid=it.uid;it.g=g;world.add(g);
-  it.m={p:new THREE.Vector3(),v:new THREE.Vector3(),tgt:new THREE.Vector3(),tt:0,spd:.05,hd:rnd(0,6.28),ph:rnd(0,6)};
+  it.m={p:new THREE.Vector3(),v:new THREE.Vector3(),tgt:new THREE.Vector3(),tt:0,spd:.05,hd:rnd(0,6.28),ph:rnd(0,6),hop:0,h0:new THREE.Vector3()};
   placeItem(it);
 }
+function poolInfo(){const p=S.items.find(i=>i.alive&&CAT[i.type].kind==='pool');if(!p||!p.g)return null;return{x:p.g.position.x,z:p.g.position.z,r:p.g.userData.r};}
 function placeItem(it){
-  const k=CAT[it.type].kind;
+  const C=CAT[it.type],k=C.kind,g=it.g;
+  if(k==='sub'){g.position.set(0,0,0);return;}
+  if(k==='decor'||k==='pool'){const [x,z]=floorMap(it.params.x,it.params.z);g.position.set(x,J.sTop,z);
+    if(k==='decor'){g.rotation.y=(it.params.rot||0)*Math.PI/180;g.scale.setScalar(it.params.size*J.k);}return;}
   if(k==='plant'){
     let y=J.sTop,f=Math.min(J.minR,rAt(J.sTop))*.72;
-    if(it.type==='moss')f=rAt(J.sTop)*.75;
+    if(it.type==='moss'||it.type==='cmoss'||it.type==='marimo')f=rAt(J.sTop)*.75;
     if(it.type==='duckweed'){y=J.wTop;f=rAt(J.wTop)*.55;}
     if(J.box)f=J.R*(it.type==='duckweed'?.6:.78);
-    it.g.position.set(it.rx*f,y,it.rz*f);
-  } else if(k==='animal'){
-    const m=it.m,swim=CAT[it.type].move==='swim';
-    m.p.set(it.rx,swim?rnd(J.sTop+.2,J.wTop-.15):J.sTop+.02,it.rz);
+    g.position.set(it.rx*f,y,it.rz*f);return;
+  }
+  if(k==='animal'){
+    const m=it.m,mv=C.move,swim=mv==='swim'||mv==='swarm';
+    m.p.set(it.rx,swim?rnd(J.sTop+.2,J.wTop-.15):J.sTop+.01,it.rz);
     const f=(J.box?J.R:rAt(m.p.y))*.7;m.p.x*=f;m.p.z*=f;
-    m.tgt.copy(m.p);it.g.position.copy(m.p);
-  } else it.g.position.set(0,J.sTop,0);
+    if(mv==='turtle'){const pi=poolInfo();if(pi){m.p.set(pi.x,J.sTop+.006,pi.z);}}
+    m.tgt.copy(m.p);g.position.copy(m.p);
+    if(it.agents)it.agents.forEach(a=>{const [x,z]=randIn(J.sTop,.6);a.p.set(m.p.x*.5+x*.4,J.sTop+.006,m.p.z*.5+z*.4);a.mesh.position.copy(a.p);});
+    if(mv==='spring')g.position.set(m.p.x,J.sTop+.01,m.p.z);
+    return;
+  }
+  g.position.set(0,J.sTop,0);
 }
 
-/* 動態效果 */
+/* ---- 特效 & 天氣 ---- */
 const fxGeo=new THREE.SphereGeometry(1,6,5);
 const bubMat=new THREE.MeshPhongMaterial({color:0xffffff,transparent:true,opacity:.55,shininess:200,depthWrite:false});
 const poopMat=mat(0x5a4630),flakeMat=mat(0xe07a2e);
 const bubbles=[],poops=[],flakes=[];
 function spawn(list,matl,s,max){let o=list.find(b=>!b.visible);if(!o){if(list.length>=max)return null;o=new THREE.Mesh(fxGeo,matl);world.add(o);list.push(o);}o.visible=true;o.scale.setScalar(s);o.userData.age=0;return o;}
 function feedFx(n){const c=Math.min(30,Math.round(n*8));for(let i=0;i<c;i++){const f=spawn(flakes,flakeMat,.012,40);if(!f)break;const [x,z]=randIn(J.wTop,.5);f.position.set(x,J.wTop-.01,z);f.scale.set(.014,.004,.012);f.userData.vy=rnd(.02,.05);}}
-function selRing(){const r=new THREE.Mesh(new THREE.TorusGeometry(1,.06,8,40),new THREE.MeshBasicMaterial({color:0x46b8ac,transparent:true,opacity:.9,depthTest:false}));r.rotation.x=Math.PI/2;r.renderOrder=10;r.visible=false;world.add(r);return r;}
-const ring=selRing();
+function bubbleAt(x,y,z,s){const b=spawn(bubbles,bubMat,s,140);if(b){b.position.set(x,y,z);b.userData.vy=rnd(.2,.32);}}
+const ring=(()=>{const r=new THREE.Mesh(new THREE.TorusGeometry(1,.06,8,40),new THREE.MeshBasicMaterial({color:0x46b8ac,transparent:true,opacity:.9,depthTest:false}));r.rotation.x=Math.PI/2;r.renderOrder=10;r.visible=false;world.add(r);return r;})();
+let mistFx=0,flash=0,boltT=0;
+const RAIN_N=600;
+const rainGeo=new THREE.BufferGeometry();rainGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(RAIN_N*6),3));
+const rainLines=new THREE.LineSegments(rainGeo,new THREE.LineBasicMaterial({color:0xaac4d6,transparent:true,opacity:.55}));scene.add(rainLines);
+const rainDrops=[];
+const boltGeo=new THREE.BufferGeometry();boltGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(30*3),3));
+const bolt=new THREE.Line(boltGeo,new THREE.LineBasicMaterial({color:0xf4f6ff}));bolt.visible=false;scene.add(bolt);
+const mistCloud=swarmPoints(140,0xffffff,.09,1);mistCloud.material.opacity=0;scene.add(mistCloud);
+function layoutWeather(maxR){
+  rainDrops.length=0;
+  for(let i=0;i<RAIN_N;i++){const a=rnd(0,6.28),r=rnd(maxR*1.25,7);rainDrops.push({x:Math.cos(a)*r,z:Math.sin(a)*r,y:rnd(-1,9),v:rnd(7,10)});}
+  const ma=mistCloud.geometry.attributes.position.array;
+  mistCloud.userData.off.forEach((v,i)=>{const [x,z]=randIn(J.H*.5,.9);v.set(x,rnd(J.sTop+.05,J.H*.85),z);ma[i*3]=v.x;ma[i*3+1]=v.y;ma[i*3+2]=v.z;});
+  mistCloud.geometry.attributes.position.needsUpdate=true;
+}
+function makeBolt(){
+  const a=rnd(-1.2,1.2),R=rnd(9,13),bx=Math.sin(a)*R,bz=-Math.cos(a)*R,arr=boltGeo.attributes.position.array;let x=bx,y=12,z=bz;
+  for(let i=0;i<30;i++){arr[i*3]=x;arr[i*3+1]=y;arr[i*3+2]=z;x+=rnd(-.5,.5);y-=.45;z+=rnd(-.3,.3);}
+  boltGeo.attributes.position.needsUpdate=true;bolt.visible=true;
+}
 
-/* 鏡頭 */
+/* ---- 鏡頭 ---- */
 const cam={theta:.6,phi:1.15,dist:6,target:new THREE.Vector3(0,1,0),idle:0};
 function updateCam(){const {theta,phi,dist,target}=cam;camera.position.set(target.x+dist*Math.sin(phi)*Math.sin(theta),target.y+dist*Math.cos(phi),target.z+dist*Math.sin(phi)*Math.cos(theta));camera.lookAt(target);}
 const ptrs=new Map();let downXY=null,pinch0=0;
@@ -585,240 +964,365 @@ canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);
 canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;
   if(ptrs.size===1){cam.theta-=dx*.008;cam.phi=clamp(cam.phi-dy*.006,.25,1.62);}
   p.x=e.clientX;p.y=e.clientY;
-  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0){cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*5);}pinch0=d;}
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*6);pinch0=d;}
   if(downXY&&Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6)downXY.moved=true;cam.idle=0;});
 const up=e=>{if(downXY&&!downXY.moved&&ptrs.size===1)pick(e);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=0;if(!ptrs.size)downXY=null;};
 canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);downXY=null;});
-canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=clamp(cam.dist*(1+e.deltaY*.001),J.H*1.1,J.H*5);cam.idle=0;},{passive:false});
-const ray=new THREE.Raycaster();
+canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=clamp(cam.dist*(1+e.deltaY*.001),J.H*1.1,J.H*6);cam.idle=0;},{passive:false});
+const ray=new THREE.Raycaster();ray.params.Points.threshold=.04;
 function pick(e){
   const r=canvas.getBoundingClientRect();ray.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-(e.clientY-r.top)/r.height*2+1},camera);
-  const groups=S.items.filter(i=>i.alive&&CAT[i.type].kind!=='microbe').map(i=>i.g);
-  const hit=ray.intersectObjects(groups,true)[0];
-  if(!hit){return;}
+  const groups=S.items.filter(i=>i.alive&&i.g&&CAT[i.type].kind!=='microbe').map(i=>i.g);
+  const hit=ray.intersectObjects(groups,true)[0];if(!hit)return;
   let o=hit.object;while(o&&o.userData.uid===undefined)o=o.parent;
-  const it=S.items.find(i=>i.uid===o.userData.uid);if(it)select(it,true);
+  const it=o&&S.items.find(i=>i.uid===o.userData.uid);if(it)select(it,true);
 }
 function select(it,fromScene){
   S.sel=it;showTab('jar');renderJarList();renderEditor();
   if(fromScene&&innerWidth<920)$('#pane-jar').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-/* 每格動畫 */
-const cDay=new THREE.Color(0xcfe3e3),cNight=new THREE.Color(0x0a141b),cBg=new THREE.Color();
-const wClear=new THREE.Color(0x9fd6e0),wGreen=new THREE.Color(0x6d9a35),wCol=new THREE.Color();
+/* ---- 每格動畫 ---- */
+const cDay=new THREE.Color(0xcfe3e3),cGray=new THREE.Color(0x8d9aa0),cNight=new THREE.Color(0x0a141b),cBg=new THREE.Color(),cWhite=new THREE.Color(0xf2f4ff);
+const wClear=new THREE.Color(0x9fd6e0),wGreen=new THREE.Color(0x6d9a35),wCol=new THREE.Color(),grayC=new THREE.Color(0x8a8a80);
 let tAll=0;
 function lightLevel(hf){const on=7,off=7+S.light;if(S.light>=24)return 1;if(S.light<=0)return 0;
-  let h=hf;const ramp=x=>clamp(x/0.6,0,1);
-  let v=Math.min(ramp(h-on+0.3),ramp(off-h+0.3));if(off>24)v=Math.max(v,ramp(off-24-h+0.3));return clamp(v,0,1);}
+  const ramp=x=>clamp(x/.6,0,1);let v=Math.min(ramp(hf-on+.3),ramp(off-hf+.3));if(off>24)v=Math.max(v,ramp(off-24-hf+.3));return clamp(v,0,1);}
+function face(g,v,pitchMax){if(v.lengthSq()>1e-8){g.rotation.y=Math.atan2(-v.z,v.x);const hz=Math.hypot(v.x,v.z);g.rotation.z=clamp(Math.atan2(v.y,hz),-pitchMax,pitchMax);}}
+function steer(m,spd,dt,rate){const d=m.tgt.clone().sub(m.p),l=d.length();if(l>1e-4)d.multiplyScalar(spd/l);m.v.lerp(d,Math.min(1,dt*rate));}
 function animate(dt,hf){
-  tAll+=dt;const lv=lightLevel(hf);
-  cBg.copy(cNight).lerp(cDay,lv);renderer.setClearColor(cBg);
-  sun.intensity=.15+.85*lv;hemi.intensity=.25+.45*lv;fill.intensity=.35-.1*lv;
+  tAll+=dt;const lv=lightLevel(hf),w=WX[S.wx],aq=S.mode==='aqua',c=S.c;
+  flash=Math.max(0,flash-dt*3);boltT=Math.max(0,boltT-dt);bolt.visible=boltT>0;
+  if(w.bolt&&Math.random()<dt*.35){flash=1;boltT=.18;makeBolt();}
+  const dayCol=cDay.clone().lerp(cGray,(1-w.light)*.85);
+  cBg.copy(cNight).lerp(dayCol,lv).lerp(cWhite,flash*.7);renderer.setClearColor(cBg);
+  const wl=.35+.65*w.light;
+  sun.intensity=(.12+.88*lv)*wl+flash*1.5;hemi.intensity=(.25+.45*lv)*(.6+.4*w.light)+flash;fill.intensity=.35-.1*lv;
   lampMat.color.setHex(lv>.5?0xfff1bf:0x2a2f33);
-  const ag=clamp(S.algae/45,0,1);wCol.copy(wClear).lerp(wGreen,ag);waterMat.color.copy(wCol);waterMat.opacity=.16+.3*ag;surfMat.color.copy(wCol).lerp(new THREE.Color(0xffffff),.3);
+  if(w.fog){if(!scene.fog)scene.fog=new THREE.Fog(cBg.getHex(),4,14);scene.fog.color.copy(cBg);scene.fog.near=J.H*1.2;scene.fog.far=J.H*6;}else scene.fog=null;
+  // 雨
+  const rainOn=!!w.rain;rainLines.visible=rainOn;
+  if(rainOn){const arr=rainGeo.attributes.position.array,n=Math.round(RAIN_N*(w.rain>1?1:.55));
+    for(let i=0;i<RAIN_N;i++){const d=rainDrops[i];if(!d)continue;d.y-=d.v*dt;if(d.y<0)d.y+=9;const on=i<n;
+      arr[i*6]=d.x;arr[i*6+1]=on?d.y:-50;arr[i*6+2]=d.z;arr[i*6+3]=d.x+.03;arr[i*6+4]=on?d.y+.35:-50;arr[i*6+5]=d.z;}
+    rainGeo.attributes.position.needsUpdate=true;}
+  // 水 & 玻璃
+  if(aq&&waterMat){const ag=clamp(c.algae/45,0,1);wCol.copy(wClear).lerp(wGreen,ag);waterMat.color.copy(wCol);waterMat.opacity=.16+.3*ag;surfMat.color.copy(wCol).lerp(new THREE.Color(0xffffff),.3);}
+  if(glassMat){const cond=!aq&&c.hum>85?(c.hum-85)/15*.35:0;glassMat.opacity=glassMat.userData.base+cond;}
+  mistFx=Math.max(0,mistFx-dt*.5);mistCloud.visible=!aq;mistCloud.material.opacity=!aq?clamp(mistFx*.4+(c.hum>92?(c.hum-92)/8*.25:0),0,.5):0;
   lid.visible=S.sealed;
-  if(microbeLayer){const m=alive('microbe');microbeLayer.material.opacity=m.length?.25+.35*Math.max(...m.map(i=>i.health)):0;}
-  const oc=S.O2/S.V,vis=Math.min(1.6,1+S.speed/40);
+  pumpG.visible=aq&&S.pump;filterG.visible=aq&&S.filter;
+  const vis=Math.min(1.6,1+S.speed/40);
+  if(aq&&S.pump&&Math.random()<dt*25){const s=pumpG.userData.src;bubbleAt(s.x+rnd(-.02,.02),s.y,s.z+rnd(-.02,.02),rnd(.008,.016));}
+  if(aq&&S.filter&&Math.random()<dt*8){const s=filterG.userData.src;bubbleAt(s.x,s.y,s.z,rnd(.006,.011));}
+  if(microbeLayer){const m=aliveIn(S,'microbe');microbeLayer.material.opacity=m.length?.25+.35*Math.max(...m.map(i=>i.health)):0;}
+  const oc=aq?c.O2/S.V:9,pi=aq?null:poolInfo();
   for(const it of S.items){
-    const g=it.g,k=CAT[it.type].kind,m=it.m;
+    const g=it.g;if(!g)continue;const C=CAT[it.type],k=C.kind,m=it.m;
     if(!it.alive){
-      it.deadT+=dt;
-      if(k==='animal'){const u=g.userData;u.inner.rotation.x=Math.min(Math.PI,u.inner.rotation.x+dt*2);
-        if(CAT[it.type].move==='swim'){m.p.y=Math.min(J.wTop-.04,m.p.y+dt*.12);g.position.copy(m.p);}
-        u.mats.forEach(mm=>{mm.color.lerp(new THREE.Color(0x8a8a80),dt*.5);mm.opacity=clamp(1-(it.deadT-5)/4,0,1);});}
-      else if(k==='plant'){g.traverse(c=>{if(c.material&&c.material.color)c.material.color.lerp(new THREE.Color(0x6b5a3a),dt*.4);});g.scale.y=Math.max(.2,1-it.deadT*.08);}
-      if(it.deadT>9){disposeObj(g);it.gone=true;}
+      it.deadT+=dt;const u=g.userData;
+      if(u.inner)u.inner.rotation.x=Math.min(Math.PI,u.inner.rotation.x+dt*2);
+      if(C.move==='swim'){m.p.y=Math.min(J.wTop-.04,m.p.y+dt*.12);g.position.copy(m.p);}
+      if(k==='plant')g.scale.y=Math.max(.2,1-it.deadT*.08);
+      g.traverse(o=>{if(o.material&&!Array.isArray(o.material)){o.material.transparent=true;if(o.material.color&&k!=='plant')o.material.color.lerp(grayC,dt*.5);if(k==='plant'&&o.material.color)o.material.color.lerp(new THREE.Color(0x6b5a3a),dt*.4);o.material.opacity=clamp(1-(it.deadT-5)/4,0,1);}});
+      if(it.deadT>9){disposeObj(g);it.g=null;it.gone=true;}
       continue;
     }
     if(k==='plant'){
-      if(it.type==='hornwort')g.rotation.z=Math.sin(tAll*.7+m.ph)*.04;
-      if(it.type==='vallis')g.userData.blades.forEach(b=>{b.rotation.z=Math.sin(tAll*.8+b.userData.ph)*.07;});
+      if(it.type==='hornwort'||it.type==='elodea')g.rotation.z=Math.sin(tAll*.7+m.ph)*.04;
+      if(g.userData.blades)g.userData.blades.forEach(b=>{b.rotation.z=Math.sin(tAll*.8+b.userData.ph)*(aq?.07:.03);});
       if(it.type==='duckweed'){g.position.x+=Math.sin(tAll*.2+m.ph)*dt*.01;g.position.z+=Math.cos(tAll*.17+m.ph)*dt*.01;}
-      const rate=it.lastProd*lv*2.2*vis;
-      if(it.type!=='duckweed'&&Math.random()<rate*dt){const b=spawn(bubbles,bubMat,rnd(.008,.016),90);
-        if(b){b.position.set(g.position.x+rnd(-.08,.08),g.position.y+rnd(.1,1)*(g.userData.top||.2),g.position.z+rnd(-.08,.08));b.userData.vy=rnd(.18,.3);}}
+      if(aq&&!C.floating&&Math.random()<it.lastProd*lv*2.2*vis*dt)bubbleAt(g.position.x+rnd(-.08,.08),g.position.y+rnd(.1,1)*(g.userData.top||.2),g.position.z+rnd(-.08,.08),rnd(.008,.016));
       continue;
     }
     if(k!=='animal')continue;
-    const mv=CAT[it.type].move,p=it.params,u=g.userData;
+    const mv=C.move,p=it.params,u=g.userData,hb=.5+.5*it.health;
     if(mv==='swim'){
-      m.tt-=dt;const gasp=oc<p.o2Min+.6;
+      m.tt-=dt;
       if(m.tt<=0||m.p.distanceTo(m.tgt)<.08){const y=rnd(J.sTop+.15,J.wTop-.12),[x,z]=randIn(y,.72);m.tgt.set(x,y,z);m.tt=rnd(2.5,6);}
-      if(gasp){m.tgt.y=J.wTop-.07;clampIn(m.tgt,.7);}
-      const spd=(it.stress?.14:.24)*(.5+.5*it.health);
-      const des=m.tgt.clone().sub(m.p);const dl=des.length();if(dl>1e-4)des.multiplyScalar(spd/dl);
-      m.v.lerp(des,Math.min(1,dt*1.6));
+      if(oc<p.o2Min+.6){m.tgt.y=J.wTop-.07;clampIn(m.tgt,.7);}
+      steer(m,(it.stress?.14:.24)*hb,dt,1.6);
       u.tail.rotation.y=Math.sin(tAll*(8+m.v.length()*30)+m.ph)*.45;
     } else if(mv==='hop'){
-      m.tt-=dt;
-      if(m.tt<=0){const y=J.sTop+rnd(.02,Math.min(.45,J.wTop-J.sTop-.1)),[x,z]=randIn(y,.75);m.tgt.set(x,y,z);m.tt=rnd(1.5,5);m.spd=rnd(.18,.32);}
+      m.tt-=dt;if(m.tt<=0){const y=J.sTop+rnd(.02,Math.min(.45,J.wTop-J.sTop-.1)),[x,z]=randIn(y,.75);m.tgt.set(x,y,z);m.tt=rnd(1.5,5);m.spd=rnd(.18,.32);}
       m.spd=Math.max(.015,m.spd*(1-dt*1.4));
-      const des=m.tgt.clone().sub(m.p);const dl=des.length();if(dl>.02)des.multiplyScalar(m.spd/dl);else des.set(0,-.02,0);
-      m.v.lerp(des,Math.min(1,dt*3));
-    } else {
+      const d=m.tgt.clone().sub(m.p),l=d.length();if(l>.02)d.multiplyScalar(m.spd/l);else d.set(0,-.02,0);m.v.lerp(d,Math.min(1,dt*3));
+    } else if(mv==='crawl'){
       m.hd+=rnd(-1,1)*dt*.8;if(edgeFrac(m.p)>.8)m.hd=Math.atan2(-m.p.z,-m.p.x)+rnd(-.3,.3);
-      const s=.02*(.4+.6*it.health);m.v.set(Math.cos(m.hd)*s,0,Math.sin(m.hd)*s);
+      const s=.02*hb;m.v.set(Math.cos(m.hd)*s,0,Math.sin(m.hd)*s);
+    } else if(mv==='swarm'){
+      m.tt-=dt;if(m.tt<=0){const y=rnd(J.sTop+.2,J.wTop-.15),[x,z]=randIn(y,.6);m.tgt.set(x,y,z);m.tt=rnd(4,8);}
+      steer(m,.05,dt,1);
+      const arr=g.geometry.attributes.position.array,off=u.off,rad=u.rad;
+      off.forEach((o,i)=>{o.x+=rnd(-1,1)*dt*.08;o.y+=rnd(-1,1)*dt*.08;o.z+=rnd(-1,1)*dt*.08;if(o.length()>rad)o.multiplyScalar(.95);arr[i*3]=o.x;arr[i*3+1]=o.y;arr[i*3+2]=o.z;});
+      g.geometry.attributes.position.needsUpdate=true;
+    } else if(mv==='spring'){
+      const arr=g.geometry.attributes.position.array,off=u.off;
+      off.forEach((o,i)=>{if(Math.random()<dt*.6){o.x+=rnd(-.08,.08);o.z+=rnd(-.08,.08);}o.y=Math.max(0,o.y*.9);if(Math.hypot(o.x,o.z)>.25){o.x*=.9;o.z*=.9;}arr[i*3]=o.x;arr[i*3+1]=Math.abs(Math.sin(tAll*3+i))*.006;arr[i*3+2]=o.z;});
+      g.geometry.attributes.position.needsUpdate=true;continue;
+    } else if(mv==='colony'){
+      it.agents.forEach(a=>{a.hd+=rnd(-1,1)*dt*1.5;if(edgeFrac(a.p)>.85)a.hd=Math.atan2(-a.p.z,-a.p.x)+rnd(-.3,.3);
+        const s=.03*hb;a.p.x+=Math.cos(a.hd)*s*dt*vis;a.p.z+=Math.sin(a.hd)*s*dt*vis;a.p.y=J.sTop+.006;clampIn(a.p,.88);a.mesh.position.copy(a.p);a.mesh.rotation.y=-a.hd;});
+      m.p.copy(it.agents[0].p);continue;
+    } else if(mv==='turtle'){
+      m.tt-=dt;
+      if(m.tt<=0||m.p.distanceTo(m.tgt)<.05){
+        if(pi&&Math.random()<.55){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*pi.r*.6;m.tgt.set(pi.x+Math.cos(a)*r,J.sTop+.006,pi.z+Math.sin(a)*r);}
+        else{const [x,z]=randIn(J.sTop,.75);m.tgt.set(x,J.sTop+.006,z);}
+        m.tt=rnd(5,12);}
+      const inPool=pi&&Math.hypot(m.p.x-pi.x,m.p.z-pi.z)<pi.r;
+      steer(m,(inPool?.07:.045)*hb,dt,1.2);m.v.y=0;
+      if(inPool)m.p.y=J.sTop+.004+Math.sin(tAll*2+m.ph)*.003;else m.p.y=J.sTop+.006;
+    } else if(mv==='climb'){
+      m.tt-=dt;
+      if(m.tt<=0){if(Math.random()<.5){const [x,z]=randIn(J.sTop,.7);m.tgt.set(x,J.sTop+.01,z);}
+        else{const y=rnd(J.sTop+.15,J.H*.75);if(J.box){const s=Math.random()<.5?1:-1,o=rnd(-.8,.8)*J.R;Math.random()<.5?m.tgt.set(s*J.R*.93,y,o):m.tgt.set(o,y,s*J.R*.93);}
+          else{const a=rnd(0,6.28),r=rAt(y)*.93;m.tgt.set(Math.cos(a)*r,y,Math.sin(a)*r);}}
+        m.tt=rnd(4,9);m.spd=rnd(.08,.14);}
+      m.spd=Math.max(.01,m.spd*(1-dt*.4));steer(m,m.spd*hb,dt,2);
+    } else if(mv==='frog'){
+      if(m.hop>0){m.hop=Math.max(0,m.hop-dt*2.2);const f=1-m.hop;m.p.lerpVectors(m.h0,m.tgt,f);m.p.y=J.sTop+.004+Math.sin(Math.PI*f)*.09;
+        g.position.copy(m.p);const d=m.tgt.clone().sub(m.h0);g.rotation.y=Math.atan2(-d.z,d.x);continue;}
+      m.tt-=dt;if(m.tt<=0){m.h0.copy(m.p);const a=rnd(0,6.28),r=rnd(.08,.25);m.tgt.set(m.p.x+Math.cos(a)*r,J.sTop+.004,m.p.z+Math.sin(a)*r);clampIn(m.tgt,.8);m.hop=1;m.tt=rnd(1.5,5);}
+      continue;
     }
     m.p.addScaledVector(m.v,dt*vis);
-    m.p.y=clamp(m.p.y,J.sTop+.02,J.wTop-.04);if(mv==='crawl')m.p.y=J.sTop+.005;
-    clampIn(m.p,.86);
+    if(mv==='climb'){m.p.y=clamp(m.p.y,J.sTop+.01,J.H*.85);clampIn(m.p,.95);}
+    else if(mv==='turtle'){clampIn(m.p,.86);}
+    else{m.p.y=clamp(m.p.y,J.sTop+.02,J.wTop-.04);if(mv==='crawl')m.p.y=J.sTop+.005;clampIn(m.p,.86);}
     g.position.copy(m.p);
-    if(m.v.lengthSq()>1e-7){g.rotation.y=Math.atan2(-m.v.z,m.v.x);const hz=Math.hypot(m.v.x,m.v.z);g.rotation.z=mv==='crawl'?0:clamp(Math.atan2(m.v.y,hz),-.5,.5);}
+    if(mv==='swarm')continue;
+    face(g,m.v,mv==='climb'?1.4:mv==='crawl'||mv==='turtle'?0:.5);
   }
   if(S.items.some(i=>i.gone)){S.items=S.items.filter(i=>!i.gone);dirtyList=true;}
-  // 排泄
-  for(const it of wasteFx.splice(0)){if(!it.alive||!it.g)continue;if(poops.filter(p=>p.visible).length>60)break;const pp=spawn(poops,poopMat,.007,70);if(pp){pp.position.copy(it.g.position);pp.scale.set(.006,.006,.014);}}
+  for(const it of wasteFx.splice(0)){if(!it.alive||!it.g)continue;if(poops.filter(p=>p.visible).length>60)break;const pp=spawn(poops,poopMat,.007,70);if(pp){pp.position.copy(it.m.p);pp.scale.set(.006,.006,.014);}}
   bubbles.forEach(b=>{if(!b.visible)return;b.position.y+=b.userData.vy*dt;b.position.x+=Math.sin(tAll*5+b.id)*dt*.01;if(b.position.y>J.wTop)b.visible=false;});
   poops.forEach(p=>{if(!p.visible)return;p.userData.age+=dt;if(p.position.y>J.sTop+.01)p.position.y-=dt*.08;if(p.userData.age>25)p.visible=false;});
-  const want=Math.ceil(S.flake*8);let shown=0;
+  const want=aq?Math.ceil(c.flake*8):0;let shown=0;
   flakes.forEach(f=>{if(!f.visible)return;shown++;if(shown>want){f.visible=false;return;}if(f.position.y>J.sTop+.01){f.position.y-=f.userData.vy*dt;f.rotation.z+=dt;f.position.x+=Math.sin(tAll+f.id)*dt*.02;}});
-  // 選取光圈
   if(S.sel&&S.sel.alive&&S.sel.g){const it=S.sel,k=CAT[it.type].kind;ring.visible=true;
-    if(k==='animal'){ring.position.copy(it.g.position);ring.scale.setScalar(.1);}
-    else if(k==='microbe'){ring.position.set(0,J.sTop+.02,0);ring.scale.setScalar(rAt(J.sTop)*.7);}
-    else{ring.position.set(it.g.position.x,it.g.position.y+.02,it.g.position.z);ring.scale.setScalar(it.type==='duckweed'?.26:.16);}
+    if(k==='animal'){ring.position.copy(it.m.p);ring.scale.setScalar(CAT[it.type].move==='turtle'?.14:.1);}
+    else if(k==='microbe'||k==='sub'){ring.position.set(0,J.sTop+.02,0);ring.scale.setScalar((J.box?J.R:rAt(J.sTop))*.7);}
+    else if(k==='pool'){ring.position.set(it.g.position.x,J.sTop+.02,it.g.position.z);ring.scale.setScalar(it.g.userData.r*1.15);}
+    else{ring.position.set(it.g.position.x,it.g.position.y+.02,it.g.position.z);ring.scale.setScalar(k==='decor'?.25*it.params.size*J.k:it.type==='duckweed'?.26:.16);}
     ring.material.opacity=.55+.35*Math.sin(tAll*4);} else ring.visible=false;
   if(!ptrs.size){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
   updateCam();
 }
-
 function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(stage);
 
-/* ---------- UI ---------- */
+/* ================= UI ================= */
 let dirtyList=false,curTab='add';
 function showTab(t){curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
   ['add','jar','bal','env'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='bal')renderBalance();}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-let toastT;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1600);}
+let toastT;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1800);}
 
 const SPEEDS=[[1,'1 小時/秒'],[4,'4 小時/秒'],[24,'1 日/秒']];
 function renderSpeed(){$('#speedSeg').innerHTML=SPEEDS.map(([v,l])=>`<button aria-pressed="${S.speed===v}" data-v="${v}">${l}</button>`).join('');
   $('#speedSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;renderSpeed();});}
+function renderModeSeg(){$('#modeSeg').innerHTML=[['aqua','水族'],['rain','雨林']].map(([k,l])=>`<button aria-pressed="${S.mode===k}" data-m="${k}">${l}</button>`).join('');
+  $('#modeSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(S.mode===b.dataset.m)return;S.mode=b.dataset.m;loadPreset(Object.keys(PRESETS[S.mode])[0]);});}
 $('#playBtn').onclick=()=>{S.running=!S.running;$('#playBtn').textContent=S.running?'暫停':'繼續';$('#playBtn').classList.toggle('primary',S.running);};
-$('#feedBtn').onclick=()=>{const n=Math.max(1,S.feed);S.flake+=n;feedFx(n);toast(`餵咗 ${n} 份飼料`);};
+$('#feedBtn').onclick=()=>{const n=Math.max(1,S.feed);if(S.mode==='aqua'){S.c.flake+=n;feedFx(n);}else S.c.feed+=n;toast(`餵咗 ${n} 份${S.mode==='aqua'?'飼料':'昆蟲／飼料'}`);};
+$('#balBtn').onclick=()=>{toast('計緊最平衡嘅設定…');setTimeout(autoBalance,30);};
 
-function paramChips(type){const p=CAT[type].params,k=CAT[type].kind;
-  if(k==='plant')return[`產氧 ${p.o2Prod} mg/h`,`耗氧 ${p.resp} mg/h`,`吸收 ${p.uptake} mg/h`];
-  if(k==='animal')return[`耗氧 ${p.resp} mg/h`,`食 ${p.food} 份/日`,`每 ${p.wasteEvery} 小時去廁所`,`需氧 ≥${p.o2Min} mg/L`];
-  return[`分解氨 ${p.cap} mg/h`,`耗氧 ×${p.o2PerN}`];}
+function paramChips(type){const p=CAT[type].params,g=CAT[type].g;
+  if(g==='aplant')return[`產氧 ${p.o2Prod} mg/h`,`耗氧 ${p.resp} mg/h`,`吸收 ${p.uptake} mg/h`];
+  if(g==='rplant')return[`產氧 ${p.o2Prod} mg/h`,`加濕 ${p.transp}%/h`,`濕度 ≥${p.humMin}%`];
+  if(g==='aanimal')return[`耗氧 ${p.resp} mg/h`,`食 ${p.food} 份/日`,`每 ${p.wasteEvery} 小時去廁所`,`${p.tMin}–${p.tMax}°C`];
+  if(g==='ranimal'||g==='turtle')return[`食 ${p.food} 份/日`,`每 ${p.wasteEvery} 小時去廁所`,`濕度 ${p.humMin}–${p.humMax}%`,`${p.tMin}–${p.tMax}°C`];
+  if(g==='nitri')return[`分解氨 ${p.cap} mg/h`];
+  if(g==='decomp'||g==='soilm')return[`分解 ${p.rate} 份/h`];
+  if(g==='sub')return[`厚 ${p.depth} cm`];
+  return[];}
 function renderCatalog(){
-  const groups=[['plant','水草','有光時產氧，吸收動物排泄物變成嘅氨同硝酸鹽。'],['animal','動物','食嘢、呼吸用氧、定時去廁所。'],['microbe','微生物','睇唔到但好重要：將有毒嘅氨變成水草食得嘅硝酸鹽。']];
-  $('#pane-add').innerHTML=`<p class="lede">揀生物放入瓶，每樣都有自己嘅參數。加入之後喺「瓶內」可以逐隻調整。</p>`+groups.map(([k,t,d])=>`
-    <section class="cards"><h3>${t}</h3><p class="lede">${d}</p>${Object.entries(CAT).filter(([,c])=>c.kind===k).map(([id,c])=>{
-      const n=S.items.filter(i=>i.type===id&&i.alive).length;
+  const m=S.mode;
+  const groups=[['scape','造景',m==='aqua'?'先鋪底沙，再擺石頭同假山。底沙同石頭越多，細菌住得越多。':'先鋪泥土，龜要有水池，再擺沉木同假橋。'],
+    ['plant',m==='aqua'?'水草':'植物',m==='aqua'?'有光時產氧，吸收動物排泄物變成嘅氨同硝酸鹽。':'有光時產氧、吸走二氧化碳，葉子蒸散提高濕度。'],
+    ['animal','動物','食嘢、呼吸、定時去廁所，每種都有適合嘅溫度範圍。'],
+    ['microbe','微生物',m==='aqua'?'睇唔到但好重要：處理有毒嘅氨同殘渣。':'住喺泥土，將排泄物變成植物養分。']];
+  const inMode=c=>c.m===m||c.m==='both';
+  const grp=c=>['sub','decor','pool'].includes(c.kind)?'scape':c.kind;
+  $('#pane-add').innerHTML=`<p class="lede">撳 ＋ 加入、－ 減少。每樣都有自己嘅參數，加咗之後喺「瓶內」逐樣調整。</p>`+groups.map(([gk,t,d])=>`
+    <section class="cards"><h3>${t}</h3><p class="lede">${d}</p>${Object.entries(CAT).filter(([,c])=>inMode(c)&&grp(c)===gk).map(([id,c])=>{
+      const n=S.items.filter(i=>i.type===id).length;
       return`<div class="card"><div class="nm"><span class="dot" style="background:${c.color}"></span>${c.name}<em>${c.sci}</em></div>
-      <p>${c.desc}</p><div class="add"><button data-add="${id}" aria-label="加入${c.name}">+</button><span>瓶內 ${n}</span></div>
+      <p>${c.desc}</p><div class="ctr"><button class="minus" data-rm="${id}" aria-label="減少${c.name}" ${n?'':'disabled'}>−</button><output>${n}</output><button data-add="${id}" aria-label="加入${c.name}">+</button></div>
       <div class="chips">${paramChips(id).map(x=>`<span class="chip">${x}</span>`).join('')}</div></div>`;}).join('')}</section>`).join('');
   $('#pane-add').querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addItem(b.dataset.add));
+  $('#pane-add').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>removeOne(b.dataset.rm));
 }
 function statusOf(it){
-  if(!it.alive)return['已死亡','bad'];
-  if(it.stress)return[it.stress,it.health<.4?'bad':'warn'];
   const k=CAT[it.type].kind;
+  if(!it.alive)return['已死亡','bad'];
+  if(k==='sub')return[`${it.params.depth} cm 厚`,''];
+  if(k==='decor'||k==='pool')return['造景',''];
+  if(it.stress)return[it.stress,it.health<.4?'bad':'warn'];
   if(k==='plant')return[it.lastProd>0?`產氧中 ${fx(it.lastProd,2)} mg/h`:'夜間休息',''];
-  if(k==='animal')return[it.satiety<.4?'有啲肚餓':'精神','' ];
+  if(k==='animal')return[it.satiety<.4?'有啲肚餓':'精神',''];
   return['運作中',''];
 }
+function refreshLists(){renderJarList();renderCatalog();}
 function renderJarList(){
   const el=$('#pane-jar');$('#tabJarBtn').textContent=`瓶內 (${S.items.filter(i=>i.alive).length})`;
-  let ed=$('#editor');if(!ed){el.innerHTML=`<div id="editor"></div><div id="jarlist"></div>`;ed=$('#editor');}
-  const order=['plant','animal','microbe'];
-  const its=[...S.items].sort((a,b)=>order.indexOf(CAT[a.type].kind)-order.indexOf(CAT[b.type].kind)||a.uid-b.uid);
-  $('#jarlist').innerHTML=its.length?`<h3 style="margin-bottom:8px">全部生物</h3><div class="list">${its.map(it=>{const c=CAT[it.type];
+  if(!$('#editor')){el.innerHTML=`<div id="editor"></div><div id="jarlist"></div>`;}
+  const its=[...S.items].sort((a,b)=>KIND_ORDER.indexOf(CAT[a.type].kind)-KIND_ORDER.indexOf(CAT[b.type].kind)||a.uid-b.uid);
+  $('#jarlist').innerHTML=its.length?`<h3 style="margin-bottom:8px">全部</h3><div class="list">${its.map(it=>{const c=CAT[it.type],deco=['sub','decor','pool'].includes(c.kind);
     return`<button class="row${S.sel===it?' sel':''}" data-uid="${it.uid}"><span class="dot" style="background:${c.color}"></span>
-    <span class="t"><b>${c.name} #${it.n}</b><span id="st-${it.uid}"></span></span><span class="hbar" id="hb-${it.uid}"><span></span></span></button>`;}).join('')}</div>`
-    :`<div class="empty">個瓶仲係空嘅。去「加入生物」揀水草同動物。</div>`;
+    <span class="t"><b id="nm-${it.uid}">${esc(label(it))}</b><span id="st-${it.uid}"></span></span>${deco?'<span></span>':`<span class="hbar" id="hb-${it.uid}"><span></span></span>`}</button>`;}).join('')}</div>`
+    :`<div class="empty">個瓶仲係空嘅。去「加入」由造景開始砌。</div>`;
   $('#jarlist').querySelectorAll('[data-uid]').forEach(b=>b.onclick=()=>{const it=S.items.find(i=>i.uid==b.dataset.uid);if(it)select(it);});
   updateJarLive();dirtyList=false;
 }
 function updateJarLive(){
-  for(const it of S.items){const st=$('#st-'+it.uid),hb=$('#hb-'+it.uid);if(!st)continue;const [t,c]=statusOf(it);st.textContent=t;st.className=c;
-    hb.className='hbar'+(it.health<.35?' bad':it.health<.7?' warn':'');hb.firstChild.style.width=(it.health*100)+'%';}
+  for(const it of S.items){const st=$('#st-'+it.uid);if(!st)continue;const [t,c]=statusOf(it);st.textContent=t;st.className=c;
+    const hb=$('#hb-'+it.uid);if(hb){hb.className='hbar'+(it.health<.35?' bad':it.health<.7?' warn':'');hb.firstChild.style.width=(it.health*100)+'%';}}
   const it=S.sel;if(!it)return;
   const set=(id,v)=>{const e=$('#'+id);if(e)e.textContent=v;};
   set('v-health',Math.round(it.health*100)+'%');set('v-state',statusOf(it)[0]);
   const k=CAT[it.type].kind;
   if(k==='animal'){set('v-sat',Math.round(it.satiety*100)+'%');set('v-wc',`${Math.max(0,it.params.wasteEvery-it.wt)} 小時後`);}
-  if(k==='plant'){set('v-prod',fx(it.lastProd,2)+' mg/h');set('v-day',fx(it.params.o2Prod*it.health*Math.min(24,S.light)-it.params.resp*24,1)+' mg/日');}
+  if(k==='plant'){set('v-prod',fx(it.lastProd,2)+' mg/h');set('v-day',fx(it.params.o2Prod*it.health*Math.min(24,S.light)*MATS[S.mat].tr-it.params.resp*24,1)+' mg/日');}
 }
 function renderEditor(){
   const ed=$('#editor');if(!ed)return;const it=S.sel;
   if(!it){ed.innerHTML='';return;}
-  const c=CAT[it.type],k=c.kind,defs=DEFS[k];
-  const vit=[['健康','v-health'],['狀態','v-state']];
+  const c=CAT[it.type],k=c.kind,defs=DEFS[c.g],deco=['sub','decor','pool'].includes(k);
+  const vit=deco?[]:[['健康','v-health'],['狀態','v-state']];
   if(k==='animal')vit.push(['飽肚程度','v-sat'],['下次去廁所','v-wc']);
   if(k==='plant')vit.push(['而家產氧','v-prod'],['每日淨產氧','v-day']);
-  ed.innerHTML=`<div class="editor"><div class="ed-head"><span class="dot" style="background:${c.color}"></span><h2>${c.name} #${it.n}</h2><button class="x" id="edClose" aria-label="關閉">×</button></div>
-   <div class="vitals">${vit.map(([l,id])=>`<div class="vital">${l}<b id="${id}">–</b></div>`).join('')}</div>
-   ${k==='animal'?`<p class="lede">食物：${Object.keys(c.diet).map(p=>POOLNAME[p]).join('、')}（按喜好排序）</p>`:''}
-   ${defs.map(d=>`<div class="param"><div class="ph"><label for="p-${d.k}">${d.l}</label><output id="o-${d.k}">${it.params[d.k]} ${d.u}</output></div>
-     <input type="range" id="p-${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${it.params[d.k]}" ${it.alive?'':'disabled'}><small>${d.h}</small></div>`).join('')}
-   <div class="ed-actions">${it.alive?`<button class="btn" id="edAll">套用到所有${c.name}</button><button class="btn" id="edReset">還原預設</button>`:''}<button class="btn danger" id="edDel">${it.alive?'移出瓶':'清走屍體'}</button></div></div>`;
-  defs.forEach(d=>{const inp=$('#p-'+d.k);inp.oninput=()=>{it.params[d.k]=+inp.value;$('#o-'+d.k).textContent=`${inp.value} ${d.u}`;save();};});
+  const rootTxt=c.root==='sand'?'要種喺底沙':c.root==='rock'?'要依附石頭或沉木':'';
+  ed.innerHTML=`<div class="editor"><div class="ed-head"><span class="dot" style="background:${c.color}"></span><h2 id="edTitle">${esc(label(it))}</h2><button class="x" id="edClose" aria-label="關閉">×</button></div>
+   ${(k==='animal'||k==='plant')&&it.alive?`<div class="field"><label for="p-name" style="font-size:13px">${k==='animal'?'幫佢改個名':'名稱'}</label><div style="display:flex;gap:6px"><input type="text" id="p-name" maxlength="12" value="${esc(it.name||'')}" placeholder="${c.name} #${it.n}" style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)"><button class="btn" id="nameRnd">隨機名</button></div></div>`:''}
+   ${vit.length?`<div class="vitals">${vit.map(([l,id])=>`<div class="vital">${l}<b id="${id}">–</b></div>`).join('')}</div>`:`<p class="lede">${c.desc}</p>`}
+   ${k==='animal'?`<p class="lede">食物：${Object.keys(c.diet).map(p=>POOLNAME[p]).join('、')}（按喜好排序）${c.pool?'。要有水池。':''}</p>`:''}
+   ${rootTxt?`<p class="lede">${rootTxt}。</p>`:''}
+   ${Object.entries(defs).map(([key,d])=>`<div class="param"><div class="ph"><label for="p-${key}">${d.l}</label><output id="o-${key}">${it.params[key]} ${d.u}</output></div>
+     <input type="range" id="p-${key}" min="${d.min}" max="${d.max}" step="${d.step}" value="${it.params[key]}" ${it.alive?'':'disabled'}>${d.h?`<small>${d.h}</small>`:''}</div>`).join('')}
+   <div class="ed-actions">${it.alive&&!deco?`<button class="btn" id="edAll">套用到所有${c.name}</button>`:''}${it.alive?`<button class="btn" id="edReset">還原預設</button>`:''}<button class="btn danger" id="edDel">${it.alive?'移走':'清走屍體'}</button></div></div>`;
+  Object.keys(defs).forEach(key=>{const inp=$('#p-'+key);
+    inp.oninput=()=>{it.params[key]=+inp.value;$('#o-'+key).textContent=`${inp.value} ${defs[key].u}`;
+      if(k==='decor'||(k==='pool'&&key!=='size'))placeItem(it);save();};
+    inp.onchange=()=>{if(k==='sub')buildJar();if(k==='pool'&&key==='size'){disposeObj(it.g);buildItem(it);}save();};});
   $('#edClose').onclick=()=>{S.sel=null;renderJarList();renderEditor();};
+  const nm=$('#p-name');if(nm){const apply=v=>{it.name=v.trim().slice(0,12);$('#edTitle').textContent=label(it);const li=$('#nm-'+it.uid);if(li)li.textContent=label(it);save();};
+    nm.oninput=()=>apply(nm.value);$('#nameRnd').onclick=()=>{nm.value=randName();apply(nm.value);};}
   $('#edDel').onclick=()=>removeItem(it);
   const all=$('#edAll');if(all)all.onclick=()=>{S.items.filter(i=>i.type===it.type).forEach(i=>i.params=Object.assign({},it.params));toast(`已套用到所有${c.name}`);save();};
-  const rs=$('#edReset');if(rs)rs.onclick=()=>{it.params=Object.assign({},c.params);renderEditor();save();};
+  const rs=$('#edReset');if(rs)rs.onclick=()=>{it.params=Object.assign({},c.params);if(k==='sub')buildJar();else if(deco){disposeObj(it.g);buildItem(it);}renderEditor();save();};
   updateJarLive();
 }
 
-function meterState(key,v){
-  if(key==='o2')return v<3?'bad':v<5?'warn':'';
-  if(key==='nh3')return v>.5?'bad':v>.2?'warn':'';
-  if(key==='no3')return v>40?'bad':v>20?'warn':'';
-  if(key==='co2')return v<.3?'warn':'';
-  if(key==='algae')return v>45?'bad':v>30?'warn':'';
-  return'';
-}
+const AQ_METERS=[['o2','溶氧 O₂',c=>c.O2/S.V,'mg/L',1,14,v=>v<3?'bad':v<5?'warn':''],['T','水溫',c=>c.T,'°C',1,40,v=>v<12||v>31?'warn':''],
+  ['nh3','氨 NH₃',c=>c.NH3/S.V,'mg/L',2,1,v=>v>.5?'bad':v>.2?'warn':''],['no3','硝酸鹽',c=>c.NO3/S.V,'mg/L',1,50,v=>v>40?'bad':v>20?'warn':''],
+  ['co2','CO₂',c=>c.CO2/S.V,'mg/L',2,6,v=>v<.3?'warn':''],['algae','藻類',c=>c.algae,'份',0,60,v=>v>45?'bad':v>30?'warn':''],['food','飼料/殘渣',c=>c.flake+c.detritus,'份',1,20,v=>v>15?'warn':'']];
+const RN_METERS=[['o2','空氣 O₂',c=>c.O2/(airL(S)*13.3),'%',1,21,v=>v<17?'bad':v<19?'warn':''],['co2','CO₂',c=>c.CO2/(airL(S)*.0018),'ppm',0,6000,v=>v>5000?'bad':v>2500?'warn':''],
+  ['hum','濕度',c=>c.hum,'%',0,100,()=>''],['T','溫度',c=>c.T,'°C',1,40,()=>''],['waste','排泄物',c=>c.waste,'份',1,20,v=>v>10?'bad':v>5?'warn':''],
+  ['mould','霉菌',c=>c.mould,'',1,60,v=>v>20?'bad':v>10?'warn':''],['pnh3','水池氨',c=>{const E=envInfo(S);return E.pool?c.pNH3/(.25*S.V*E.poolSize):0;},'mg/L',2,3,v=>v>1?'bad':v>.5?'warn':'']];
+function rangeOf(key){const ans=aliveIn(S,'animal');if(!ans.length)return null;
+  return[Math.max(...ans.map(a=>a.params[key+'Min'])),Math.min(...ans.map(a=>a.params[key+'Max']))];}
 function renderMeters(){
-  const V=S.V;const ms=[['o2','溶氧 O₂',S.O2/V,'mg/L',1,14],['co2','二氧化碳',S.CO2/V,'mg/L',2,6],['nh3','氨 NH₃',S.NH3/V,'mg/L',2,1],['no3','硝酸鹽',S.NO3/V,'mg/L',1,50],['algae','藻類',S.algae,'份',0,60],['food','飼料/殘渣',S.flake+S.detritus,'份',1,20]];
-  $('#meters').innerHTML=ms.map(([k,l,v,u,d,mx])=>`<div class="meter ${meterState(k,v)}"><div class="l">${l}</div><div class="v">${fx(v,d)}<small>${u}</small></div><div class="bar"><span style="width:${clamp(v/mx,0,1)*100}%"></span></div></div>`).join('');
+  const aq=S.mode==='aqua',M=aq?AQ_METERS:RN_METERS.filter(m=>m[0]!=='pnh3'||envInfo(S).pool);
+  const hr=!aq&&rangeOf('hum'),tr=rangeOf('t');
+  const st=(k,v,f)=>{if(k==='hum'&&hr)return v<hr[0]-5||v>hr[1]+5?'bad':v<hr[0]||v>hr[1]?'warn':'';if(k==='T'&&tr)return v<tr[0]-2||v>tr[1]+2?'bad':v<tr[0]||v>tr[1]?'warn':'';return f(v);};
+  $('#meters').innerHTML=M.map(([k,l,g,u,d,mx,f])=>{const v=g(S.c);return`<div class="meter ${st(k,v,f)}"><div class="l">${l}</div><div class="v">${fx(v,d)}<small>${u}</small></div><div class="bar"><span style="width:${clamp(v/mx,0,1)*100}%"></span></div></div>`;}).join('');
   $('#clkDay').textContent=`第 ${S.day} 日`;$('#clkTime').textContent=String(S.hour).padStart(2,'0')+':00';
-  const L=isLight(S.hour);const lt=$('#lightTag');lt.textContent=L?'開燈':'熄燈';lt.className='tag '+(L?'day':'night');
-  const states=['o2','nh3','algae'].map((k,i)=>meterState(k,[S.O2/V,S.NH3/V,S.algae][i]));
-  const an=S.items.filter(i=>i.alive&&CAT[i.type].kind!=='microbe');
-  const stressed=an.filter(i=>i.stress).length;let st='',txt='穩定';
-  if(states.includes('bad')||an.some(i=>i.stress&&i.health<.4)){st='bad';txt=`危險 · ${stressed} 隻受壓`;}
-  else if(states.includes('warn')||stressed){st='warn';txt=stressed?`注意 · ${stressed} 隻受壓`:'注意';}
-  if(!an.length){st='';txt='空瓶';}
-  const p=$('#status');p.className='pill '+st;p.lastChild.textContent=txt;
+  const L=isLight(S,S.hour);const lt=$('#lightTag');lt.textContent=L?'開燈':'熄燈';lt.className='tag '+(L?'day':'night');
+  $('#wxPill').textContent=`${WX[S.wx].n} · ${fx(S.c.T)}°C${S.wxMode!=='auto'?'（固定）':''}`;
+  const an=S.items.filter(i=>i.alive&&CAT[i.type].kind==='animal');
+  const stressed=an.filter(i=>i.stress).length;
+  const states=M.map(([k,,g,,,,f])=>st(k,g(S.c),f));
+  let cls='',txt='穩定';
+  if(states.includes('bad')||an.some(i=>i.stress&&i.health<.4)){cls='bad';txt=stressed?`危險 · ${stressed} 隻受壓`:'危險';}
+  else if(states.includes('warn')||stressed){cls='warn';txt=stressed?`注意 · ${stressed} 隻受壓`:'注意';}
+  if(!an.length&&!S.items.some(i=>i.alive&&CAT[i.type].kind==='plant')){cls='';txt='未有生物';}
+  const p=$('#status');p.className='pill '+cls;p.lastChild.textContent=txt;
+  $('.hint').textContent=S.sel&&S.sel.alive?`已揀：${label(S.sel)}`:'拖動旋轉 · 撳生物睇參數';
 }
+
 function pairRow(l,v,mx,col,u){return`<div class="pair"><span>${l}</span><span class="track"><span style="width:${clamp(v/mx,0,1)*100}%;background:${col}"></span></span><span class="n">${fx(v,1)} ${u}</span></div>`;}
+function rangeRow(l,lo,hi,cur,min,max,u){const X=v=>clamp((v-min)/(max-min),0,1)*100;
+  return`<div class="pair"><span>${l}</span><span class="track"><span style="margin-left:${X(lo)}%;width:${Math.max(0,X(hi)-X(lo))}%;background:var(--good);opacity:.5"></span><i style="left:calc(${X(cur)}% - 1px)"></i></span><span class="n">${fx(lo,0)}–${fx(hi,0)}${u}</span></div>`;}
+function bud(cls,title,right,body,text){return`<div class="bud ${cls}"><div class="bh"><b>${title}</b><span>${right}</span></div>${body}<p>${text}</p></div>`;}
+function rate(r,good=1.2,ok=.8){return r>=good?'good':r>=ok?'warn':'bad';}
+function budgets(){
+  const aq=S.mode==='aqua',c=S.c,V=S.V,L=Math.min(24,S.light),E=envInfo(S),tr=MATS[S.mat].tr;
+  const wl=S.wxMode==='auto'?WX.cloudy.light:WX[S.wxMode].light,lm=tr*wl,q=clamp(1+.04*(c.T-25),.5,1.6);
+  const P=aliveIn(S,'plant'),A=aliveIn(S,'animal'),M=aliveIn(S,'microbe'),out=[];
+  let o2In=0,o2Out=0,hr=0;
+  P.forEach(it=>{const p=it.params;o2In+=p.o2Prod*it.health*L*lm*(CAT[it.type].floating?.5:1);const r=p.resp*Math.max(.3,it.health)*q;o2Out+=r*24;hr+=r;});
+  A.forEach(it=>{o2Out+=it.params.resp*q*24;hr+=it.params.resp*q;});
+  const lightNote=`按 ${L} 小時光照、${MATS[S.mat].n}透光 ${Math.round(tr*100)}%、${S.wxMode==='auto'?'平均天氣':WX[S.wxMode].n}計`;
+  if(aq){
+    let wIn=0,need=0;A.forEach(it=>{wIn+=it.params.wasteAmt*24/it.params.wasteEvery;need+=it.params.food;});
+    const flakeEat=A.reduce((s,it)=>s+(CAT[it.type].diet.flake?it.params.food:0),0);wIn+=Math.max(0,S.feed-flakeEat)*.1;
+    const cap=M.filter(i=>i.type==='nitri').reduce((s,i)=>s+i.params.cap*24*i.health*E.surf,0)+(S.filter?.012*V*24:0);
+    const upt=P.reduce((s,i)=>s+i.params.uptake*i.health*L,0);
+    const nitr=Math.min(wIn,cap);o2Out+=nitr*3.4;hr+=nitr*3.4/24;
+    const r=o2Out>0?o2In/o2Out:9,mx=Math.max(o2In,o2Out,1);
+    let cls=rate(r,1.2,1),t=r>=1.2?'水草產氧足夠，仲有剩。':r>=1?'產氧同耗氧差唔多，邊緣平衡。':'耗氧多過產氧。';
+    if(r<1&&(S.pump||!S.sealed)){cls='warn';t+=S.pump?'靠氧氣泵補充。':'暫時靠開口換氣頂住。';}else if(r<1)t+='密封會慢慢缺氧，加水草、開氧氣泵或者減少動物。';
+    if(!P.length&&o2Out>0&&!S.pump){cls=S.sealed?'bad':'warn';t='冇水草'+(S.sealed?'，密封之後氧氣只會一直跌。':'，全靠開口換氣。');}
+    out.push(bud(cls,'氧氣（每日）',fx(r,2)+'×',pairRow('產氧',o2In,mx,'var(--o2)','mg')+pairRow('耗氧',o2Out,mx,'var(--muted)','mg'),t+`<br><span class="lede">${lightNote}</span>`));
+    const nightUse=hr*(24-L),stock=Math.max(0,c.O2-2*V),pumpAdd=S.pump?(S.sealed?.04:.15)*2*V*(24-L):0;
+    const nc=nightUse>stock+pumpAdd?'bad':nightUse>(stock+pumpAdd)*.6?'warn':'good',nm=Math.max(nightUse,stock+pumpAdd,1);
+    out.push(bud(nc,`熄燈 ${24-L} 小時`,`${fx(nightUse)} / ${fx(stock+pumpAdd)} mg`,pairRow('夜晚用',nightUse,nm,'var(--muted)','mg')+pairRow('可用',stock+pumpAdd,nm,'var(--o2)','mg'),
+      nc==='good'?'存量夠撐到天光。':nc==='warn'?'天光前溶氧會跌得幾低，留意敏感嘅蝦。':'夜晚會缺氧！開氧氣泵、縮短熄燈時間或者減少動物。'));
+    if(wIn>0){const r2=(cap+upt)/wIn,m2=Math.max(wIn,cap+upt,.01);
+      out.push(bud(rate(r2),'排泄物（氨，每日）',fx(r2,2)+'×',pairRow('產生',wIn,m2,'var(--warn)','mg')+pairRow('處理',cap+upt,m2,'var(--leaf)','mg'),
+        (r2>=1.2?'硝化菌同水草處理得切。':r2>=.8?'啱啱好，餵多咗就會累積氨。':'氨會累積，加硝化菌、底沙、石頭或者開過濾。')+`<br><span class="lede">細菌附著面 ×${fx(E.surf,2)}${S.filter?'，過濾器幫手':''}</span>`));}
+    if(need>0){const algaeDay=S.hist.slice(-24).reduce((s,h)=>s+(h.grown||0),0),sup=S.feed+algaeDay+c.detritus*.1,r3=sup/need,m3=Math.max(need,sup,.1);
+      out.push(bud(rate(r3),'食物（每日）',fx(r3,2)+'×',pairRow('需要',need,m3,'var(--muted)','份')+pairRow('供應',sup,m3,'var(--accent)','份'),
+        r3>=1.2?'食物夠。':r3>=.8?'食物勉強夠。':'食物唔夠，增加餵食，或者揀食藻嘅蝦同螺。'));}
+    const tr2=rangeOf('t');if(tr2){const ok=c.T>=tr2[0]&&c.T<=tr2[1],bad=tr2[0]>tr2[1];
+      out.push(bud(bad?'bad':ok?'good':'warn','水溫',`${fx(c.T)}°C`,rangeRow('啱溫',tr2[0],tr2[1],c.T,0,40,'°C'),
+        bad?'瓶入面啲動物冇一個共同啱嘅溫度，要揀過啲生物。':ok?'水溫喺全部動物都舒服嘅範圍。':'水溫出咗範圍，受天氣影響，可以搬去室內或者改天氣。'));}
+  } else {
+    let wIn=0,need=0,eatW=0;A.forEach(it=>{const C=CAT[it.type];if(!C.pool)wIn+=it.params.wasteAmt*24/it.params.wasteEvery;if(C.diet.feed&&!C.diet.waste)need+=it.params.food;if(C.diet.waste)eatW+=it.params.food*.6;});
+    const cap=M.reduce((s,i)=>s+i.params.rate*24*i.health*E.surf,0)+eatW+c.waste*.12;
+    const r=o2Out>0?o2In/o2Out:9,mx=Math.max(o2In,o2Out,1);
+    let cls=rate(r,1.1,.9);if(!S.sealed)cls=r>=.5?'good':'warn';
+    out.push(bud(cls,'氧氣同二氧化碳（每日）',fx(r,2)+'×',pairRow('植物產氧',o2In,mx,'var(--o2)','mg')+pairRow('全部耗氧',o2Out,mx,'var(--muted)','mg'),
+      (S.sealed?(r>=1.1?'密封都得：植物食走嘅二氧化碳多過動物呼出嘅。':'密封會令二氧化碳不斷上升，要開網蓋通風或加植物。'):'開咗口，空氣會自然交換。')+`<br><span class="lede">${lightNote}</span>`));
+    if(wIn>0){const r2=cap/wIn,m2=Math.max(wIn,cap,.01);
+      out.push(bud(rate(r2),'排泄物（每日）',fx(r2,2)+'×',pairRow('產生',wIn,m2,'var(--warn)','份')+pairRow('分解',cap,m2,'var(--leaf)','份'),
+        r2>=1.2?'分解者處理得切。':'排泄物會堆積、生霉，加土壤菌群、鼠婦或者泥土。'));}
+    if(need>0){const r3=S.feed/need,m3=Math.max(need,S.feed,.1);
+      out.push(bud(rate(r3),'食物（每日）',fx(r3,2)+'×',pairRow('需要',need,m3,'var(--muted)','份')+pairRow('餵食',S.feed,m3,'var(--accent)','份'),r3>=1.2?'夠食。':r3>=.8?'勉強夠。':'唔夠食，增加每日餵食。'));}
+    const hr2=rangeOf('hum');if(hr2){const ok=c.hum>=hr2[0]&&c.hum<=hr2[1],bad=hr2[0]>hr2[1];
+      out.push(bud(bad?'bad':ok?'good':'warn','濕度',`${fx(c.hum,0)}%`,rangeRow('舒適',hr2[0],hr2[1],c.hum,0,100,'%'),
+        bad?'動物之間冇共同啱嘅濕度，例如守宮怕太濕、箭毒蛙要好濕。':ok?'濕度啱晒。':c.hum<hr2[0]?'太乾：加噴霧次數、密封或者加水池。':'太濕：打開網蓋通風、減噴霧或者開加熱燈。'));}
+    const tr2=rangeOf('t');if(tr2){const ok=c.T>=tr2[0]&&c.T<=tr2[1],bad=tr2[0]>tr2[1];
+      out.push(bud(bad?'bad':ok?'good':'warn','溫度',`${fx(c.T)}°C`,rangeRow('舒適',tr2[0],tr2[1],c.T,0,40,'°C'),bad?'動物之間冇共同啱嘅溫度。':ok?'溫度啱晒。':c.T<tr2[0]?'太凍：開加熱燈。':'太熱：關加熱燈或者打開瓶口。'));}
+    if(A.some(i=>CAT[i.type].pool)&&!E.pool)out.push(bud('bad','水池','冇','','麝香龜一定要有水池，去「加入 › 造景」加一個。'));
+  }
+  return out;
+}
 function renderBalance(){
-  const a=analyze(),V=S.V;const items=[];
-  const hasP=alive('plant').length;
-  // 氧
-  {const r=a.o2Out>0?a.o2In/a.o2Out:9;let c,t;
-    if(!hasP&&a.o2Out>0){c=S.sealed?'bad':'warn';t=S.sealed?'冇水草，密封之後氧氣只會一直跌。':'冇水草，全靠開口換氣補氧。';}
-    else if(r>=1.2){c='good';t='水草產氧足夠應付全瓶呼吸，仲有剩。';}
-    else if(r>=1){c='warn';t='產氧同耗氧差唔多，邊緣平衡，再加動物就唔夠。';}
-    else{c=S.sealed?'bad':'warn';t=S.sealed?'耗氧多過產氧，密封會慢慢缺氧。加水草、減動物或延長光照。':'耗氧多過產氧，暫時靠開口換氣頂住。';}
-    const mx=Math.max(a.o2In,a.o2Out,1);
-    items.push(`<div class="bud ${c}"><div class="bh"><b>氧氣（每日）</b><span>${fx(r,2)}×</span></div>${pairRow('產氧',a.o2In,mx,'var(--o2)','mg')}${pairRow('耗氧',a.o2Out,mx,'var(--muted)','mg')}<p>${t}${a.hasHist?`<br><span class="lede">過去 24 小時實際：產 ${fx(a.actP)} mg，用 ${fx(a.actU)} mg（受 CO₂ 同健康影響）</span>`:''}</p></div>`);}
-  // 夜晚
-  {const c=a.nightUse>a.stock?'bad':a.nightUse>a.stock*.6?'warn':'good';const mx=Math.max(a.nightUse,a.stock,1);
-    items.push(`<div class="bud ${c}"><div class="bh"><b>熄燈 ${24-a.L} 小時</b><span>${fx(a.nightUse)} / ${fx(a.stock)} mg</span></div>${pairRow('夜晚用',a.nightUse,mx,'var(--muted)','mg')}${pairRow('可用存量',a.stock,mx,'var(--o2)','mg')}<p>${c==='good'?'夜晚冇光合作用，但存量夠撐到天光。':c==='warn'?'天光前溶氧會跌得幾低，留意敏感嘅蝦。':'夜晚會缺氧！縮短熄燈時間或減少動物。'}</p></div>`);}
-  // 排泄
-  if(a.wIn>0){const r=a.wOut/a.wIn,c=r>=1.2?'good':r>=.8?'warn':'bad',mx=Math.max(a.wIn,a.wOut,.01);
-    items.push(`<div class="bud ${c}"><div class="bh"><b>排泄物（氨，每日）</b><span>${fx(r,2)}×</span></div>${pairRow('產生',a.wIn,mx,'var(--warn)','mg')}${pairRow('處理',a.wOut,mx,'var(--leaf)','mg')}<p>${c==='good'?'硝化菌同水草處理得切。':c==='warn'?'處理能力啱啱好，餵多咗就會累積氨。':'氨會不斷累積，要加硝化菌群或水草，或者減少餵食。'}<br><span class="lede">硝化菌 ${fx(a.cap,2)} mg + 水草吸收 ${fx(a.upt,2)} mg</span></p></div>`);}
-  // 食物
-  if(a.need>0){const r=a.supply/a.need,c=r>=1.2?'good':r>=.8?'warn':'bad',mx=Math.max(a.need,a.supply,.1);
-    items.push(`<div class="bud ${c}"><div class="bh"><b>食物（每日）</b><span>${fx(r,2)}×</span></div>${pairRow('需要',a.need,mx,'var(--muted)','份')}${pairRow('供應',a.supply,mx,'var(--accent)','份')}<p>${c==='good'?'食物夠。':c==='warn'?'食物勉強夠。':'食物唔夠，動物會餓。增加餵食，或者揀食藻嘅蝦同螺。'}<br><span class="lede">餵食 ${S.feed} 份 + 藻類生長 ${fx(a.algaeDay,2)} 份${a.hasHist?'':'（模擬滿一日先有準確數）'}</span></p></div>`);}
-  if(S.algae>30)items.push(`<div class="bud warn"><div class="bh"><b>藻類</b><span>${fx(S.algae)} 份</span></div><p>硝酸鹽太多、水草食唔切，藻類開始爆發。加浮萍或縮短光照。</p></div>`);
-  const bads=items.filter(x=>x.includes('bud bad')).length,warns=items.filter(x=>x.includes('bud warn')).length;
-  const an=alive('animal').length;
+  const aq=S.mode==='aqua',items=budgets(),fc=forecast(72);
+  const bads=items.filter(x=>x.includes('bud bad')).length+(fc.deaths.length?1:0),warns=items.filter(x=>x.includes('bud warn')).length;
+  const anyLife=S.items.some(i=>i.alive&&['plant','animal'].includes(CAT[i.type].kind));
   let vt,vb;
-  if(!an&&!hasP){vt='空瓶';vb='加啲水草同動物開始試。';}
-  else if(!bads&&!warns){vt=S.sealed?'可以長期密封自給自足':'生態平衡';vb='氧氣、排泄物同食物三條循環都閉合得到。';}
+  if(!anyLife){vt='未有生物';vb='去「加入」由造景開始砌，再放植物同動物。';}
+  else if(!bads&&!warns){vt=S.sealed?'可以長期密封自給自足':'生態平衡';vb='氧氣、排泄物同食物循環都閉合得到。';}
   else if(!bads){vt='基本平衡，有啲邊緣';vb='可以運作，但留意黃色項目。';}
-  else{vt='未能自給自足';vb=`有 ${bads} 項唔平衡，跟住紅色項目調整。`;}
-  $('#pane-bal').innerHTML=`<div class="verdict"><b>${vt}</b>${vb}</div><p class="lede">按而家瓶內生物同每日 ${a.L} 小時光照計。</p>
+  else{vt='未能自給自足';vb=`有 ${bads} 項唔平衡。可以跟住紅色項目調整，或者撳「一鍵平衡」。`;}
+  const reasons=Object.entries(fc.stress).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([r,n])=>`${r}（${n} 隻·小時）`).join('、');
+  const fcTxt=aq?`溶氧最低 ${fx(fc.mn.o2)} mg/L，氨最高 ${fx(fc.mx.nh3,2)} mg/L，水溫 ${fx(fc.mn.T)}–${fx(fc.mx.T)}°C`
+    :`O₂ 最低 ${fx(fc.mn.o2)}%，CO₂ 最高 ${fx(fc.mx.co2,0)} ppm，濕度 ${fx(fc.mn.hum,0)}–${fx(fc.mx.hum,0)}%，溫度 ${fx(fc.mn.T)}–${fx(fc.mx.T)}°C，霉菌最高 ${fx(fc.mx.mould)}`;
+  const R=S.report;
+  $('#pane-bal').innerHTML=`${R?`<div class="report"><b>一鍵平衡結果</b>${R.changes.length?`<ul>${R.changes.map(x=>`<li>${x}</li>`).join('')}</ul>`:'<p class="lede">而家嘅設定已經係最平衡，冇需要改。</p>'}
+      <p class="lede" style="margin-top:6px">${R.ok?'模擬未來 5 日：冇生物死亡。':'模擬未來 5 日仍然有生物頂唔順，可能要移走部份動物。'}水質已重設、生物已回復健康。生物本身嘅參數（食量、耗氧）係佢哋嘅天性，所以只調環境同組合。</p></div>`:''}
+    <div class="verdict"><div><b>${vt}</b>${vb}</div><button class="btn magic" id="balBtn2" style="align-self:flex-start">一鍵平衡</button></div>
+    <div class="bud ${fc.deaths.length?'bad':reasons?'warn':'good'}"><div class="bh"><b>預測未來 3 日</b><span>${S.wxMode==='auto'?'以多雲天氣':WX[S.wxMode].n}</span></div>
+      <p>${fc.deaths.length?`會有 ${fc.deaths.length} 個生物死亡：${[...new Set(fc.deaths.map(d=>CAT[d.type].name+'（'+d.why+'）'))].join('、')}。`:'冇生物會死。'}${reasons?`受壓原因：${reasons}。`:''}<br><span class="lede">${fcTxt}</span></p></div>
     <div class="budget">${items.join('')}</div>
-    <div class="chartbox"><h3>水質走勢（最近 ${Math.min(S.hist.length,168)} 小時）</h3><canvas id="chart"></canvas>
-    <div class="legend"><span><i style="background:var(--o2)"></i>溶氧 mg/L（左）</span><span><i style="background:var(--warn)"></i>氨 mg/L（右）</span><span><i style="background:var(--line);height:8px"></i>夜間</span></div></div>
-    <section><h3 style="margin-bottom:6px">事件紀錄</h3>${S.log.length?`<ul class="log">${S.log.slice(0,14).map(l=>`<li><span class="tm">第${l.d}日 ${String(l.h).padStart(2,'0')}:00</span><span style="color:var(--${l.c})">${l.t}</span></li>`).join('')}</ul>`:'<p class="lede">暫時冇事發生。</p>'}</section>`;
+    <div class="chartbox"><h3>走勢（最近 ${Math.min(S.hist.length,168)} 小時）</h3><canvas id="chart"></canvas>
+    <div class="legend">${aq?'<span><i style="background:var(--o2)"></i>溶氧 mg/L（左）</span><span><i style="background:var(--warn)"></i>氨 mg/L（右）</span>':'<span><i style="background:var(--o2)"></i>濕度 %（左）</span><span><i style="background:var(--warn)"></i>溫度 °C（右）</span>'}<span><i style="background:var(--line);height:8px"></i>夜間</span></div></div>
+    <section><h3 style="margin-bottom:6px">事件紀錄</h3>${S.log.length?`<ul class="log">${S.log.slice(0,16).map(l=>`<li><span class="tm">第${l.d}日 ${String(l.h).padStart(2,'0')}:00</span><span style="color:var(--${l.c==='muted'?'muted':l.c})">${esc(l.t)}</span></li>`).join('')}</ul>`:'<p class="lede">暫時冇事發生。</p>'}</section>`;
+  $('#balBtn2').onclick=()=>$('#balBtn').click();
   drawChart();
 }
 function drawChart(){
@@ -827,76 +1331,90 @@ function drawChart(){
   const H=S.hist.slice(-168),pl=30,pr=34,pt=8,pb=18,iw=w-pl-pr,ih=h-pt-pb;
   x.font='10px '+col('--f-mono');x.fillStyle=col('--muted');
   if(H.length<2){x.fillText('模擬緊，等一陣…',pl,h/2);return;}
-  const nMax=Math.max(1,Math.ceil(Math.max(...H.map(p=>p.nh3))*2)/2);
-  const X=i=>pl+i/(H.length-1)*iw,Y1=v=>pt+ih-v/14*ih,Y2=v=>pt+ih-v/nMax*ih;
+  const aq=S.mode==='aqua';
+  const k1=aq?'o2':'hum',max1=aq?14:100,ticks1=aq?[0,4,8,12]:[0,25,50,75,100];
+  const k2=aq?'nh3':'T',max2=aq?Math.max(1,Math.ceil(Math.max(...H.map(p=>p.nh3||0))*2)/2):40;
+  const X=i=>pl+i/(H.length-1)*iw,Y1=v=>pt+ih-clamp(v/max1,0,1)*ih,Y2=v=>pt+ih-clamp(v/max2,0,1)*ih;
   x.fillStyle=col('--line');x.globalAlpha=.5;H.forEach((p,i)=>{if(!p.light)x.fillRect(X(i)-iw/(H.length-1)/2,pt,iw/(H.length-1)+.5,ih);});x.globalAlpha=1;
   x.strokeStyle=col('--line');x.lineWidth=1;x.fillStyle=col('--muted');x.textAlign='right';
-  [0,4,8,12].forEach(v=>{x.beginPath();x.moveTo(pl,Y1(v));x.lineTo(pl+iw,Y1(v));x.stroke();x.fillText(v,pl-5,Y1(v)+3);});
-  x.textAlign='left';[0,nMax/2,nMax].forEach(v=>x.fillText(fx(v,2),pl+iw+5,Y2(v)+3));
-  x.strokeStyle=col('--bad');x.setLineDash([3,3]);x.beginPath();x.moveTo(pl,Y1(3));x.lineTo(pl+iw,Y1(3));x.stroke();x.setLineDash([]);
-  const line=(f,Y,c)=>{x.strokeStyle=c;x.lineWidth=2;x.beginPath();H.forEach((p,i)=>i?x.lineTo(X(i),Y(f(p))):x.moveTo(X(i),Y(f(p))));x.stroke();
-    const l=H[H.length-1];x.fillStyle=c;x.beginPath();x.arc(X(H.length-1),Y(f(l)),3,0,7);x.fill();};
-  line(p=>p.o2,Y1,col('--o2'));line(p=>p.nh3,Y2,col('--warn'));
+  ticks1.forEach(v=>{x.beginPath();x.moveTo(pl,Y1(v));x.lineTo(pl+iw,Y1(v));x.stroke();x.fillText(v,pl-5,Y1(v)+3);});
+  x.textAlign='left';[0,max2/2,max2].forEach(v=>x.fillText(fx(v,aq?2:0),pl+iw+5,Y2(v)+3));
+  if(aq){x.strokeStyle=col('--bad');x.setLineDash([3,3]);x.beginPath();x.moveTo(pl,Y1(3));x.lineTo(pl+iw,Y1(3));x.stroke();x.setLineDash([]);}
+  const line=(k,Y,c)=>{x.strokeStyle=c;x.lineWidth=2;x.beginPath();H.forEach((p,i)=>i?x.lineTo(X(i),Y(p[k]||0)):x.moveTo(X(i),Y(p[k]||0)));x.stroke();
+    const l=H[H.length-1];x.fillStyle=c;x.beginPath();x.arc(X(H.length-1),Y(l[k]||0),3,0,7);x.fill();};
+  line(k1,Y1,col('--o2'));line(k2,Y2,col('--warn'));
   x.fillStyle=col('--muted');x.textAlign='center';x.fillText(`${H.length} 小時前`,pl+30,h-4);x.fillText('而家',pl+iw-10,h-4);
 }
 
-const PRESETS={
-  eco:{n:'密封生態瓶',d:'4L 密封，金魚藻 + 莫絲 + 米蝦 + 石田螺 + 硝化菌，唔使餵。',V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,items:[['hornwort',2],['moss',1],['vallis',1],['shrimp',5],['snail',2],['bacteria',1]]},
-  tank:{n:'開口小魚缸',d:'10L 方缸開口，孔雀魚 4 條，每日餵 3 份。',V:10,shape:'box',mat:'glass',sealed:false,light:10,feed:3,items:[['hornwort',2],['vallis',2],['duckweed',1],['guppy',4],['snail',1],['bacteria',1]]},
-  bad:{n:'失衡示範',d:'3L 密封金魚缸，5 條孔雀魚只得一撮莫絲，冇硝化菌。睇吓會發生咩事。',V:3,shape:'bowl',mat:'glass',sealed:true,light:12,feed:2,items:[['moss',1],['guppy',5]]}
-};
-function loadPreset(key){const p=PRESETS[key];S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;
-  Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat,sealed:p.sealed,light:p.light,feed:p.feed});resetChem();buildJar();
-  p.items.forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);});
-  renderAll();save();toast('已載入：'+p.n);}
+function loadPreset(key){
+  const p=PRESETS[S.mode][key];S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;S.report=null;
+  Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat||'glass',sealed:p.sealed,light:p.light,feed:p.feed,pump:!!p.pump,filter:!!p.filter,mist:p.mist||0,heat:!!p.heat,log:[],hour:6,day:1});
+  resetChem(S);
+  p.items.forEach(([t,n,par])=>{for(let i=0;i<n;i++){const it=makeItem(t,par);it.n=nextN(t);S.items.push(it);}});
+  buildJar();renderAll();save();toast('已載入：'+p.n);
+}
 function shapeIcon(k){const sh=SHAPES[k];
   if(sh.box)return`<svg viewBox="0 0 40 50" aria-hidden="true"><rect x="5" y="${46-sh.H/2.7*40}" width="30" height="${sh.H/2.7*40}" rx="1"/></svg>`;
   const pts=shapeSamples(sh).map(p=>[p.x*sh.R*14,46-p.y*sh.H/2.7*40]);
   const d='M'+pts.map(([x,y])=>`${(20+x).toFixed(1)} ${y.toFixed(1)}`).join('L')+'L'+[...pts].reverse().map(([x,y])=>`${(20-x).toFixed(1)} ${y.toFixed(1)}`).join('L')+'Z';
   return`<svg viewBox="0 0 40 50" aria-hidden="true"><path d="${d}"/></svg>`;}
-function matHex(k){return'#'+MATS[k].c.toString(16).padStart(6,'0');}
+const matHex=k=>'#'+MATS[k].c.toString(16).padStart(6,'0');
 function renderEnv(){
+  const aq=S.mode==='aqua';
+  const sw=(id,on,t,d)=>`<label class="switch" for="${id}"><span><b>${t}</b><br><span class="lede">${d}</span></span><input type="checkbox" id="${id}" ${on?'checked':''}></label>`;
+  const sl=(id,l,v,min,max,step,u,h)=>`<div class="field param"><div class="ph"><label for="${id}">${l}</label><output id="o${id}">${v} ${u}</output></div><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${v}"><small>${h}</small></div>`;
   $('#pane-env').innerHTML=`
+   <section class="field"><h3>天氣</h3><div class="opts">${[['auto','自動'],...Object.entries(WX).map(([k,w])=>[k,w.n])].map(([k,n])=>`<button class="opt" data-wx="${k}" aria-pressed="${S.wxMode===k}"><span>${n}</span></button>`).join('')}</div>
+     <small class="lede">個瓶放喺窗邊：天氣會改變光照同溫度。${aq?'開口時落雨會沖淡水入面嘅氨。':'開口時落雨同起霧會令濕度上升。'}雷暴會閃電。</small></section>
    <section class="field"><h3>瓶形狀</h3><div class="opts">${Object.entries(SHAPES).map(([k,sh])=>`<button class="opt" data-shape="${k}" aria-pressed="${S.shape===k}">${shapeIcon(k)}<span>${sh.n}</span></button>`).join('')}</div>
      <small class="lede">開口越窄，打開蓋時換氣越慢。而家開口換氣效率：${Math.round(J.open*100)}%</small></section>
    <section class="field"><h3>瓶材質</h3><div class="opts">${Object.entries(MATS).map(([k,m])=>`<button class="opt" data-mat="${k}" aria-pressed="${S.mat===k}"><i class="sw" style="background:${matHex(k)};opacity:${Math.min(1,m.op*2.5+.3)}"></i><span>${m.n}</span><em>透光 ${Math.round(m.tr*100)}%</em></button>`).join('')}</div>
-     <small class="lede">${MATS[S.mat].n}：${MATS[S.mat].d}。透光率會直接乘落水草同藻類嘅光合作用。</small></section>
-
-   <div class="field param"><div class="ph"><label for="e-V">瓶容量</label><output id="eo-V">${S.V} L</output></div><input type="range" id="e-V" min="1" max="20" step="1" value="${S.V}"><small>水量越多，氧氣同毒素變化越慢，越易穩定。</small></div>
-   <div class="field param"><div class="ph"><label for="e-L">每日光照</label><output id="eo-L">${S.light} 小時</output></div><input type="range" id="e-L" min="0" max="24" step="1" value="${S.light}"><small>朝早 7 點開燈。光照長產氧多，但藻類都會長得快。</small></div>
-   <div class="field param"><div class="ph"><label for="e-F">每日餵食</label><output id="eo-F">${S.feed} 份</output></div><input type="range" id="e-F" min="0" max="6" step="0.5" value="${S.feed}"><small>每朝 9 點自動落飼料。食唔晒會腐爛變氨。</small></div>
-   <label class="switch" for="e-S"><span><b>密封瓶口</b><br><span class="lede">密封＝完全靠瓶內循環；開口＝空氣會補氧、散走 CO₂。</span></span><input type="checkbox" id="e-S" ${S.sealed?'checked':''}></label>
-   <section class="presets"><h3>預設組合</h3>${Object.entries(PRESETS).map(([k,p])=>`<button class="preset" data-p="${k}"><b>${p.n}</b><span>${p.d}</span></button>`).join('')}</section>
+     <small class="lede">${MATS[S.mat].n}：${MATS[S.mat].d}。透光率會直接乘落光合作用。</small></section>
+   ${sl('e-V','瓶容量',S.V,1,30,1,'L','越大越穩定，變化越慢。')}
+   ${sl('e-L','每日光照',S.light,0,24,1,'小時','朝早 7 點開燈。光照長產氧多，但藻類都長得快。')}
+   ${sl('e-F','每日餵食',S.feed,0,6,.5,'份',aq?'每朝 9 點落飼料，食唔晒會腐爛變氨。':'每朝 9 點放昆蟲或飼料，食唔晒會變排泄物。')}
+   ${aq?sw('e-P',S.pump,'氧氣泵','打氣入水，補氧同趕走 CO₂。密封時效果細啲。')+sw('e-Fi',S.filter,'過濾','海綿入面住咗大量硝化菌，分解氨同隔走殘渣。')
+     :sl('e-M','每日噴霧',S.mist,0,6,1,'次','每次噴霧即刻提高濕度。')+sw('e-H',S.heat,'加熱燈','開燈時加熱約 5°C，同時令空氣乾啲。')+(envInfo(S).pool?sw('e-Fi',S.filter,'水池過濾','清走龜嘅排泄物，水池保持乾淨。'):'')}
+   ${sw('e-S',S.sealed,aq?'密封瓶口':'密封（唔用網蓋）',aq?'密封＝完全靠瓶內循環；開口＝空氣會補氧。':'密封＝濕度高、空氣唔流通；網蓋＝通風、濕度跟天氣。')}
+   <section class="presets"><h3>預設組合（${aq?'水族':'雨林'}）</h3>${Object.entries(PRESETS[S.mode]).map(([k,p])=>`<button class="preset" data-p="${k}"><b>${p.n}</b><span>${p.d}</span></button>`).join('')}</section>
    <div class="ed-actions"><button class="btn" id="e-restart">保留生物，重新開始時間</button><button class="btn danger" id="e-clear">清空個瓶</button></div>`;
-  const bind=(id,o,f,u)=>{const e=$('#'+id);e.oninput=()=>{f(+e.value);$('#'+o).textContent=e.value+u;save();};};
-  bind('e-V','eo-V',v=>{const r=v/S.V;['O2','CO2','NH3','NO3'].forEach(k=>S[k]*=r);S.V=v;buildJar();},' L');
-  bind('e-L','eo-L',v=>S.light=v,' 小時');bind('e-F','eo-F',v=>S.feed=v,' 份');
-  $('#e-S').onchange=e=>{S.sealed=e.target.checked;save();};
-  $('#pane-env').querySelectorAll('[data-shape]').forEach(b=>b.onclick=()=>{S.shape=b.dataset.shape;buildJar();renderEnv();renderJarList();renderEditor();save();toast('換咗做'+SHAPES[S.shape].n);});
-  $('#pane-env').querySelectorAll('[data-mat]').forEach(b=>b.onclick=()=>{S.mat=b.dataset.mat;buildJar();renderEnv();save();toast('換咗做'+MATS[S.mat].n);});
-  $('#pane-env').querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>loadPreset(b.dataset.p));
-  $('#e-restart').onclick=()=>{resetChem();S.items=S.items.filter(i=>{if(!i.alive){disposeObj(i.g);return false;}return true;});S.items.forEach(i=>{i.health=1;i.satiety=1;});renderAll();toast('時間重新開始');};
-  $('#e-clear').onclick=()=>{S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;resetChem();renderAll();save();toast('已清空');};
+  const bind=(id,f,u)=>{const e=$('#'+id);if(!e)return;e.oninput=()=>{$('#o'+id).textContent=e.value+' '+u;f(+e.value,false);save();};e.onchange=()=>f(+e.value,true);};
+  bind('e-V',(v,done)=>{if(!done)return;const r=v/S.V;['O2','CO2','NH3','NO3','waste','pNH3'].forEach(k=>{if(S.c[k]!=null)S.c[k]*=r;});S.V=v;buildJar();renderEnv();},'L');
+  bind('e-L',v=>S.light=v,'小時');bind('e-F',v=>S.feed=v,'份');bind('e-M',v=>S.mist=v,'次');
+  const chk=(id,k)=>{const e=$('#'+id);if(e)e.onchange=()=>{S[k]=e.checked;save();};};
+  chk('e-P','pump');chk('e-Fi','filter');chk('e-H','heat');chk('e-S','sealed');
+  const pe=$('#pane-env');
+  pe.querySelectorAll('[data-wx]').forEach(b=>b.onclick=()=>{S.wxMode=b.dataset.wx;if(S.wxMode!=='auto')S.wx=S.wxMode;renderEnv();save();toast(S.wxMode==='auto'?'天氣自動變化':'天氣固定為'+WX[S.wx].n);});
+  pe.querySelectorAll('[data-shape]').forEach(b=>b.onclick=()=>{S.shape=b.dataset.shape;buildJar();renderEnv();renderJarList();renderEditor();save();toast('換咗做'+SHAPES[S.shape].n);});
+  pe.querySelectorAll('[data-mat]').forEach(b=>b.onclick=()=>{S.mat=b.dataset.mat;buildJar();renderEnv();save();toast('換咗做'+MATS[S.mat].n);});
+  pe.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>loadPreset(b.dataset.p));
+  $('#e-restart').onclick=()=>{resetChem(S);S.hour=6;S.day=1;S.log=[];S.items=S.items.filter(i=>{if(!i.alive){disposeObj(i.g);return false;}return true;});S.items.forEach(i=>{i.health=1;i.satiety=1;});renderAll();toast('時間重新開始');};
+  $('#e-clear').onclick=()=>{S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;resetChem(S);buildJar();renderAll();save();toast('已清空');};
 }
-function renderAll(){renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(curTab==='bal')renderBalance();}
+function renderAll(){renderModeSeg();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(curTab==='bal')renderBalance();}
 
-/* 儲存（只存設定） */
-let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem('ecojar.v1',JSON.stringify({V:S.V,shape:S.shape,mat:S.mat,sealed:S.sealed,light:S.light,feed:S.feed,items:S.items.filter(i=>i.alive).map(i=>[i.type,i.params])}));}catch(e){}},400);}
-function load(){try{const d=JSON.parse(localStorage.getItem('ecojar.v1')||'null');if(!d||!d.items)return false;
-  Object.assign(S,{V:d.V,shape:SHAPES[d.shape]?d.shape:'jar',mat:MATS[d.mat]?d.mat:'glass',sealed:d.sealed,light:d.light,feed:d.feed});resetChem();buildJar();d.items.forEach(([t,p])=>CAT[t]&&addItem(t,p,true));return true;}catch(e){return false;}}
+/* ================= 儲存 ================= */
+const KEY='ecojar.v2';
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify({mode:S.mode,V:S.V,shape:S.shape,mat:S.mat,sealed:S.sealed,light:S.light,feed:S.feed,pump:S.pump,filter:S.filter,mist:S.mist,heat:S.heat,wxMode:S.wxMode,
+  items:S.items.filter(i=>i.alive).map(i=>[i.type,i.params,i.name||''])}));}catch(e){}},400);}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(!d||!d.items||!PRESETS[d.mode])return false;
+  Object.assign(S,{mode:d.mode,V:d.V,shape:SHAPES[d.shape]?d.shape:'jar',mat:MATS[d.mat]?d.mat:'glass',sealed:!!d.sealed,light:d.light,feed:d.feed,pump:!!d.pump,filter:!!d.filter,mist:d.mist||0,heat:!!d.heat,wxMode:d.wxMode||'auto'});
+  if(S.wxMode!=='auto'&&WX[S.wxMode])S.wx=S.wxMode;
+  resetChem(S);d.items.forEach(([t,p,nm])=>{if(!CAT[t])return;const it=makeItem(t,p);it.n=nextN(t);it.name=nm||'';S.items.push(it);});return true;}catch(e){return false;}}
 
-/* 開始 */
+/* ================= 開始 ================= */
 renderSpeed();
-if(!load()){const p=PRESETS.eco;Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat,sealed:p.sealed,light:p.light,feed:p.feed});resetChem();buildJar();p.items.forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);});}
-renderAll();resize();
+if(!load()){const p=PRESETS.aqua.eco;Object.assign(S,{V:p.V,shape:p.shape,sealed:p.sealed,light:p.light,feed:p.feed});resetChem(S);
+  p.items.forEach(([t,n])=>{for(let i=0;i<n;i++){const it=makeItem(t);it.n=nextN(t);S.items.push(it);}});}
+buildJar();renderAll();resize();
 let last=performance.now(),acc=0,lastUI=0,lastBal=0;
 function frame(t){
   const dt=Math.min(.1,(t-last)/1000);last=t;
-  if(S.running){acc+=dt*S.speed;let n=0;while(acc>=1&&n<60){step();acc-=1;n++;}}
+  if(S.running){acc+=dt*S.speed;let n=0;while(acc>=1&&n<60){step(S);acc-=1;n++;}}
   animate(dt,S.hour+(S.running?acc:0));
   renderer.render(scene,camera);
   if(t-lastUI>250){lastUI=t;renderMeters();if(dirtyList){renderJarList();renderCatalog();if(S.sel&&!S.items.includes(S.sel)){S.sel=null;renderEditor();}}else updateJarLive();
-    if(curTab==='bal'&&t-lastBal>1500&&!document.activeElement?.closest?.('#pane-bal')){lastBal=t;renderBalance();}}
+    if(curTab==='bal'&&t-lastBal>2500&&!document.activeElement?.closest?.('#pane-bal')){lastBal=t;renderBalance();}}
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
