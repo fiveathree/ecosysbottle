@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>生態瓶實驗室</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-screen lab bench — live 3D jar on the left, specimen sheet (catalog / contents / budget / environment) on the right; stacks on phones */
+:root{
+  --bg:#edf3f2; --surface:#ffffff; --surface-2:#f4f8f7; --ink:#10262b; --muted:#566f74; --line:#d3dfde;
+  --accent:#0f716b; --accent-soft:#d7ebe8; --on-accent:#ffffff;
+  --leaf:#4a8628; --o2:#2672ad; --warn:#a4660f; --bad:#bf3828; --good:#2b7f52;
+  --glass:rgba(255,255,255,.82);
+  --f-display:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1517; --surface:#112022; --surface-2:#0e1b1d; --ink:#e1eeec; --muted:#8fa8a7; --line:#223739;
+  --accent:#46b8ac; --accent-soft:#163533; --on-accent:#05211e;
+  --leaf:#8cc152; --o2:#6db3e8; --warn:#e2a84c; --bad:#f06c5c; --good:#5cc28b;
+  --glass:rgba(12,24,26,.8); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0b1517; --surface:#112022; --surface-2:#0e1b1d; --ink:#e1eeec; --muted:#8fa8a7; --line:#223739;
+  --accent:#46b8ac; --accent-soft:#163533; --on-accent:#05211e;
+  --leaf:#8cc152; --o2:#6db3e8; --warn:#e2a84c; --bad:#f06c5c; --good:#5cc28b;
+  --glass:rgba(12,24,26,.8); color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.app{display:flex;flex-direction:column;gap:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 20px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto;min-width:0}
+.brand h1{font-family:var(--f-display);font-size:22px;font-weight:700;margin:0;letter-spacing:.02em;text-wrap:balance}
+.brand small{color:var(--muted);font-size:12px;letter-spacing:.06em}
+.clock{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.clock b{font-weight:500;font-size:15px}
+.tag{font-family:var(--f-body);font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);background:var(--surface)}
+.tag.day{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.tag.night{color:var(--o2);border-color:color-mix(in srgb,var(--o2) 40%,var(--line))}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:13px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{color:var(--bad)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:6px 10px;font-size:12px}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+
+.main{display:flex;flex-direction:column;gap:12px}
+.stage{position:relative;height:56vh;min-height:320px;border-radius:14px;overflow:hidden;background:#0f1d22;border:1px solid var(--line)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.hud{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}
+.pill{pointer-events:auto;font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(6px);display:flex;gap:6px;align-items:center}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--good);display:inline-block}
+.pill.warn i{background:var(--warn)} .pill.bad i{background:var(--bad)}
+.hint{font-size:11px;color:var(--muted);background:var(--glass);padding:3px 9px;border-radius:99px;border:1px solid var(--line)}
+.meters{position:absolute;left:10px;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;pointer-events:none}
+.meter{background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px;padding:6px 9px;min-width:0}
+.meter .l{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meter .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px;font-weight:500}
+.meter .v small{font-size:10px;color:var(--muted);margin-left:2px}
+.meter .bar{height:3px;border-radius:2px;background:var(--line);margin-top:3px;overflow:hidden}
+.meter .bar span{display:block;height:100%;background:var(--good)}
+.meter.warn .v{color:var(--warn)} .meter.warn .bar span{background:var(--warn)}
+.meter.bad .v{color:var(--bad)} .meter.bad .bar span{background:var(--bad)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-width:0;min-height:0}
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 6px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:12px 10px 10px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
+.pane{padding:14px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0}
+.pane h2{font-family:var(--f-display);font-size:16px;margin:0}
+.pane h3{font-size:12px;letter-spacing:.08em;color:var(--muted);margin:0;font-weight:700}
+.lede{color:var(--muted);font-size:12.5px;margin:0}
+
+.cards{display:grid;gap:8px}
+.card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;background:var(--surface-2)}
+.card .nm{font-weight:700;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.card .nm em{font-weight:400;font-size:11px;color:var(--muted)}
+.card p{margin:0;font-size:12.5px;color:var(--muted);grid-column:1/2}
+.card .add{grid-row:1/3;grid-column:2;align-self:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.card .add button{width:40px;height:40px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:20px;line-height:1}
+.card .add span{font-size:10.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;grid-column:1/-1}
+.chip{font-size:11px;padding:1px 7px;border-radius:5px;background:var(--surface);border:1px solid var(--line);font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) 80px;align-items:center;gap:10px;padding:8px 12px;border:0;border-top:1px solid var(--line);background:var(--surface);text-align:left;width:100%}
+.row:first-child{border-top:0}
+.row:hover{background:var(--surface-2)}
+.row.sel{background:var(--accent-soft)}
+.row .t{display:flex;flex-direction:column;min-width:0}
+.row .t span{font-size:11.5px;color:var(--muted)}
+.row .t span.warn{color:var(--warn)} .row .t span.bad{color:var(--bad)}
+.hbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.hbar span{display:block;height:100%;background:var(--good)}
+.hbar.warn span{background:var(--warn)} .hbar.bad span{background:var(--bad)}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:16px;color:var(--muted);font-size:13px;text-align:center}
+
+.editor{border:1px solid var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:12px;background:var(--surface-2)}
+.ed-head{display:flex;align-items:center;gap:8px}
+.ed-head h2{margin-right:auto}
+.x{border:0;background:none;font-size:18px;color:var(--muted);width:30px;height:30px;border-radius:6px}
+.vitals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vital{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.vital b{color:var(--ink);font-family:var(--f-mono);font-weight:500;font-variant-numeric:tabular-nums}
+.param{display:flex;flex-direction:column;gap:3px}
+.param .ph{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.param .ph output{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--accent);white-space:nowrap}
+.param small{color:var(--muted);font-size:11.5px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.ed-actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.budget{display:flex;flex-direction:column;gap:10px}
+.bud{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.bud .bh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.bud .bh b{font-size:13px}
+.bud .bh span{font-family:var(--f-mono);font-size:12px;font-variant-numeric:tabular-nums}
+.pair{display:grid;grid-template-columns:44px minmax(0,1fr) 74px;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.pair .track{height:8px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.pair .track span{display:block;height:100%}
+.pair .n{font-family:var(--f-mono);text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+.bud p{margin:0;font-size:12.5px}
+.bud.good{border-left:4px solid var(--good)} .bud.warn{border-left:4px solid var(--warn)} .bud.bad{border-left:4px solid var(--bad)}
+.verdict{padding:12px 14px;border-radius:10px;background:var(--accent-soft);font-size:13.5px}
+.verdict b{font-family:var(--f-display);font-size:16px;display:block;margin-bottom:2px}
+.chartbox{border:1px solid var(--line);border-radius:10px;padding:10px}
+.chartbox canvas{width:100%;height:170px;display:block}
+.legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted);margin-top:4px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.log{list-style:none;margin:0;padding:0;font-size:12.5px;display:flex;flex-direction:column;gap:4px}
+.log li{display:grid;grid-template-columns:86px minmax(0,1fr);gap:8px}
+.log .tm{font-family:var(--f-mono);color:var(--muted);font-size:11.5px}
+
+.field{display:flex;flex-direction:column;gap:4px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.switch input{width:20px;height:20px;accent-color:var(--accent)}
+.presets{display:grid;gap:8px}
+.preset{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.preset:hover{border-color:var(--accent)}
+.preset b{display:block}
+.preset span{font-size:12px;color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:99px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+
+@media (min-width:920px){
+  html,body{overflow:hidden}
+  .app{height:100%;padding-block:14px}
+  .main{flex-direction:row;flex:1;min-height:0}
+  .stage{flex:1;height:auto;min-width:0}
+  .panel{width:400px;flex:none}
+  .pane{flex:1}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>生態瓶實驗室</h1><small>CLOSED ECOSYSTEM BENCH</small></div>
+    <div class="clock"><b id="clkDay">第 1 日</b><b id="clkTime">06:00</b><span id="lightTag" class="tag night">熄燈</span></div>
+    <div class="ctrls">
+      <button class="btn primary" id="playBtn">暫停</button>
+      <div class="seg" id="speedSeg" role="group" aria-label="模擬速度"></div>
+      <button class="btn" id="feedBtn">即刻餵食</button>
+    </div>
+  </header>
+  <div class="main">
+    <section class="stage" id="stage">
+      <canvas id="c" aria-label="3D 生態瓶，拖動旋轉，撳生物睇參數"></canvas>
+      <div class="hud"><div class="pill" id="status"><i></i><span>穩定</span></div><span class="hint">拖動旋轉 · 撳生物睇參數</span></div>
+      <div class="meters" id="meters"></div>
+    </section>
+    <aside class="panel">
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="add" aria-selected="true">加入生物</button>
+        <button role="tab" data-tab="jar" aria-selected="false" id="tabJarBtn">瓶內</button>
+        <button role="tab" data-tab="bal" aria-selected="false">平衡分析</button>
+        <button role="tab" data-tab="env" aria-selected="false">環境</button>
+      </nav>
+      <div class="pane" id="pane-add"></div>
+      <div class="pane" id="pane-jar" hidden></div>
+      <div class="pane" id="pane-bal" hidden></div>
+      <div class="pane" id="pane-env" hidden></div>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const fx=(x,d=1)=>(Math.abs(x)<1e-9?0:x).toFixed(d);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+
+/* ---------- 物種資料 ---------- */
+const CAT={
+  hornwort:{name:'金魚藻',kind:'plant',sci:'Ceratophyllum',color:'#4f8f2c',desc:'生長快、產氧多，吸收養分能力強，係生態瓶嘅主力水草。',params:{o2Prod:0.8,resp:0.10,uptake:0.012}},
+  vallis:{name:'苦草',kind:'plant',sci:'Vallisneria',color:'#6aa33a',desc:'長條葉子，產氧穩定，適合做背景。',params:{o2Prod:0.6,resp:0.08,uptake:0.010}},
+  moss:{name:'莫絲',kind:'plant',sci:'Java moss',color:'#3d6b25',desc:'貼住石頭生長，產氧少但好耐命，俾蝦同螺藏身。',params:{o2Prod:0.3,resp:0.04,uptake:0.004}},
+  duckweed:{name:'浮萍',kind:'plant',sci:'Lemna',color:'#8fc13f',desc:'浮喺水面，一半氧氣散去空氣，但吸收養分快，可以壓制藻類。',params:{o2Prod:0.3,resp:0.03,uptake:0.016}},
+  guppy:{name:'孔雀魚',kind:'animal',move:'swim',sci:'Poecilia reticulata',color:'#e89a3c',desc:'活潑耐養，但食量大、排泄多，要定時餵飼料。',diet:{flake:1,algae:0.3},params:{resp:0.10,food:1.0,wasteEvery:6,wasteAmt:0.05,o2Min:3,nh3Tol:0.4}},
+  minnow:{name:'白雲山魚',kind:'animal',move:'swim',sci:'Tanichthys',color:'#c9d3c2',desc:'香港原生小魚，耐低溫、耐低氧，比孔雀魚易養。',diet:{flake:1,algae:0.4,detritus:0.2},params:{resp:0.12,food:1.1,wasteEvery:8,wasteAmt:0.06,o2Min:2.5,nh3Tol:0.5}},
+  shrimp:{name:'米蝦',kind:'animal',move:'hop',sci:'Neocaridina',color:'#d9452f',desc:'食藻類同殘渣，清潔工；對氨好敏感。',diet:{algae:1,detritus:0.7,flake:0.6},params:{resp:0.04,food:0.4,wasteEvery:8,wasteAmt:0.012,o2Min:4,nh3Tol:0.2}},
+  snail:{name:'石田螺',kind:'animal',move:'crawl',sci:'Sinotaia',color:'#7a5532',desc:'食殘渣同藻類，好頑強，係生態瓶嘅清道夫。',diet:{detritus:1,algae:0.8,flake:0.4},params:{resp:0.03,food:0.5,wasteEvery:10,wasteAmt:0.015,o2Min:2,nh3Tol:0.6}},
+  bacteria:{name:'硝化菌群',kind:'microbe',sci:'Nitrosomonas + Nitrobacter',color:'#d8c27a',desc:'住喺沙底，將有毒嘅氨變成水草食得嘅硝酸鹽，但過程要用氧。',params:{cap:0.03,o2PerN:3.4}}
+};
+const DEFS={
+  plant:[
+    {k:'o2Prod',l:'光照時產氧',u:'mg/小時',min:0,max:3,step:0.05,h:'開燈時每小時製造幾多氧氣'},
+    {k:'resp',l:'呼吸耗氧',u:'mg/小時',min:0,max:0.5,step:0.01,h:'水草日夜都要呼吸，夜晚只用氧唔產氧'},
+    {k:'uptake',l:'吸收養分',u:'mg/小時',min:0,max:0.05,step:0.001,h:'吸收氨同硝酸鹽，即係食咗動物排泄物分解出嚟嘅嘢'}],
+  animal:[
+    {k:'resp',l:'呼吸耗氧',u:'mg/小時',min:0,max:0.5,step:0.005,h:'每小時用幾多氧氣'},
+    {k:'food',l:'每日食量',u:'份/日',min:0,max:3,step:0.1,h:'1 份 ≈ 一撮飼料；冇得食會慢慢餓'},
+    {k:'wasteEvery',l:'幾耐去一次廁所',u:'小時',min:1,max:48,step:1,h:'排泄嘅時間間隔'},
+    {k:'wasteAmt',l:'每次排泄量',u:'mg 氨',min:0,max:0.3,step:0.005,h:'一半即刻變氨，一半變殘渣慢慢分解'},
+    {k:'o2Min',l:'最少要幾多氧',u:'mg/L',min:0.5,max:8,step:0.1,h:'水中溶氧低過呢個數就會缺氧受傷'},
+    {k:'nh3Tol',l:'氨耐受上限',u:'mg/L',min:0.05,max:2,step:0.05,h:'氨濃度高過呢個數就會中毒'}],
+  microbe:[
+    {k:'cap',l:'分解氨能力',u:'mg/小時',min:0,max:0.15,step:0.005,h:'每小時最多將幾多氨變成硝酸鹽'},
+    {k:'o2PerN',l:'分解耗氧',u:'mg 氧 / mg 氨',min:0,max:6,step:0.1,h:'每分解 1 mg 氨要用幾多氧氣'}]
+};
+const POOLNAME={flake:'飼料',algae:'藻類',detritus:'殘渣'};
+
+/* ---------- 狀態 ---------- */
+const S={V:4,sealed:true,light:12,feed:0,feedHour:9,hour:6,day:1,O2:0,CO2:0,NH3:0,NO3:0,algae:3,flake:0,detritus:0,
+  items:[],hist:[],log:[],running:true,speed:4,uid:1,sel:null};
+const isLight=h=>{const on=7,off=7+S.light;return S.light>=24||(h>=on&&h<off)||(off>24&&h<off-24);};
+const alive=k=>S.items.filter(i=>i.alive&&CAT[i.type].kind===k);
+
+function resetChem(){const V=S.V;Object.assign(S,{O2:7.5*V,CO2:1.5*V,NH3:0.02*V,NO3:2*V,algae:3,flake:0,detritus:0.5,hist:[],log:[],hour:6,day:1});}
+
+function addItem(type,params,silent){
+  const c=CAT[type];const n=S.items.filter(i=>i.type===type).length+1;
+  const it={uid:S.uid++,type,n,params:Object.assign({},c.params,params||{}),health:1,satiety:1,wt:Math.floor(Math.random()*6),nShort:0,alive:true,stress:'',lastProd:0,
+    rx:0,rz:0,deadT:0};
+  const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*0.75;it.rx=Math.cos(a)*r;it.rz=Math.sin(a)*r;
+  S.items.push(it);buildItem(it);
+  if(!silent){renderJarList();renderCatalog();save();toast('已加入 '+c.name);}
+  return it;
+}
+function removeItem(it){
+  disposeObj(it.g);S.items=S.items.filter(x=>x!==it);if(S.sel===it)S.sel=null;renderJarList();renderEditor();renderCatalog();save();
+}
+function die(it,why){
+  if(!it.alive)return;it.alive=false;it.deadT=0;it.why=why;
+  const k=CAT[it.type].kind;S.detritus+=k==='plant'?5:k==='animal'?3:0;
+  logEv(`${CAT[it.type].name} #${it.n} ${k==='microbe'?'失效':'死亡'}（${why}）`,'bad');
+  if(S.sel===it)renderEditor();
+  dirtyList=true;
+}
+function logEv(t,c){S.log.unshift({t,c,d:S.day,h:S.hour});if(S.log.length>40)S.log.pop();}
+
+/* ---------- 每小時模擬 ---------- */
+let wasteFx=[];
+function step(){
+  const V=S.V,light=isLight(S.hour);
+  const co2c=S.CO2/V,co2f=co2c/(co2c+0.4);
+  let o2p=0,o2u=0,grown=0;
+  const useO2=x=>{const t=Math.min(S.O2,x);S.O2-=t;S.CO2+=t*1.375;o2u+=t;return t;};
+  for(const it of alive('plant')){
+    const p=it.params,h=it.health;
+    useO2(p.resp*Math.max(.3,h));
+    if(light){
+      const prod=p.o2Prod*h*co2f, kept=it.type==='duckweed'?0.5:1;
+      S.O2+=prod*kept;S.CO2=Math.max(0,S.CO2-prod*1.375);o2p+=prod*kept;it.lastProd=prod*kept;
+      let need=p.uptake*h;const a=Math.min(S.NH3,need);S.NH3-=a;need-=a;const b=Math.min(S.NO3,need);S.NO3-=b;need-=b;
+      it.nShort=need>p.uptake*h*0.7?it.nShort+1:Math.max(0,it.nShort-2);
+    } else it.lastProd=0;
+    let dh=0.003;it.stress='';
+    if(it.nShort>60){dh=-0.004;it.stress='缺養分';}
+    if(S.light<5){dh=-0.005;it.stress='光照不足';}
+    if(S.NH3/V>3){dh-=0.004;it.stress='氨太高';}
+    it.health=clamp(it.health+dh,0,1);if(it.health<=0)die(it,it.stress||'衰弱');
+  }
+  for(const it of alive('animal')){
+    const p=it.params,c=CAT[it.type];
+    useO2(p.resp);
+    const per=p.food/24;
+    if(per>0){
+      let need=per,got=0;
+      for(const [pool,w] of Object.entries(c.diet).sort((a,b)=>b[1]-a[1])){
+        if(need<=1e-9)break;const take=Math.min(S[pool],need/w);S[pool]-=take;got+=take*w;need-=take*w;
+      }
+      it.satiety=clamp(it.satiety+(got/per-1)/36,0,1);
+    }
+    it.wt+=1;
+    if(it.wt>=p.wasteEvery){it.wt=0;S.NH3+=p.wasteAmt*0.5;S.detritus+=p.wasteAmt*0.5/0.1;wasteFx.push(it);}
+    const oc=S.O2/V,nc=S.NH3/V;let dh=0.004;it.stress='';
+    if(oc<p.o2Min){dh=-0.03*(1+(p.o2Min-oc));it.stress='缺氧';}
+    if(nc>p.nh3Tol){dh=Math.min(dh,0)-0.012*(nc/p.nh3Tol);it.stress=it.stress||'氨中毒';}
+    if(it.satiety<=0){dh=Math.min(dh,0)-0.006;it.stress=it.stress||'飢餓';}
+    it.health=clamp(it.health+dh,0,1);if(it.health<=0)die(it,it.stress||'衰弱');
+  }
+  for(const it of alive('microbe')){
+    const p=it.params;let conv=Math.min(S.NH3,p.cap*it.health);
+    if(p.o2PerN>0)conv=Math.min(conv,S.O2/p.o2PerN);
+    S.NH3-=conv;S.NO3+=conv;S.O2-=conv*p.o2PerN;o2u+=conv*p.o2PerN;S.CO2=Math.max(0,S.CO2-conv*0.5);
+    it.stress=S.O2/V<1?'缺氧':'';it.health=clamp(it.health+(S.O2/V<1?-0.01:0.005),0,1);
+    if(it.health<=0)die(it,'缺氧');
+  }
+  // 藻類
+  if(light){
+    const no3c=S.NO3/V;let g=(0.04*S.algae+0.01)*(no3c/(no3c+1.5))*Math.max(0,1-S.algae/60)*co2f;
+    g=Math.max(0,Math.min(g,S.NO3/0.01));S.algae+=g;S.NO3-=g*0.01;S.O2+=g*0.6;S.CO2=Math.max(0,S.CO2-g*0.8);o2p+=g*0.6;grown=g;
+  }
+  useO2(0.003*S.algae);
+  const ad=S.algae*0.004;S.algae-=ad;S.detritus+=ad;
+  // 餵食 & 分解
+  if(S.hour===S.feedHour&&S.feed>0){S.flake+=S.feed;feedFx(S.feed);}
+  let d=S.flake*0.04;S.flake-=d;S.detritus+=d;
+  d=S.detritus*0.02;S.detritus-=d;S.NH3+=d*0.1;useO2(d*0.3);
+  // 氣體交換
+  const k=S.sealed?0.002:0.06;S.O2+=(8*V-S.O2)*k;S.CO2+=(0.6*V-S.CO2)*k;
+  S.O2=clamp(S.O2,0,14*V);for(const key of ['CO2','NH3','NO3','algae','flake','detritus'])S[key]=Math.max(0,S[key]);
+  S.hist.push({o2:S.O2/V,nh3:S.NH3/V,no3:S.NO3/V,co2:S.CO2/V,algae:S.algae,light,o2p,o2u,grown});
+  if(S.hist.length>240)S.hist.shift();
+  S.hour++;if(S.hour>=24){S.hour=0;S.day++;}
+  // 警告
+  const oc=S.O2/V;
+  if(oc<2&&!S._lowO2){S._lowO2=true;logEv(`溶氧跌到 ${fx(oc)} mg/L`,'warn');} if(oc>4)S._lowO2=false;
+  if(S.NH3/V>0.5&&!S._hiN){S._hiN=true;logEv(`氨升到 ${fx(S.NH3/V,2)} mg/L`,'warn');} if(S.NH3/V<0.3)S._hiN=false;
+  if(S.algae>35&&!S._bloom){S._bloom=true;logEv('藻類爆發，水開始變綠','warn');} if(S.algae<25)S._bloom=false;
+}
+
+/* ---------- 平衡分析 ---------- */
+function analyze(){
+  const V=S.V,L=Math.min(24,S.light);
+  let o2In=0,o2Out=0,wIn=0,cap=0,upt=0,need=0,o2N=3.4,hourlyResp=0;
+  alive('plant').forEach(it=>{const p=it.params,h=it.health;o2In+=p.o2Prod*h*L*(it.type==='duckweed'?.5:1);const r=p.resp*Math.max(.3,h);o2Out+=r*24;hourlyResp+=r;upt+=p.uptake*h*L;});
+  alive('animal').forEach(it=>{const p=it.params;o2Out+=p.resp*24;hourlyResp+=p.resp;wIn+=p.wasteAmt*24/p.wasteEvery;need+=p.food;});
+  alive('microbe').forEach(it=>{cap+=it.params.cap*24*it.health;o2N=it.params.o2PerN;});
+  const flakeEaters=alive('animal').reduce((s,it)=>s+(CAT[it.type].diet.flake?it.params.food:0),0);
+  wIn+=Math.max(0,S.feed-flakeEaters)*0.1;
+  const nitr=Math.min(wIn,cap);o2Out+=nitr*o2N;hourlyResp+=nitr*o2N/24;
+  const last=S.hist.slice(-24);
+  const algaeDay=last.reduce((s,h)=>s+h.grown,0);
+  const actP=last.reduce((s,h)=>s+h.o2p,0),actU=last.reduce((s,h)=>s+h.o2u,0);
+  const supply=S.feed+algaeDay+S.detritus*0.1;
+  const nightUse=hourlyResp*(24-L),stock=Math.max(0,S.O2-2*V);
+  return {o2In,o2Out,wIn,wOut:cap+upt,cap,upt,need,supply,algaeDay,nightUse,stock,actP,actU,hasHist:last.length>=24,L};
+}
+
+/* ---------- 3D ---------- */
+const stage=$('#stage'),canvas=$('#c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,1,0.05,100);
+const hemi=new THREE.HemisphereLight(0xdff3ff,0x3b2f22,0.6);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xfff4dc,0.9);sun.position.set(2,6,3);scene.add(sun);
+const fill=new THREE.DirectionalLight(0x8fb7ff,0.25);fill.position.set(-3,2,-2);scene.add(fill);
+const J={R:1,H:2.4,sTop:0.18,wTop:2};
+const jarG=new THREE.Group();scene.add(jarG);
+const world=new THREE.Group();scene.add(world);
+let waterMat,surfMat,lid,lampMat;
+const mat=(c,o)=>new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}));
+
+function buildJar(){
+  while(jarG.children.length){disposeObj(jarG.children[0]);}
+  const k=Math.cbrt(S.V/4);J.R=1*k;J.H=2.3*k;J.sTop=0.16*k;J.wTop=J.H*0.82;
+  const {R,H}=J;
+  const glass=new THREE.MeshPhongMaterial({color:0xdcefff,transparent:true,opacity:.14,shininess:120,specular:0xffffff,side:THREE.DoubleSide,depthWrite:false});
+  jarG.add(new THREE.Mesh(new THREE.CylinderGeometry(R,R,H,64,1,true).translate(0,H/2,0),glass));
+  const hl=new THREE.Mesh(new THREE.CylinderGeometry(R*1.003,R*1.003,H*0.9,24,1,true,0.4,0.22).translate(0,H*0.48,0),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.09,side:THREE.DoubleSide,depthWrite:false}));
+  jarG.add(hl);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(R,0.025*k,8,64),glass.clone());rim.material.opacity=.35;rim.rotation.x=Math.PI/2;rim.position.y=H;jarG.add(rim);
+  const sand=new THREE.Mesh(new THREE.CylinderGeometry(R*.985,R*.985,J.sTop,48),mat(0xcab68c));sand.position.y=J.sTop/2;jarG.add(sand);
+  const pm=[mat(0x6b665e),mat(0x8f8578),mat(0x4f4a44)];
+  for(let i=0;i<14;i++){const a=Math.random()*6.28,r=Math.sqrt(Math.random())*R*.85,s=rnd(.04,.09)*k;
+    const p=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),pm[i%3]);p.scale.y=.55;p.position.set(Math.cos(a)*r,J.sTop+s*.3,Math.sin(a)*r);p.rotation.y=a;jarG.add(p);}
+  waterMat=new THREE.MeshPhongMaterial({color:0x9fd6e0,transparent:true,opacity:.18,shininess:60,depthWrite:false});
+  const water=new THREE.Mesh(new THREE.CylinderGeometry(R*.985,R*.985,J.wTop-J.sTop,64,1,true).translate(0,(J.wTop+J.sTop)/2,0),waterMat);
+  water.material.side=THREE.DoubleSide;jarG.add(water);
+  surfMat=new THREE.MeshPhongMaterial({color:0xbfe6ee,transparent:true,opacity:.32,shininess:140,specular:0xffffff,side:THREE.DoubleSide,depthWrite:false});
+  const surf=new THREE.Mesh(new THREE.CircleGeometry(R*.985,64),surfMat);surf.rotation.x=-Math.PI/2;surf.position.y=J.wTop;jarG.add(surf);
+  lid=new THREE.Group();
+  const cork=new THREE.Mesh(new THREE.CylinderGeometry(R*.97,R*.93,0.22*k,48),mat(0xa77a4c));cork.position.y=H+0.06*k;lid.add(cork);
+  jarG.add(lid);lid.visible=S.sealed;
+  lampMat=new THREE.MeshBasicMaterial({color:0xfff3c4});
+  const lamp=new THREE.Mesh(new THREE.CylinderGeometry(R*.5,R*.5,0.04,32),lampMat);lamp.position.y=H+0.9*k;jarG.add(lamp);
+  const cord=new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,3,4),mat(0x333333));cord.position.y=H+0.9*k+1.5;jarG.add(cord);
+  S.items.forEach(placeItem);
+  cam.target.set(0,H*0.45,0);cam.dist=Math.max(cam.dist||0,0)||H*2.6;cam.dist=clamp(cam.dist,H*1.2,H*5);
+  buildMicrobeLayer();
+}
+function disposeObj(o){if(!o)return;o.parent&&o.parent.remove(o);o.traverse(c=>{c.geometry&&c.geometry.dispose();if(c.material)(Array.isArray(c.material)?c.material:[c.material]).forEach(m=>m.dispose());});}
+
+/* 生物模型 */
+function plantHornwort(){
+  const g=new THREE.Group(),h=clamp(rnd(.65,1)*(J.wTop-J.sTop)*.8,.4,3);
+  const bx=rnd(-.2,.2),bz=rnd(-.2,.2),pts=[];
+  for(let i=0;i<=4;i++){const t=i/4;pts.push(new THREE.Vector3(bx*t*t,t*h,bz*t*t));}
+  const curve=new THREE.CatmullRomCurve3(pts),m=mat(CAT.hornwort.color);
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(curve,16,0.01,5,false),m));
+  const wh=Math.floor(h/0.055),nd=7,ng=new THREE.ConeGeometry(0.006,0.12,3);ng.translate(0,0.06,0);
+  const im=new THREE.InstancedMesh(ng,m,wh*nd),d=new THREE.Object3D();let k=0;
+  for(let w=0;w<wh;w++){const t=(w+1)/(wh+1),p=curve.getPoint(t),s=1.15-0.6*t;
+    for(let j=0;j<nd;j++){d.position.copy(p);d.rotation.set(0,j/nd*6.283+w*.7,0);d.rotateZ(-1.05);d.scale.setScalar(s);d.updateMatrix();im.setMatrixAt(k++,d.matrix);}}
+  g.add(im);g.userData.top=h;return g;
+}
+function plantVallis(){
+  const g=new THREE.Group(),m=mat(CAT.vallis.color,{side:THREE.DoubleSide});g.userData.blades=[];let top=0;
+  for(let i=0;i<7;i++){const h=clamp(rnd(.6,.95)*(J.wTop-J.sTop)*.85,.4,3);top=Math.max(top,h);
+    const geo=new THREE.PlaneGeometry(0.03,h,1,12);geo.translate(0,h/2,0);const pos=geo.attributes.position,bend=rnd(.08,.25)*(Math.random()<.5?-1:1);
+    for(let v=0;v<pos.count;v++){const y=pos.getY(v)/h;pos.setX(v,pos.getX(v)*(1-y*.4)+bend*y*y);}geo.computeVertexNormals();
+    const b=new THREE.Mesh(geo,m);b.rotation.y=rnd(0,6.28);b.position.set(rnd(-.05,.05),0,rnd(-.05,.05));b.userData.ph=rnd(0,6);g.add(b);g.userData.blades.push(b);}
+  g.userData.top=top;return g;
+}
+function plantMoss(){
+  const g=new THREE.Group();
+  const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(0.12,0),mat(0x6d6a63));rock.scale.set(1.3,.6,1);rock.position.y=.04;g.add(rock);
+  const ms=[mat(0x3d6b25),mat(0x4f7d2e),mat(0x2f5a1d)];
+  for(let i=0;i<26;i++){const a=rnd(0,6.28),r=rnd(0,.16);const s=new THREE.Mesh(new THREE.IcosahedronGeometry(rnd(.03,.055),0),ms[i%3]);
+    s.position.set(Math.cos(a)*r,.07+rnd(0,.06)*(1-r*4),Math.sin(a)*r);g.add(s);}
+  g.userData.top=.15;return g;
+}
+function plantDuck(){
+  const g=new THREE.Group(),m=mat(CAT.duckweed.color,{side:THREE.DoubleSide});
+  for(let i=0;i<14;i++){const l=new THREE.Mesh(new THREE.CircleGeometry(rnd(.025,.04),10),m);l.rotation.x=-Math.PI/2;
+    const a=rnd(0,6.28),r=rnd(0,.2);l.position.set(Math.cos(a)*r,0.004,Math.sin(a)*r);g.add(l);
+    const root=new THREE.Mesh(new THREE.CylinderGeometry(.002,.002,.08,3),mat(0xe8e2d0));root.position.set(l.position.x,-.04,l.position.z);g.add(root);}
+  g.userData.top=0;return g;
+}
+function fishModel(body,fin,r,slim){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);
+  const bm=mat(body,{transparent:true}),fm=mat(fin,{transparent:true,opacity:.92,side:THREE.DoubleSide});
+  const b=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),bm);b.scale.set(1.9,slim?.6:.75,.5);inner.add(b);
+  const tg=new THREE.ConeGeometry(r*(slim?.7:1.05),r*1.7,12);tg.rotateZ(-Math.PI/2);
+  const tail=new THREE.Mesh(tg,fm);tail.scale.z=.18;tail.position.x=-r*2.6;inner.add(tail);
+  const dg=new THREE.ConeGeometry(r*.4,r*.8,6);const dor=new THREE.Mesh(dg,fm);dor.scale.z=.2;dor.position.set(-r*.3,r*.75,0);dor.rotation.z=.5;inner.add(dor);
+  const em=mat(0x111111);[1,-1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(r*.16,6,6),em);e.position.set(r*1.3,r*.18,s*r*.36);inner.add(e);});
+  g.userData={inner,tail,mats:[bm,fm]};return g;
+}
+function shrimpModel(){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);
+  const bm=mat(CAT.shrimp.color,{transparent:true,opacity:.92});
+  const b=new THREE.Mesh(new THREE.SphereGeometry(.022,10,8),bm);b.scale.set(2.3,.85,.8);inner.add(b);
+  const t=new THREE.Mesh(new THREE.ConeGeometry(.016,.04,6).rotateZ(-Math.PI/2),bm);t.position.x=-.065;t.scale.z=.4;inner.add(t);
+  const am=mat(0xc8735f);[1,-1].forEach(s=>{const a=new THREE.Mesh(new THREE.CylinderGeometry(.0015,.0015,.09,3),am);a.rotation.z=-1.2;a.rotation.y=s*.4;a.position.set(.07,.02,s*.012);inner.add(a);});
+  g.userData={inner,mats:[bm]};return g;
+}
+function snailModel(){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);
+  const sm=mat(CAT.snail.color,{transparent:true}),fm=mat(0x8a8072,{transparent:true});
+  const foot=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),fm);foot.scale.set(2,.35,.9);foot.position.y=.008;inner.add(foot);
+  const sh=new THREE.Mesh(new THREE.SphereGeometry(.042,12,10),sm);sh.position.set(-.012,.045,0);sh.scale.set(1,1.05,.9);inner.add(sh);
+  const st=new THREE.Mesh(new THREE.TorusGeometry(.028,.007,6,16),mat(0x3e2a17));st.position.set(-.012,.05,0);inner.add(st);
+  const tip=new THREE.Mesh(new THREE.ConeGeometry(.02,.05,10),sm);tip.position.set(-.03,.085,0);tip.rotation.z=.6;inner.add(tip);
+  [1,-1].forEach(s=>{const t=new THREE.Mesh(new THREE.CylinderGeometry(.002,.002,.03,3),fm);t.position.set(.06,.02,s*.01);t.rotation.z=-.8;inner.add(t);});
+  g.userData={inner,mats:[sm,fm]};return g;
+}
+let microbeLayer=null;
+function buildMicrobeLayer(){
+  if(microbeLayer)disposeObj(microbeLayer);
+  const n=160,pos=new Float32Array(n*3);
+  for(let i=0;i<n;i++){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*J.R*.92;pos[i*3]=Math.cos(a)*r;pos[i*3+1]=J.sTop+rnd(0,.05);pos[i*3+2]=Math.sin(a)*r;}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  microbeLayer=new THREE.Points(geo,new THREE.PointsMaterial({color:0xf2e2a0,size:.022,transparent:true,opacity:0,depthWrite:false}));
+  world.add(microbeLayer);
+}
+function buildItem(it){
+  const t=it.type;let g;
+  if(t==='hornwort')g=plantHornwort();else if(t==='vallis')g=plantVallis();else if(t==='moss')g=plantMoss();else if(t==='duckweed')g=plantDuck();
+  else if(t==='guppy')g=fishModel(0xe8a04a,[0x3a6fd8,0xd8463a,0x8a3ad8][it.n%3],.055,false);
+  else if(t==='minnow')g=fishModel(0xc9d3c2,0xd3473a,.05,true);
+  else if(t==='shrimp')g=shrimpModel();else if(t==='snail')g=snailModel();
+  else {g=new THREE.Group();const s=new THREE.Mesh(new THREE.CylinderGeometry(J.R*.5,J.R*.5,.02,24),new THREE.MeshBasicMaterial({visible:false}));g.add(s);}
+  g.userData.uid=it.uid;it.g=g;world.add(g);
+  it.m={p:new THREE.Vector3(),v:new THREE.Vector3(),tgt:new THREE.Vector3(),tt:0,spd:.05,hd:rnd(0,6.28),ph:rnd(0,6)};
+  placeItem(it);
+}
+function placeItem(it){
+  const k=CAT[it.type].kind,R=J.R;
+  if(k==='plant'){
+    const r=it.type==='duckweed'?.6:.82;
+    it.g.position.set(it.rx*R*r,it.type==='duckweed'?J.wTop:J.sTop,it.rz*R*r);
+  } else if(k==='animal'){
+    const m=it.m;m.p.set(it.rx*R*.7,CAT[it.type].move==='swim'?rnd(J.sTop+.2,J.wTop-.15):J.sTop+.02,it.rz*R*.7);
+    m.tgt.copy(m.p);it.g.position.copy(m.p);
+  } else it.g.position.set(0,J.sTop,0);
+}
+
+/* 動態效果 */
+const fxGeo=new THREE.SphereGeometry(1,6,5);
+const bubMat=new THREE.MeshPhongMaterial({color:0xffffff,transparent:true,opacity:.55,shininess:200,depthWrite:false});
+const poopMat=mat(0x5a4630),flakeMat=mat(0xe07a2e);
+const bubbles=[],poops=[],flakes=[];
+function spawn(list,matl,s,max){let o=list.find(b=>!b.visible);if(!o){if(list.length>=max)return null;o=new THREE.Mesh(fxGeo,matl);world.add(o);list.push(o);}o.visible=true;o.scale.setScalar(s);o.userData.age=0;return o;}
+function feedFx(n){const c=Math.min(30,Math.round(n*8));for(let i=0;i<c;i++){const f=spawn(flakes,flakeMat,.012,40);if(!f)break;const a=rnd(0,6.28),r=rnd(0,J.R*.5);f.position.set(Math.cos(a)*r,J.wTop-.01,Math.sin(a)*r);f.scale.set(.014,.004,.012);f.userData.vy=rnd(.02,.05);}}
+function selRing(){const r=new THREE.Mesh(new THREE.TorusGeometry(1,.06,8,40),new THREE.MeshBasicMaterial({color:0x46b8ac,transparent:true,opacity:.9,depthTest:false}));r.rotation.x=Math.PI/2;r.renderOrder=10;r.visible=false;world.add(r);return r;}
+const ring=selRing();
+
+/* 鏡頭 */
+const cam={theta:.6,phi:1.15,dist:6,target:new THREE.Vector3(0,1,0),idle:0};
+function updateCam(){const {theta,phi,dist,target}=cam;camera.position.set(target.x+dist*Math.sin(phi)*Math.sin(theta),target.y+dist*Math.cos(phi),target.z+dist*Math.sin(phi)*Math.cos(theta));camera.lookAt(target);}
+const ptrs=new Map();let downXY=null,pinch0=0;
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});downXY={x:e.clientX,y:e.clientY,moved:false};cam.idle=0;
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);}});
+canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;
+  if(ptrs.size===1){cam.theta-=dx*.008;cam.phi=clamp(cam.phi-dy*.006,.25,1.62);}
+  p.x=e.clientX;p.y=e.clientY;
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0){cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*5);}pinch0=d;}
+  if(downXY&&Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6)downXY.moved=true;cam.idle=0;});
+const up=e=>{if(downXY&&!downXY.moved&&ptrs.size===1)pick(e);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=0;if(!ptrs.size)downXY=null;};
+canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);downXY=null;});
+canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=clamp(cam.dist*(1+e.deltaY*.001),J.H*1.1,J.H*5);cam.idle=0;},{passive:false});
+const ray=new THREE.Raycaster();
+function pick(e){
+  const r=canvas.getBoundingClientRect();ray.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-(e.clientY-r.top)/r.height*2+1},camera);
+  const groups=S.items.filter(i=>i.alive&&CAT[i.type].kind!=='microbe').map(i=>i.g);
+  const hit=ray.intersectObjects(groups,true)[0];
+  if(!hit){return;}
+  let o=hit.object;while(o&&o.userData.uid===undefined)o=o.parent;
+  const it=S.items.find(i=>i.uid===o.userData.uid);if(it)select(it,true);
+}
+function select(it,fromScene){
+  S.sel=it;showTab('jar');renderJarList();renderEditor();
+  if(fromScene&&innerWidth<920)$('#pane-jar').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* 每格動畫 */
+const cDay=new THREE.Color(0xcfe3e3),cNight=new THREE.Color(0x0a141b),cBg=new THREE.Color();
+const wClear=new THREE.Color(0x9fd6e0),wGreen=new THREE.Color(0x6d9a35),wCol=new THREE.Color();
+let tAll=0;
+function lightLevel(hf){const on=7,off=7+S.light;if(S.light>=24)return 1;if(S.light<=0)return 0;
+  let h=hf;const ramp=x=>clamp(x/0.6,0,1);
+  let v=Math.min(ramp(h-on+0.3),ramp(off-h+0.3));if(off>24)v=Math.max(v,ramp(off-24-h+0.3));return clamp(v,0,1);}
+function animate(dt,hf){
+  tAll+=dt;const lv=lightLevel(hf);
+  cBg.copy(cNight).lerp(cDay,lv);renderer.setClearColor(cBg);
+  sun.intensity=.15+.85*lv;hemi.intensity=.25+.45*lv;fill.intensity=.35-.1*lv;
+  lampMat.color.setHex(lv>.5?0xfff1bf:0x2a2f33);
+  const ag=clamp(S.algae/45,0,1);wCol.copy(wClear).lerp(wGreen,ag);waterMat.color.copy(wCol);waterMat.opacity=.16+.3*ag;surfMat.color.copy(wCol).lerp(new THREE.Color(0xffffff),.3);
+  lid.visible=S.sealed;
+  if(microbeLayer){const m=alive('microbe');microbeLayer.material.opacity=m.length?.25+.35*Math.max(...m.map(i=>i.health)):0;}
+  const oc=S.O2/S.V,vis=Math.min(1.6,1+S.speed/40);
+  for(const it of S.items){
+    const g=it.g,k=CAT[it.type].kind,m=it.m;
+    if(!it.alive){
+      it.deadT+=dt;
+      if(k==='animal'){const u=g.userData;u.inner.rotation.x=Math.min(Math.PI,u.inner.rotation.x+dt*2);
+        if(CAT[it.type].move==='swim'){m.p.y=Math.min(J.wTop-.04,m.p.y+dt*.12);g.position.copy(m.p);}
+        u.mats.forEach(mm=>{mm.color.lerp(new THREE.Color(0x8a8a80),dt*.5);mm.opacity=clamp(1-(it.deadT-5)/4,0,1);});}
+      else if(k==='plant'){g.traverse(c=>{if(c.material&&c.material.color)c.material.color.lerp(new THREE.Color(0x6b5a3a),dt*.4);});g.scale.y=Math.max(.2,1-it.deadT*.08);}
+      if(it.deadT>9){disposeObj(g);it.gone=true;}
+      continue;
+    }
+    if(k==='plant'){
+      if(it.type==='hornwort')g.rotation.z=Math.sin(tAll*.7+m.ph)*.04;
+      if(it.type==='vallis')g.userData.blades.forEach(b=>{b.rotation.z=Math.sin(tAll*.8+b.userData.ph)*.07;});
+      if(it.type==='duckweed'){g.position.x+=Math.sin(tAll*.2+m.ph)*dt*.01;g.position.z+=Math.cos(tAll*.17+m.ph)*dt*.01;}
+      const rate=it.lastProd*lv*2.2*vis;
+      if(it.type!=='duckweed'&&Math.random()<rate*dt){const b=spawn(bubbles,bubMat,rnd(.008,.016),90);
+        if(b){b.position.set(g.position.x+rnd(-.08,.08),g.position.y+rnd(.1,1)*(g.userData.top||.2),g.position.z+rnd(-.08,.08));b.userData.vy=rnd(.18,.3);}}
+      continue;
+    }
+    if(k!=='animal')continue;
+    const mv=CAT[it.type].move,p=it.params,u=g.userData;const Rw=J.R*.88;
+    if(mv==='swim'){
+      m.tt-=dt;const gasp=oc<p.o2Min+.6;
+      if(m.tt<=0||m.p.distanceTo(m.tgt)<.08){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*Rw*.85;m.tgt.set(Math.cos(a)*r,rnd(J.sTop+.15,J.wTop-.12),Math.sin(a)*r);m.tt=rnd(2.5,6);}
+      if(gasp)m.tgt.y=J.wTop-.07;
+      const spd=(it.stress?.14:.24)*(.5+.5*it.health);
+      const des=m.tgt.clone().sub(m.p);const dl=des.length();if(dl>1e-4)des.multiplyScalar(spd/dl);
+      m.v.lerp(des,Math.min(1,dt*1.6));
+      u.tail.rotation.y=Math.sin(tAll*(8+m.v.length()*30)+m.ph)*.45;
+    } else if(mv==='hop'){
+      m.tt-=dt;
+      if(m.tt<=0){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*Rw*.85;m.tgt.set(Math.cos(a)*r,J.sTop+rnd(.02,.45),Math.sin(a)*r);m.tt=rnd(1.5,5);m.spd=rnd(.18,.32);}
+      m.spd=Math.max(.015,m.spd*(1-dt*1.4));
+      const des=m.tgt.clone().sub(m.p);const dl=des.length();if(dl>.02)des.multiplyScalar(m.spd/dl);else des.set(0,-.02,0);
+      m.v.lerp(des,Math.min(1,dt*3));
+    } else {
+      m.hd+=rnd(-1,1)*dt*.8;const r=Math.hypot(m.p.x,m.p.z);if(r>Rw*.9)m.hd=Math.atan2(-m.p.z,-m.p.x)+rnd(-.3,.3);
+      const s=.02*(.4+.6*it.health);m.v.set(Math.cos(m.hd)*s,0,Math.sin(m.hd)*s);
+    }
+    m.p.addScaledVector(m.v,dt*vis);
+    const r=Math.hypot(m.p.x,m.p.z);if(r>Rw){m.p.x*=Rw/r;m.p.z*=Rw/r;}
+    m.p.y=clamp(m.p.y,J.sTop+.02,J.wTop-.04);if(mv==='crawl')m.p.y=J.sTop+.005;
+    g.position.copy(m.p);
+    if(m.v.lengthSq()>1e-7){g.rotation.y=Math.atan2(-m.v.z,m.v.x);const hz=Math.hypot(m.v.x,m.v.z);g.rotation.z=mv==='crawl'?0:clamp(Math.atan2(m.v.y,hz),-.5,.5);}
+  }
+  if(S.items.some(i=>i.gone)){S.items=S.items.filter(i=>!i.gone);dirtyList=true;}
+  // 排泄
+  for(const it of wasteFx.splice(0)){if(!it.alive||!it.g)continue;if(poops.filter(p=>p.visible).length>60)break;const pp=spawn(poops,poopMat,.007,70);if(pp){pp.position.copy(it.g.position);pp.scale.set(.006,.006,.014);}}
+  bubbles.forEach(b=>{if(!b.visible)return;b.position.y+=b.userData.vy*dt;b.position.x+=Math.sin(tAll*5+b.id)*dt*.01;if(b.position.y>J.wTop)b.visible=false;});
+  poops.forEach(p=>{if(!p.visible)return;p.userData.age+=dt;if(p.position.y>J.sTop+.01)p.position.y-=dt*.08;if(p.userData.age>25)p.visible=false;});
+  const want=Math.ceil(S.flake*8);let shown=0;
+  flakes.forEach(f=>{if(!f.visible)return;shown++;if(shown>want){f.visible=false;return;}if(f.position.y>J.sTop+.01){f.position.y-=f.userData.vy*dt;f.rotation.z+=dt;f.position.x+=Math.sin(tAll+f.id)*dt*.02;}});
+  // 選取光圈
+  if(S.sel&&S.sel.alive&&S.sel.g){const it=S.sel,k=CAT[it.type].kind;ring.visible=true;
+    if(k==='animal'){ring.position.copy(it.g.position);ring.scale.setScalar(.1);}
+    else if(k==='microbe'){ring.position.set(0,J.sTop+.02,0);ring.scale.setScalar(J.R*.7);}
+    else{ring.position.set(it.g.position.x,it.g.position.y+.02,it.g.position.z);ring.scale.setScalar(it.type==='duckweed'?.26:.16);}
+    ring.material.opacity=.55+.35*Math.sin(tAll*4);} else ring.visible=false;
+  if(!ptrs.size){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
+  updateCam();
+}
+
+function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(stage);
+
+/* ---------- UI ---------- */
+let dirtyList=false,curTab='add';
+function showTab(t){curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  ['add','jar','bal','env'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='bal')renderBalance();}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+let toastT;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1600);}
+
+const SPEEDS=[[1,'1 小時/秒'],[4,'4 小時/秒'],[24,'1 日/秒']];
+function renderSpeed(){$('#speedSeg').innerHTML=SPEEDS.map(([v,l])=>`<button aria-pressed="${S.speed===v}" data-v="${v}">${l}</button>`).join('');
+  $('#speedSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;renderSpeed();});}
+$('#playBtn').onclick=()=>{S.running=!S.running;$('#playBtn').textContent=S.running?'暫停':'繼續';$('#playBtn').classList.toggle('primary',S.running);};
+$('#feedBtn').onclick=()=>{const n=Math.max(1,S.feed);S.flake+=n;feedFx(n);toast(`餵咗 ${n} 份飼料`);};
+
+function paramChips(type){const p=CAT[type].params,k=CAT[type].kind;
+  if(k==='plant')return[`產氧 ${p.o2Prod} mg/h`,`耗氧 ${p.resp} mg/h`,`吸收 ${p.uptake} mg/h`];
+  if(k==='animal')return[`耗氧 ${p.resp} mg/h`,`食 ${p.food} 份/日`,`每 ${p.wasteEvery} 小時去廁所`,`需氧 ≥${p.o2Min} mg/L`];
+  return[`分解氨 ${p.cap} mg/h`,`耗氧 ×${p.o2PerN}`];}
+function renderCatalog(){
+  const groups=[['plant','水草','有光時產氧，吸收動物排泄物變成嘅氨同硝酸鹽。'],['animal','動物','食嘢、呼吸用氧、定時去廁所。'],['microbe','微生物','睇唔到但好重要：將有毒嘅氨變成水草食得嘅硝酸鹽。']];
+  $('#pane-add').innerHTML=`<p class="lede">揀生物放入瓶，每樣都有自己嘅參數。加入之後喺「瓶內」可以逐隻調整。</p>`+groups.map(([k,t,d])=>`
+    <section class="cards"><h3>${t}</h3><p class="lede">${d}</p>${Object.entries(CAT).filter(([,c])=>c.kind===k).map(([id,c])=>{
+      const n=S.items.filter(i=>i.type===id&&i.alive).length;
+      return`<div class="card"><div class="nm"><span class="dot" style="background:${c.color}"></span>${c.name}<em>${c.sci}</em></div>
+      <p>${c.desc}</p><div class="add"><button data-add="${id}" aria-label="加入${c.name}">+</button><span>瓶內 ${n}</span></div>
+      <div class="chips">${paramChips(id).map(x=>`<span class="chip">${x}</span>`).join('')}</div></div>`;}).join('')}</section>`).join('');
+  $('#pane-add').querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addItem(b.dataset.add));
+}
+function statusOf(it){
+  if(!it.alive)return['已死亡','bad'];
+  if(it.stress)return[it.stress,it.health<.4?'bad':'warn'];
+  const k=CAT[it.type].kind;
+  if(k==='plant')return[it.lastProd>0?`產氧中 ${fx(it.lastProd,2)} mg/h`:'夜間休息',''];
+  if(k==='animal')return[it.satiety<.4?'有啲肚餓':'精神','' ];
+  return['運作中',''];
+}
+function renderJarList(){
+  const el=$('#pane-jar');$('#tabJarBtn').textContent=`瓶內 (${S.items.filter(i=>i.alive).length})`;
+  let ed=$('#editor');if(!ed){el.innerHTML=`<div id="editor"></div><div id="jarlist"></div>`;ed=$('#editor');}
+  const order=['plant','animal','microbe'];
+  const its=[...S.items].sort((a,b)=>order.indexOf(CAT[a.type].kind)-order.indexOf(CAT[b.type].kind)||a.uid-b.uid);
+  $('#jarlist').innerHTML=its.length?`<h3 style="margin-bottom:8px">全部生物</h3><div class="list">${its.map(it=>{const c=CAT[it.type];
+    return`<button class="row${S.sel===it?' sel':''}" data-uid="${it.uid}"><span class="dot" style="background:${c.color}"></span>
+    <span class="t"><b>${c.name} #${it.n}</b><span id="st-${it.uid}"></span></span><span class="hbar" id="hb-${it.uid}"><span></span></span></button>`;}).join('')}</div>`
+    :`<div class="empty">個瓶仲係空嘅。去「加入生物」揀水草同動物。</div>`;
+  $('#jarlist').querySelectorAll('[data-uid]').forEach(b=>b.onclick=()=>{const it=S.items.find(i=>i.uid==b.dataset.uid);if(it)select(it);});
+  updateJarLive();dirtyList=false;
+}
+function updateJarLive(){
+  for(const it of S.items){const st=$('#st-'+it.uid),hb=$('#hb-'+it.uid);if(!st)continue;const [t,c]=statusOf(it);st.textContent=t;st.className=c;
+    hb.className='hbar'+(it.health<.35?' bad':it.health<.7?' warn':'');hb.firstChild.style.width=(it.health*100)+'%';}
+  const it=S.sel;if(!it)return;
+  const set=(id,v)=>{const e=$('#'+id);if(e)e.textContent=v;};
+  set('v-health',Math.round(it.health*100)+'%');set('v-state',statusOf(it)[0]);
+  const k=CAT[it.type].kind;
+  if(k==='animal'){set('v-sat',Math.round(it.satiety*100)+'%');set('v-wc',`${Math.max(0,it.params.wasteEvery-it.wt)} 小時後`);}
+  if(k==='plant'){set('v-prod',fx(it.lastProd,2)+' mg/h');set('v-day',fx(it.params.o2Prod*it.health*Math.min(24,S.light)-it.params.resp*24,1)+' mg/日');}
+}
+function renderEditor(){
+  const ed=$('#editor');if(!ed)return;const it=S.sel;
+  if(!it){ed.innerHTML='';return;}
+  const c=CAT[it.type],k=c.kind,defs=DEFS[k];
+  const vit=[['健康','v-health'],['狀態','v-state']];
+  if(k==='animal')vit.push(['飽肚程度','v-sat'],['下次去廁所','v-wc']);
+  if(k==='plant')vit.push(['而家產氧','v-prod'],['每日淨產氧','v-day']);
+  ed.innerHTML=`<div class="editor"><div class="ed-head"><span class="dot" style="background:${c.color}"></span><h2>${c.name} #${it.n}</h2><button class="x" id="edClose" aria-label="關閉">×</button></div>
+   <div class="vitals">${vit.map(([l,id])=>`<div class="vital">${l}<b id="${id}">–</b></div>`).join('')}</div>
+   ${k==='animal'?`<p class="lede">食物：${Object.keys(c.diet).map(p=>POOLNAME[p]).join('、')}（按喜好排序）</p>`:''}
+   ${defs.map(d=>`<div class="param"><div class="ph"><label for="p-${d.k}">${d.l}</label><output id="o-${d.k}">${it.params[d.k]} ${d.u}</output></div>
+     <input type="range" id="p-${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${it.params[d.k]}" ${it.alive?'':'disabled'}><small>${d.h}</small></div>`).join('')}
+   <div class="ed-actions">${it.alive?`<button class="btn" id="edAll">套用到所有${c.name}</button><button class="btn" id="edReset">還原預設</button>`:''}<button class="btn danger" id="edDel">${it.alive?'移出瓶':'清走屍體'}</button></div></div>`;
+  defs.forEach(d=>{const inp=$('#p-'+d.k);inp.oninput=()=>{it.params[d.k]=+inp.value;$('#o-'+d.k).textContent=`${inp.value} ${d.u}`;save();};});
+  $('#edClose').onclick=()=>{S.sel=null;renderJarList();renderEditor();};
+  $('#edDel').onclick=()=>removeItem(it);
+  const all=$('#edAll');if(all)all.onclick=()=>{S.items.filter(i=>i.type===it.type).forEach(i=>i.params=Object.assign({},it.params));toast(`已套用到所有${c.name}`);save();};
+  const rs=$('#edReset');if(rs)rs.onclick=()=>{it.params=Object.assign({},c.params);renderEditor();save();};
+  updateJarLive();
+}
+
+function meterState(key,v){
+  if(key==='o2')return v<3?'bad':v<5?'warn':'';
+  if(key==='nh3')return v>.5?'bad':v>.2?'warn':'';
+  if(key==='no3')return v>40?'bad':v>20?'warn':'';
+  if(key==='co2')return v<.3?'warn':'';
+  if(key==='algae')return v>45?'bad':v>30?'warn':'';
+  return'';
+}
+function renderMeters(){
+  const V=S.V;const ms=[['o2','溶氧 O₂',S.O2/V,'mg/L',1,14],['co2','二氧化碳',S.CO2/V,'mg/L',2,6],['nh3','氨 NH₃',S.NH3/V,'mg/L',2,1],['no3','硝酸鹽',S.NO3/V,'mg/L',1,50],['algae','藻類',S.algae,'份',0,60],['food','飼料/殘渣',S.flake+S.detritus,'份',1,20]];
+  $('#meters').innerHTML=ms.map(([k,l,v,u,d,mx])=>`<div class="meter ${meterState(k,v)}"><div class="l">${l}</div><div class="v">${fx(v,d)}<small>${u}</small></div><div class="bar"><span style="width:${clamp(v/mx,0,1)*100}%"></span></div></div>`).join('');
+  $('#clkDay').textContent=`第 ${S.day} 日`;$('#clkTime').textContent=String(S.hour).padStart(2,'0')+':00';
+  const L=isLight(S.hour);const lt=$('#lightTag');lt.textContent=L?'開燈':'熄燈';lt.className='tag '+(L?'day':'night');
+  const states=['o2','nh3','algae'].map((k,i)=>meterState(k,[S.O2/V,S.NH3/V,S.algae][i]));
+  const an=S.items.filter(i=>i.alive&&CAT[i.type].kind!=='microbe');
+  const stressed=an.filter(i=>i.stress).length;let st='',txt='穩定';
+  if(states.includes('bad')||an.some(i=>i.stress&&i.health<.4)){st='bad';txt=`危險 · ${stressed} 隻受壓`;}
+  else if(states.includes('warn')||stressed){st='warn';txt=stressed?`注意 · ${stressed} 隻受壓`:'注意';}
+  if(!an.length){st='';txt='空瓶';}
+  const p=$('#status');p.className='pill '+st;p.lastChild.textContent=txt;
+}
+function pairRow(l,v,mx,col,u){return`<div class="pair"><span>${l}</span><span class="track"><span style="width:${clamp(v/mx,0,1)*100}%;background:${col}"></span></span><span class="n">${fx(v,1)} ${u}</span></div>`;}
+function renderBalance(){
+  const a=analyze(),V=S.V;const items=[];
+  const hasP=alive('plant').length;
+  // 氧
+  {const r=a.o2Out>0?a.o2In/a.o2Out:9;let c,t;
+    if(!hasP&&a.o2Out>0){c=S.sealed?'bad':'warn';t=S.sealed?'冇水草，密封之後氧氣只會一直跌。':'冇水草，全靠開口換氣補氧。';}
+    else if(r>=1.2){c='good';t='水草產氧足夠應付全瓶呼吸，仲有剩。';}
+    else if(r>=1){c='warn';t='產氧同耗氧差唔多，邊緣平衡，再加動物就唔夠。';}
+    else{c=S.sealed?'bad':'warn';t=S.sealed?'耗氧多過產氧，密封會慢慢缺氧。加水草、減動物或延長光照。':'耗氧多過產氧，暫時靠開口換氣頂住。';}
+    const mx=Math.max(a.o2In,a.o2Out,1);
+    items.push(`<div class="bud ${c}"><div class="bh"><b>氧氣（每日）</b><span>${fx(r,2)}×</span></div>${pairRow('產氧',a.o2In,mx,'var(--o2)','mg')}${pairRow('耗氧',a.o2Out,mx,'var(--muted)','mg')}<p>${t}${a.hasHist?`<br><span class="lede">過去 24 小時實際：產 ${fx(a.actP)} mg，用 ${fx(a.actU)} mg（受 CO₂ 同健康影響）</span>`:''}</p></div>`);}
+  // 夜晚
+  {const c=a.nightUse>a.stock?'bad':a.nightUse>a.stock*.6?'warn':'good';const mx=Math.max(a.nightUse,a.stock,1);
+    items.push(`<div class="bud ${c}"><div class="bh"><b>熄燈 ${24-a.L} 小時</b><span>${fx(a.nightUse)} / ${fx(a.stock)} mg</span></div>${pairRow('夜晚用',a.nightUse,mx,'var(--muted)','mg')}${pairRow('可用存量',a.stock,mx,'var(--o2)','mg')}<p>${c==='good'?'夜晚冇光合作用，但存量夠撐到天光。':c==='warn'?'天光前溶氧會跌得幾低，留意敏感嘅蝦。':'夜晚會缺氧！縮短熄燈時間或減少動物。'}</p></div>`);}
+  // 排泄
+  if(a.wIn>0){const r=a.wOut/a.wIn,c=r>=1.2?'good':r>=.8?'warn':'bad',mx=Math.max(a.wIn,a.wOut,.01);
+    items.push(`<div class="bud ${c}"><div class="bh"><b>排泄物（氨，每日）</b><span>${fx(r,2)}×</span></div>${pairRow('產生',a.wIn,mx,'var(--warn)','mg')}${pairRow('處理',a.wOut,mx,'var(--leaf)','mg')}<p>${c==='good'?'硝化菌同水草處理得切。':c==='warn'?'處理能力啱啱好，餵多咗就會累積氨。':'氨會不斷累積，要加硝化菌群或水草，或者減少餵食。'}<br><span class="lede">硝化菌 ${fx(a.cap,2)} mg + 水草吸收 ${fx(a.upt,2)} mg</span></p></div>`);}
+  // 食物
+  if(a.need>0){const r=a.supply/a.need,c=r>=1.2?'good':r>=.8?'warn':'bad',mx=Math.max(a.need,a.supply,.1);
+    items.push(`<div class="bud ${c}"><div class="bh"><b>食物（每日）</b><span>${fx(r,2)}×</span></div>${pairRow('需要',a.need,mx,'var(--muted)','份')}${pairRow('供應',a.supply,mx,'var(--accent)','份')}<p>${c==='good'?'食物夠。':c==='warn'?'食物勉強夠。':'食物唔夠，動物會餓。增加餵食，或者揀食藻嘅蝦同螺。'}<br><span class="lede">餵食 ${S.feed} 份 + 藻類生長 ${fx(a.algaeDay,2)} 份${a.hasHist?'':'（模擬滿一日先有準確數）'}</span></p></div>`);}
+  if(S.algae>30)items.push(`<div class="bud warn"><div class="bh"><b>藻類</b><span>${fx(S.algae)} 份</span></div><p>硝酸鹽太多、水草食唔切，藻類開始爆發。加浮萍或縮短光照。</p></div>`);
+  const bads=items.filter(x=>x.includes('bud bad')).length,warns=items.filter(x=>x.includes('bud warn')).length;
+  const an=alive('animal').length;
+  let vt,vb;
+  if(!an&&!hasP){vt='空瓶';vb='加啲水草同動物開始試。';}
+  else if(!bads&&!warns){vt=S.sealed?'可以長期密封自給自足':'生態平衡';vb='氧氣、排泄物同食物三條循環都閉合得到。';}
+  else if(!bads){vt='基本平衡，有啲邊緣';vb='可以運作，但留意黃色項目。';}
+  else{vt='未能自給自足';vb=`有 ${bads} 項唔平衡，跟住紅色項目調整。`;}
+  $('#pane-bal').innerHTML=`<div class="verdict"><b>${vt}</b>${vb}</div><p class="lede">按而家瓶內生物同每日 ${a.L} 小時光照計。</p>
+    <div class="budget">${items.join('')}</div>
+    <div class="chartbox"><h3>水質走勢（最近 ${Math.min(S.hist.length,168)} 小時）</h3><canvas id="chart"></canvas>
+    <div class="legend"><span><i style="background:var(--o2)"></i>溶氧 mg/L（左）</span><span><i style="background:var(--warn)"></i>氨 mg/L（右）</span><span><i style="background:var(--line);height:8px"></i>夜間</span></div></div>
+    <section><h3 style="margin-bottom:6px">事件紀錄</h3>${S.log.length?`<ul class="log">${S.log.slice(0,14).map(l=>`<li><span class="tm">第${l.d}日 ${String(l.h).padStart(2,'0')}:00</span><span style="color:var(--${l.c})">${l.t}</span></li>`).join('')}</ul>`:'<p class="lede">暫時冇事發生。</p>'}</section>`;
+  drawChart();
+}
+function drawChart(){
+  const cv=$('#chart');if(!cv)return;const w=cv.clientWidth,h=170,dpr=Math.min(devicePixelRatio,2);cv.width=w*dpr;cv.height=h*dpr;
+  const x=cv.getContext('2d');x.scale(dpr,dpr);const cs=getComputedStyle(document.documentElement);const col=k=>cs.getPropertyValue(k).trim();
+  const H=S.hist.slice(-168),pl=30,pr=34,pt=8,pb=18,iw=w-pl-pr,ih=h-pt-pb;
+  x.font='10px '+col('--f-mono');x.fillStyle=col('--muted');
+  if(H.length<2){x.fillText('模擬緊，等一陣…',pl,h/2);return;}
+  const nMax=Math.max(1,Math.ceil(Math.max(...H.map(p=>p.nh3))*2)/2);
+  const X=i=>pl+i/(H.length-1)*iw,Y1=v=>pt+ih-v/14*ih,Y2=v=>pt+ih-v/nMax*ih;
+  x.fillStyle=col('--line');x.globalAlpha=.5;H.forEach((p,i)=>{if(!p.light)x.fillRect(X(i)-iw/(H.length-1)/2,pt,iw/(H.length-1)+.5,ih);});x.globalAlpha=1;
+  x.strokeStyle=col('--line');x.lineWidth=1;x.fillStyle=col('--muted');x.textAlign='right';
+  [0,4,8,12].forEach(v=>{x.beginPath();x.moveTo(pl,Y1(v));x.lineTo(pl+iw,Y1(v));x.stroke();x.fillText(v,pl-5,Y1(v)+3);});
+  x.textAlign='left';[0,nMax/2,nMax].forEach(v=>x.fillText(fx(v,2),pl+iw+5,Y2(v)+3));
+  x.strokeStyle=col('--bad');x.setLineDash([3,3]);x.beginPath();x.moveTo(pl,Y1(3));x.lineTo(pl+iw,Y1(3));x.stroke();x.setLineDash([]);
+  const line=(f,Y,c)=>{x.strokeStyle=c;x.lineWidth=2;x.beginPath();H.forEach((p,i)=>i?x.lineTo(X(i),Y(f(p))):x.moveTo(X(i),Y(f(p))));x.stroke();
+    const l=H[H.length-1];x.fillStyle=c;x.beginPath();x.arc(X(H.length-1),Y(f(l)),3,0,7);x.fill();};
+  line(p=>p.o2,Y1,col('--o2'));line(p=>p.nh3,Y2,col('--warn'));
+  x.fillStyle=col('--muted');x.textAlign='center';x.fillText(`${H.length} 小時前`,pl+30,h-4);x.fillText('而家',pl+iw-10,h-4);
+}
+
+const PRESETS={
+  eco:{n:'密封生態瓶',d:'4L 密封，金魚藻 + 莫絲 + 米蝦 + 石田螺 + 硝化菌，唔使餵。',V:4,sealed:true,light:12,feed:0,items:[['hornwort',2],['moss',1],['vallis',1],['shrimp',5],['snail',2],['bacteria',1]]},
+  tank:{n:'開口小魚缸',d:'10L 開口，孔雀魚 4 條，每日餵 3 份。',V:10,sealed:false,light:10,feed:3,items:[['hornwort',2],['vallis',2],['duckweed',1],['guppy',4],['snail',1],['bacteria',1]]},
+  bad:{n:'失衡示範',d:'3L 密封，5 條孔雀魚只得一撮莫絲，冇硝化菌。睇吓會發生咩事。',V:3,sealed:true,light:12,feed:2,items:[['moss',1],['guppy',5]]}
+};
+function loadPreset(key){const p=PRESETS[key];S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;
+  Object.assign(S,{V:p.V,sealed:p.sealed,light:p.light,feed:p.feed});resetChem();buildJar();
+  p.items.forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);});
+  renderAll();save();toast('已載入：'+p.n);}
+function renderEnv(){
+  $('#pane-env').innerHTML=`
+   <div class="field param"><div class="ph"><label for="e-V">瓶容量</label><output id="eo-V">${S.V} L</output></div><input type="range" id="e-V" min="1" max="20" step="1" value="${S.V}"><small>水量越多，氧氣同毒素變化越慢，越易穩定。</small></div>
+   <div class="field param"><div class="ph"><label for="e-L">每日光照</label><output id="eo-L">${S.light} 小時</output></div><input type="range" id="e-L" min="0" max="24" step="1" value="${S.light}"><small>朝早 7 點開燈。光照長產氧多，但藻類都會長得快。</small></div>
+   <div class="field param"><div class="ph"><label for="e-F">每日餵食</label><output id="eo-F">${S.feed} 份</output></div><input type="range" id="e-F" min="0" max="6" step="0.5" value="${S.feed}"><small>每朝 9 點自動落飼料。食唔晒會腐爛變氨。</small></div>
+   <label class="switch" for="e-S"><span><b>密封瓶口</b><br><span class="lede">密封＝完全靠瓶內循環；開口＝空氣會補氧、散走 CO₂。</span></span><input type="checkbox" id="e-S" ${S.sealed?'checked':''}></label>
+   <section class="presets"><h3>預設組合</h3>${Object.entries(PRESETS).map(([k,p])=>`<button class="preset" data-p="${k}"><b>${p.n}</b><span>${p.d}</span></button>`).join('')}</section>
+   <div class="ed-actions"><button class="btn" id="e-restart">保留生物，重新開始時間</button><button class="btn danger" id="e-clear">清空個瓶</button></div>`;
+  const bind=(id,o,f,u)=>{const e=$('#'+id);e.oninput=()=>{f(+e.value);$('#'+o).textContent=e.value+u;save();};};
+  bind('e-V','eo-V',v=>{const r=v/S.V;['O2','CO2','NH3','NO3'].forEach(k=>S[k]*=r);S.V=v;buildJar();},' L');
+  bind('e-L','eo-L',v=>S.light=v,' 小時');bind('e-F','eo-F',v=>S.feed=v,' 份');
+  $('#e-S').onchange=e=>{S.sealed=e.target.checked;save();};
+  $('#pane-env').querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>loadPreset(b.dataset.p));
+  $('#e-restart').onclick=()=>{resetChem();S.items=S.items.filter(i=>{if(!i.alive){disposeObj(i.g);return false;}return true;});S.items.forEach(i=>{i.health=1;i.satiety=1;});renderAll();toast('時間重新開始');};
+  $('#e-clear').onclick=()=>{S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;resetChem();renderAll();save();toast('已清空');};
+}
+function renderAll(){renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(curTab==='bal')renderBalance();}
+
+/* 儲存（只存設定） */
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem('ecojar.v1',JSON.stringify({V:S.V,sealed:S.sealed,light:S.light,feed:S.feed,items:S.items.filter(i=>i.alive).map(i=>[i.type,i.params])}));}catch(e){}},400);}
+function load(){try{const d=JSON.parse(localStorage.getItem('ecojar.v1')||'null');if(!d||!d.items)return false;
+  Object.assign(S,{V:d.V,sealed:d.sealed,light:d.light,feed:d.feed});resetChem();buildJar();d.items.forEach(([t,p])=>CAT[t]&&addItem(t,p,true));return true;}catch(e){return false;}}
+
+/* 開始 */
+renderSpeed();
+if(!load()){const p=PRESETS.eco;Object.assign(S,{V:p.V,sealed:p.sealed,light:p.light,feed:p.feed});resetChem();buildJar();p.items.forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);});}
+renderAll();resize();
+let last=performance.now(),acc=0,lastUI=0,lastBal=0;
+function frame(t){
+  const dt=Math.min(.1,(t-last)/1000);last=t;
+  if(S.running){acc+=dt*S.speed;let n=0;while(acc>=1&&n<60){step();acc-=1;n++;}}
+  animate(dt,S.hour+(S.running?acc:0));
+  renderer.render(scene,camera);
+  if(t-lastUI>250){lastUI=t;renderMeters();if(dirtyList){renderJarList();renderCatalog();if(S.sel&&!S.items.includes(S.sel)){S.sel=null;renderEditor();}}else updateJarLive();
+    if(curTab==='bal'&&t-lastBal>1500&&!document.activeElement?.closest?.('#pane-bal')){lastBal=t;renderBalance();}}
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</html>
