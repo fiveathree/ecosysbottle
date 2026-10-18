@@ -321,6 +321,14 @@ function buildItem(it){
   else if(t==='javafern'){g=fronds(C.color,6,.22,.06,.25);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.07,0),mat(0x6d6a63));r.scale.y=.6;r.position.y=.03;g.add(r);}
   else if(t==='moss'){g=clump(['#3d6b25','#4f7d2e','#2f5a1d'],26,.16,.055,.12);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.12,0),mat(0x6d6a63));r.scale.set(1.3,.6,1);r.position.y=.03;g.add(r);}
   else if(t==='marimo'){g=new THREE.Group();const s=new THREE.Mesh(new THREE.IcosahedronGeometry(.07,2),mat(C.color));s.position.y=.07;g.add(s);g.userData.top=.14;}
+  else if(t==='lotus'){g=new THREE.Group();const top=J.waterTop!=null?J.waterTop-J.sTop:J.H*.4,sm=mat(0x5f7d2a),lm=mat(0x4f8f3a,{side:THREE.DoubleSide}),pk=mat(0xf0a3b8,{side:THREE.DoubleSide}),yl=mat(0xf2d35a);
+    for(let i=0;i<5;i++){const a=rnd(0,6.28),r=rnd(.05,.22),up=i<2?rnd(.08,.2):0,h=top+up,x=Math.cos(a)*r,z=Math.sin(a)*r;
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0),new THREE.Vector3(x*.4,h*.5,z*.4),new THREE.Vector3(x,h,z)]),10,.007,5,false),sm));
+      const pad=new THREE.Mesh(new THREE.CircleGeometry(rnd(.1,.15),20,.15,Math.PI*2-.3),lm);pad.rotation.x=-Math.PI/2;pad.rotation.z=rnd(0,6.28);pad.position.set(x,h+.003,z);if(up){pad.rotation.x=-Math.PI/2+rnd(-.5,.5);pad.scale.setScalar(.9);}g.add(pad);}
+    const fh=top+.22,fl=new THREE.Group();fl.position.set(.03,fh,0);
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0),new THREE.Vector3(.02,fh*.5,0),new THREE.Vector3(.03,fh,0)]),10,.006,5,false),sm));
+    for(let i=0;i<9;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),pk);p.scale.set(.45,1,.2);const a=i/9*6.28;p.position.set(Math.cos(a)*.025,.03,Math.sin(a)*.025);p.rotation.set(Math.sin(a)*.5,-a,Math.cos(a)*-.5);fl.add(p);}
+    const pod=new THREE.Mesh(new THREE.CylinderGeometry(.015,.01,.02,10),yl);pod.position.y=.03;fl.add(pod);g.add(fl);g.userData.top=fh;}
   else if(t==='caulerpa')g=clump(['#4fa04a','#6abf5a','#3f8a3a'],34,.15,.03,.14);
   else if(t==='duckweed'){g=new THREE.Group();const m=mat(C.color,{side:THREE.DoubleSide});
     for(let i=0;i<14;i++){const l=new THREE.Mesh(new THREE.CircleGeometry(rnd(.025,.04),10),m);l.rotation.x=-Math.PI/2;const a=rnd(0,6.28),r=rnd(0,.2);l.position.set(Math.cos(a)*r,.004,Math.sin(a)*r);g.add(l);}g.userData.top=0;}

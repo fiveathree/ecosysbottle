@@ -60,7 +60,7 @@ const GROUPS={
 
 const STR={noO2:['缺氧','Low oxygen'],nh3:['氨中毒','Ammonia poisoning'],cold:['太凍','Too cold'],hot:['太熱','Too hot'],hungry:['飢餓','Hungry'],dry:['太乾','Too dry'],wet:['太濕','Too humid'],
   co2:['二氧化碳過高','CO₂ too high'],mould:['霉菌','Mould'],noWater:['冇水','No water'],needFresh:['要淡水','Needs fresh water'],needSalt:['要海水','Needs salt water'],flow:['水流太強','Current too strong'],
-  noSand:['冇底沙生根','No substrate to root'],noRock:['冇石或沉木依附','Nothing to attach to'],noSoil:['冇泥土','No soil'],lowN:['缺養分','Low nutrients'],lowLight:['光照不足','Not enough light'],
+  noSand:['冇底沙生根','No substrate to root'],noRock:['冇石或沉木依附','Nothing to attach to'],noSoil:['冇泥土','No soil'],noMud:['冇泥生根','No mud to root in'],lowN:['缺養分','Low nutrients'],lowLight:['光照不足','Not enough light'],
   hiN:['氨太高','Ammonia too high'],weak:['衰弱','Weakness'],eaten:['俾其他生物食咗','Eaten'],soilDry:['泥土太乾','Soil too dry']};
 const SS=code=>code?N(STR[code]||[code,code]):'';
 
@@ -74,6 +74,7 @@ const CAT={
   moss:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['莫絲','Java moss'],sci:'Taxiphyllum',color:'#3d6b25',root:'rock',desc:['依附石頭生長，俾蝦同螺藏身。','Grows on rock; cover for shrimp and snails.'],params:{o2Prod:.3,resp:.04,uptake:.004}},
   marimo:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['綠藻球','Marimo ball'],sci:'Aegagropila',color:'#3e7d2c',root:'none',desc:['慢慢生長嘅毛球，產氧唔多，但蝦好鍾意喺上面揾食。','Slow fuzzy ball; little oxygen, but shrimp love grazing on it.'],params:{o2Prod:.12,resp:.02,uptake:.003}},
   duckweed:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['浮萍','Duckweed'],sci:'Lemna',color:'#8fc13f',root:'none',floating:1,desc:['浮喺水面，一半氧氣散去空氣，但吸收養分快，壓制藻類。','Floats; half its oxygen escapes, but it soaks up nutrients and starves algae.'],params:{o2Prod:.3,resp:.03,uptake:.016}},
+  lotus:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['荷花','Lotus'],sci:'Nelumbo nucifera',color:'#e58fa8',root:'mud',shade:.15,airO2:1,desc:['根要種喺泥入面，葉浮喺水面遮光，藻類會少好多；大部份氧氣由葉面散去空氣。','Roots in mud; its pads shade the water and cut algae, and much of its oxygen goes to the air.'],params:{o2Prod:1.2,resp:.15,uptake:.02}},
   caulerpa:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['海葡萄','Sea grapes'],sci:'Caulerpa',color:'#4fa04a',root:'none',desc:['海水藻類，吸收硝酸鹽好快，幫手產氧。','Marine algae that absorbs nitrate quickly and adds oxygen.'],params:{o2Prod:.6,resp:.07,uptake:.014}},
 
   guppy:{m:'both',hab:'water',kind:'animal',g:'aanimal',move:'swim',name:['孔雀魚','Guppy'],sci:'Poecilia',color:'#e89a3c',diet:{flake:1,algae:.3},desc:['活潑耐養，但食量大、排泄多，要定時餵。','Lively and hardy, but eats and poops a lot; feed daily.'],params:{resp:.1,food:1,wasteEvery:6,wasteAmt:.05,o2Min:3,nh3Tol:.4,tMin:22,tMax:30}},
@@ -136,6 +137,7 @@ const SHAPES={
   cyl:{n:['圓柱瓶','Cylinder'],R:.95,H:2.4,w:.82,prof:[[1,0],[1,.5],[1,1]]},
   bowl:{n:['金魚缸','Fishbowl'],R:1.25,H:2.1,w:.72,prof:[[.6,0],[.85,.08],[.98,.25],[1,.42],[.95,.6],[.8,.78],[.62,.92],[.66,1]]},
   flask:{n:['燒瓶','Flask'],R:1.2,H:2.7,w:.6,prof:[[.88,0],[.98,.06],[1,.2],[.94,.4],[.72,.55],[.4,.67],[.32,.74],[.32,.97],[.36,1]]},
+  basin:{n:['陶缸','Ceramic basin'],R:1.35,H:1.55,w:.86,prof:[[.68,0],[.88,.08],[.98,.3],[1,.6],[.97,.86],[1,1]]},
   box:{n:['方缸','Box tank'],R:1,H:1.9,w:.85,box:true,prof:[[1,0],[1,1]]}
 };
 const MATS={
@@ -143,6 +145,7 @@ const MATS={
   acrylic:{n:['亞克力','Acrylic'],c:0xeaf6ff,op:.09,sh:45,tr:.92,d:['輕身唔易爛，但會刮花、慢慢變黃','Light and tough, but scratches and yellows']},
   green:{n:['綠玻璃','Green glass'],c:0x5f9a6a,op:.28,sh:110,tr:.8,d:['濾走部份光，藻類生長慢啲','Filters some light, slowing algae']},
   amber:{n:['茶色玻璃','Amber glass'],c:0xb0702a,op:.32,sh:110,tr:.62,d:['擋光多，植物產氧會明顯減少','Blocks a lot of light; plants make much less oxygen']},
+  ceramic:{n:['陶瓷','Ceramic'],c:0x9a5f3c,op:.88,sh:25,tr:.7,therm:.55,d:['唔透光，只有頂部入光；厚身保溫，溫度變化細。畫面會淡淡透視方便你睇入面','Opaque, so light only enters from the top; thick walls keep the temperature steady. Shown faintly see-through so you can look inside']},
   frosted:{n:['磨砂玻璃','Frosted glass'],c:0xf2f5f5,op:.48,sh:5,tr:.75,d:['光線柔和，但睇唔清入面','Soft light, but hard to see inside']}
 };
 const WX={
@@ -186,6 +189,8 @@ const PRESETS={
       V:6,shape:'cyl',sealed:false,light:10,feed:.5,items:[['sand',1],['hornwort',1],['jelly',4],['nitri',1]]},
     medaka:{n:['青鱂魚露台缸','Medaka balcony bowl'],d:['20L 開口金魚缸放喺露台：浮萍、金魚藻、青鱂魚、水蚤同石田螺，跟京都天氣。','20 L open bowl outdoors in Kyoto weather: duckweed, hornwort, medaka, daphnia and snails.'],
       V:20,shape:'bowl',sealed:false,light:12,feed:1,region:'kyoto',items:[['sand',1],['stone',1],['duckweed',2],['hornwort',2],['medaka',6],['daphnia',1],['snail',2],['nitri',1]]},
+    lotus:{n:['陶缸荷花魚','Ceramic lotus pond'],d:['30L 開口陶缸放喺室外：泥土、細沙、2 棵荷花、浮萍、青鱂魚同石田螺，唔使泵。','30 L open ceramic basin outdoors: soil, sand, 2 lotus, duckweed, medaka and pond snails; no pump.'],
+      V:30,shape:'basin',mat:'ceramic',sealed:false,light:12,feed:1,region:'hk',items:[['soil',1,{depth:5}],['sand',1,{depth:1.5}],['lotus',2],['duckweed',1],['stone',1],['medaka',6],['snail',3],['nitri',1]]},
     bad:{n:['失衡示範','Unbalanced demo'],d:['3L 密封金魚缸，5 條孔雀魚只得一撮莫絲，冇硝化菌。','3 L sealed fishbowl: 5 guppies, one clump of moss and no bacteria.'],V:3,shape:'bowl',sealed:true,light:12,feed:2,items:[['moss',1],['guppy',5]]},
     zero:{n:['由零開始','Start from scratch'],d:['一個未注水嘅空瓶，由鋪沙、擺石頭開始自己砌。','An empty, dry jar. Lay sand and stones, then add water.'],V:4,shape:'jar',sealed:false,light:12,feed:0,filled:false,items:[]}
   },
@@ -213,7 +218,7 @@ const PRESETS={
 };
 const PET_NAMES=[['波波','Bubbles'],['咕咕','Coco'],['豆豆','Bean'],['阿橙','Sunny'],['小藍','Blue'],['芝麻','Sesame'],['布甸','Pudding'],['麻糬','Mochi'],['珍珠','Pearl'],['雪糕','Gelato'],['叉燒','Char Siu'],['菠蘿包','Bolo'],['奶茶','Milk Tea'],['湯圓','Tangyuan'],['花生','Peanut'],['檸檬','Lemon'],['蛋撻','Tart'],['咖喱','Curry'],['鴛鴦','Yuenyeung'],['雞蛋仔','Waffle'],['魚蛋','Fishball'],['燒賣','Siu Mai'],['西多','Toastie'],['番薯','Yam'],['栗子','Chestnut'],['紅豆','Red Bean'],['椰子','Coconut'],['QQ','QQ']];
 
-const BEGINNER=['hornwort','javafern','moss','marimo','guppy','medaka','minnow','snail','shrimp','pothos','fern','isopod','springtail','nitri','soilmic','sand','soil','stone','gravel'];
+const BEGINNER=['lotus','hornwort','javafern','moss','marimo','guppy','medaka','minnow','snail','shrimp','pothos','fern','isopod','springtail','nitri','soilmic','sand','soil','stone','gravel'];
 const TAGS={all:['全部','All'],scape:['造景','Hardscape'],plant:['植物','Plants'],animal:['動物','Animals'],microbe:['微生物','Microbes'],easy:['新手易養','Beginner'],o2:['產氧多','High O₂'],clean:['清道夫','Cleaners'],breed:['會繁殖','Breeders'],predator:['肉食','Predators'],amph:['兩棲','Amphibians'],salt:['海水','Salt water']};
 function tagsOf(id){const c=CAT[id],t=[];
   t.push(['sub','decor'].includes(c.kind)?'scape':c.kind);

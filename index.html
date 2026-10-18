@@ -370,7 +370,7 @@ const GROUPS={
 
 const STR={noO2:['缺氧','Low oxygen'],nh3:['氨中毒','Ammonia poisoning'],cold:['太凍','Too cold'],hot:['太熱','Too hot'],hungry:['飢餓','Hungry'],dry:['太乾','Too dry'],wet:['太濕','Too humid'],
   co2:['二氧化碳過高','CO₂ too high'],mould:['霉菌','Mould'],noWater:['冇水','No water'],needFresh:['要淡水','Needs fresh water'],needSalt:['要海水','Needs salt water'],flow:['水流太強','Current too strong'],
-  noSand:['冇底沙生根','No substrate to root'],noRock:['冇石或沉木依附','Nothing to attach to'],noSoil:['冇泥土','No soil'],lowN:['缺養分','Low nutrients'],lowLight:['光照不足','Not enough light'],
+  noSand:['冇底沙生根','No substrate to root'],noRock:['冇石或沉木依附','Nothing to attach to'],noSoil:['冇泥土','No soil'],noMud:['冇泥生根','No mud to root in'],lowN:['缺養分','Low nutrients'],lowLight:['光照不足','Not enough light'],
   hiN:['氨太高','Ammonia too high'],weak:['衰弱','Weakness'],eaten:['俾其他生物食咗','Eaten'],soilDry:['泥土太乾','Soil too dry']};
 const SS=code=>code?N(STR[code]||[code,code]):'';
 
@@ -384,6 +384,7 @@ const CAT={
   moss:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['莫絲','Java moss'],sci:'Taxiphyllum',color:'#3d6b25',root:'rock',desc:['依附石頭生長，俾蝦同螺藏身。','Grows on rock; cover for shrimp and snails.'],params:{o2Prod:.3,resp:.04,uptake:.004}},
   marimo:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['綠藻球','Marimo ball'],sci:'Aegagropila',color:'#3e7d2c',root:'none',desc:['慢慢生長嘅毛球，產氧唔多，但蝦好鍾意喺上面揾食。','Slow fuzzy ball; little oxygen, but shrimp love grazing on it.'],params:{o2Prod:.12,resp:.02,uptake:.003}},
   duckweed:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['浮萍','Duckweed'],sci:'Lemna',color:'#8fc13f',root:'none',floating:1,desc:['浮喺水面，一半氧氣散去空氣，但吸收養分快，壓制藻類。','Floats; half its oxygen escapes, but it soaks up nutrients and starves algae.'],params:{o2Prod:.3,resp:.03,uptake:.016}},
+  lotus:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['荷花','Lotus'],sci:'Nelumbo nucifera',color:'#e58fa8',root:'mud',shade:.15,airO2:1,desc:['根要種喺泥入面，葉浮喺水面遮光，藻類會少好多；大部份氧氣由葉面散去空氣。','Roots in mud; its pads shade the water and cut algae, and much of its oxygen goes to the air.'],params:{o2Prod:1.2,resp:.15,uptake:.02}},
   caulerpa:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['海葡萄','Sea grapes'],sci:'Caulerpa',color:'#4fa04a',root:'none',desc:['海水藻類，吸收硝酸鹽好快，幫手產氧。','Marine algae that absorbs nitrate quickly and adds oxygen.'],params:{o2Prod:.6,resp:.07,uptake:.014}},
 
   guppy:{m:'both',hab:'water',kind:'animal',g:'aanimal',move:'swim',name:['孔雀魚','Guppy'],sci:'Poecilia',color:'#e89a3c',diet:{flake:1,algae:.3},desc:['活潑耐養，但食量大、排泄多，要定時餵。','Lively and hardy, but eats and poops a lot; feed daily.'],params:{resp:.1,food:1,wasteEvery:6,wasteAmt:.05,o2Min:3,nh3Tol:.4,tMin:22,tMax:30}},
@@ -446,6 +447,7 @@ const SHAPES={
   cyl:{n:['圓柱瓶','Cylinder'],R:.95,H:2.4,w:.82,prof:[[1,0],[1,.5],[1,1]]},
   bowl:{n:['金魚缸','Fishbowl'],R:1.25,H:2.1,w:.72,prof:[[.6,0],[.85,.08],[.98,.25],[1,.42],[.95,.6],[.8,.78],[.62,.92],[.66,1]]},
   flask:{n:['燒瓶','Flask'],R:1.2,H:2.7,w:.6,prof:[[.88,0],[.98,.06],[1,.2],[.94,.4],[.72,.55],[.4,.67],[.32,.74],[.32,.97],[.36,1]]},
+  basin:{n:['陶缸','Ceramic basin'],R:1.35,H:1.55,w:.86,prof:[[.68,0],[.88,.08],[.98,.3],[1,.6],[.97,.86],[1,1]]},
   box:{n:['方缸','Box tank'],R:1,H:1.9,w:.85,box:true,prof:[[1,0],[1,1]]}
 };
 const MATS={
@@ -453,6 +455,7 @@ const MATS={
   acrylic:{n:['亞克力','Acrylic'],c:0xeaf6ff,op:.09,sh:45,tr:.92,d:['輕身唔易爛，但會刮花、慢慢變黃','Light and tough, but scratches and yellows']},
   green:{n:['綠玻璃','Green glass'],c:0x5f9a6a,op:.28,sh:110,tr:.8,d:['濾走部份光，藻類生長慢啲','Filters some light, slowing algae']},
   amber:{n:['茶色玻璃','Amber glass'],c:0xb0702a,op:.32,sh:110,tr:.62,d:['擋光多，植物產氧會明顯減少','Blocks a lot of light; plants make much less oxygen']},
+  ceramic:{n:['陶瓷','Ceramic'],c:0x9a5f3c,op:.88,sh:25,tr:.7,therm:.55,d:['唔透光，只有頂部入光；厚身保溫，溫度變化細。畫面會淡淡透視方便你睇入面','Opaque, so light only enters from the top; thick walls keep the temperature steady. Shown faintly see-through so you can look inside']},
   frosted:{n:['磨砂玻璃','Frosted glass'],c:0xf2f5f5,op:.48,sh:5,tr:.75,d:['光線柔和，但睇唔清入面','Soft light, but hard to see inside']}
 };
 const WX={
@@ -496,6 +499,8 @@ const PRESETS={
       V:6,shape:'cyl',sealed:false,light:10,feed:.5,items:[['sand',1],['hornwort',1],['jelly',4],['nitri',1]]},
     medaka:{n:['青鱂魚露台缸','Medaka balcony bowl'],d:['20L 開口金魚缸放喺露台：浮萍、金魚藻、青鱂魚、水蚤同石田螺，跟京都天氣。','20 L open bowl outdoors in Kyoto weather: duckweed, hornwort, medaka, daphnia and snails.'],
       V:20,shape:'bowl',sealed:false,light:12,feed:1,region:'kyoto',items:[['sand',1],['stone',1],['duckweed',2],['hornwort',2],['medaka',6],['daphnia',1],['snail',2],['nitri',1]]},
+    lotus:{n:['陶缸荷花魚','Ceramic lotus pond'],d:['30L 開口陶缸放喺室外：泥土、細沙、2 棵荷花、浮萍、青鱂魚同石田螺，唔使泵。','30 L open ceramic basin outdoors: soil, sand, 2 lotus, duckweed, medaka and pond snails; no pump.'],
+      V:30,shape:'basin',mat:'ceramic',sealed:false,light:12,feed:1,region:'hk',items:[['soil',1,{depth:5}],['sand',1,{depth:1.5}],['lotus',2],['duckweed',1],['stone',1],['medaka',6],['snail',3],['nitri',1]]},
     bad:{n:['失衡示範','Unbalanced demo'],d:['3L 密封金魚缸，5 條孔雀魚只得一撮莫絲，冇硝化菌。','3 L sealed fishbowl: 5 guppies, one clump of moss and no bacteria.'],V:3,shape:'bowl',sealed:true,light:12,feed:2,items:[['moss',1],['guppy',5]]},
     zero:{n:['由零開始','Start from scratch'],d:['一個未注水嘅空瓶，由鋪沙、擺石頭開始自己砌。','An empty, dry jar. Lay sand and stones, then add water.'],V:4,shape:'jar',sealed:false,light:12,feed:0,filled:false,items:[]}
   },
@@ -523,7 +528,7 @@ const PRESETS={
 };
 const PET_NAMES=[['波波','Bubbles'],['咕咕','Coco'],['豆豆','Bean'],['阿橙','Sunny'],['小藍','Blue'],['芝麻','Sesame'],['布甸','Pudding'],['麻糬','Mochi'],['珍珠','Pearl'],['雪糕','Gelato'],['叉燒','Char Siu'],['菠蘿包','Bolo'],['奶茶','Milk Tea'],['湯圓','Tangyuan'],['花生','Peanut'],['檸檬','Lemon'],['蛋撻','Tart'],['咖喱','Curry'],['鴛鴦','Yuenyeung'],['雞蛋仔','Waffle'],['魚蛋','Fishball'],['燒賣','Siu Mai'],['西多','Toastie'],['番薯','Yam'],['栗子','Chestnut'],['紅豆','Red Bean'],['椰子','Coconut'],['QQ','QQ']];
 
-const BEGINNER=['hornwort','javafern','moss','marimo','guppy','medaka','minnow','snail','shrimp','pothos','fern','isopod','springtail','nitri','soilmic','sand','soil','stone','gravel'];
+const BEGINNER=['lotus','hornwort','javafern','moss','marimo','guppy','medaka','minnow','snail','shrimp','pothos','fern','isopod','springtail','nitri','soilmic','sand','soil','stone','gravel'];
 const TAGS={all:['全部','All'],scape:['造景','Hardscape'],plant:['植物','Plants'],animal:['動物','Animals'],microbe:['微生物','Microbes'],easy:['新手易養','Beginner'],o2:['產氧多','High O₂'],clean:['清道夫','Cleaners'],breed:['會繁殖','Breeders'],predator:['肉食','Predators'],amph:['兩棲','Amphibians'],salt:['海水','Salt water']};
 function tagsOf(id){const c=CAT[id],t=[];
   t.push(['sub','decor'].includes(c.kind)?'scape':c.kind);
@@ -596,7 +601,7 @@ function step(st){
   const amb=RG.t+(w.d+(st.hour>=8&&st.hour<18?RG.sw/2:-RG.sw/2))*.6;
   let tgt=amb+(light?1.5:0)+(st.mode==='rain'&&st.heat&&light?5:0)+(st.sealed?.5:0);
   if(st.heater&&wL>0)tgt=Math.max(tgt,st.mode==='aqua'?25.5:23);
-  c.T+=(tgt-c.T)*.15;
+  c.T+=(tgt-c.T)*.15*(MATS[st.mat].therm||1);
   const q=clamp(1+.04*(c.T-25),.5,1.6);
   // 餵食：水中動物食飼料，陸上動物食昆蟲
   if(st.hour===st.feedHour&&st.feed>0){
@@ -646,7 +651,7 @@ function stepWater(st,c,wL,light,lm,q,E,w){
     const p=it.params,h=it.health,C=CAT[it.type];
     useO2(p.resp*Math.max(.3,h)*q);
     if(lm>0){
-      const prod=p.o2Prod*h*co2f*lm,kept=C.floating?.5:1;
+      const prod=p.o2Prod*h*co2f*lm,kept=C.floating?.5:C.airO2?.35:1;
       c.O2+=prod*kept;c.CO2=Math.max(0,c.CO2-prod*1.375);o2p+=prod*kept;it.lastProd=prod*kept;
       let need=p.uptake*h;const a=Math.min(c.NH3,need);c.NH3-=a;need-=a;const b=Math.min(c.NO3,need);c.NO3-=b;need-=b;
       it.nShort=need>p.uptake*h*.7?it.nShort+1:Math.max(0,it.nShort-2);
@@ -657,6 +662,7 @@ function stepWater(st,c,wL,light,lm,q,E,w){
     if(c.NH3/wL>3){dh-=.004;it.stress='hiN';}
     if(C.root==='sand'&&!E.sub){dh=Math.min(dh,0)-.004;it.stress='noSand';}
     if(C.root==='rock'&&!E.rocks){dh=Math.min(dh,0)-.002;it.stress='noRock';}
+    if(C.root==='mud'&&!E.subTypes.soil){dh=Math.min(dh,0)-.005;it.stress='noMud';}
     if(C.w!=='both'&&C.w!==wt){dh=Math.min(dh,0)-.02;it.stress=wt==='salt'?'needFresh':'needSalt';}
     hurt(it,dh,st);
   }
@@ -685,8 +691,9 @@ function stepWater(st,c,wL,light,lm,q,E,w){
     let conv=Math.min(c.NH3,.012*wL,c.O2/3.4);c.NH3-=conv;c.NO3+=conv;c.O2-=conv*3.4;o2u+=conv*3.4;
     const d=c.detritus*.04;c.detritus-=d;c.NO3+=d*.1;useO2(d*.1*3.4);
   }
+  const shade=Math.min(.7,plants.reduce((a,i)=>a+(CAT[i.type].shade||(CAT[i.type].floating?.04:0))*i.health,0)*Math.min(1,4/Math.sqrt(wL)));
   if(lm>0){
-    const no3c=c.NO3/wL;let g=(.04*c.algae+.01)*(no3c/(no3c+1.5))*Math.max(0,1-c.algae/60)*co2f*lm;
+    const no3c=c.NO3/wL;let g=(.04*c.algae+.01)*(no3c/(no3c+1.5))*Math.max(0,1-c.algae/60)*co2f*lm*(1-shade);
     g=Math.max(0,Math.min(g,c.NO3/.01));c.algae+=g;c.NO3-=g*.01;c.O2+=g*.6;c.CO2=Math.max(0,c.CO2-g*.8);o2p+=g*.6;grown=g;
   }
   useO2(.003*c.algae);
@@ -1210,6 +1217,14 @@ function buildItem(it){
   else if(t==='javafern'){g=fronds(C.color,6,.22,.06,.25);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.07,0),mat(0x6d6a63));r.scale.y=.6;r.position.y=.03;g.add(r);}
   else if(t==='moss'){g=clump(['#3d6b25','#4f7d2e','#2f5a1d'],26,.16,.055,.12);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.12,0),mat(0x6d6a63));r.scale.set(1.3,.6,1);r.position.y=.03;g.add(r);}
   else if(t==='marimo'){g=new THREE.Group();const s=new THREE.Mesh(new THREE.IcosahedronGeometry(.07,2),mat(C.color));s.position.y=.07;g.add(s);g.userData.top=.14;}
+  else if(t==='lotus'){g=new THREE.Group();const top=J.waterTop!=null?J.waterTop-J.sTop:J.H*.4,sm=mat(0x5f7d2a),lm=mat(0x4f8f3a,{side:THREE.DoubleSide}),pk=mat(0xf0a3b8,{side:THREE.DoubleSide}),yl=mat(0xf2d35a);
+    for(let i=0;i<5;i++){const a=rnd(0,6.28),r=rnd(.05,.22),up=i<2?rnd(.08,.2):0,h=top+up,x=Math.cos(a)*r,z=Math.sin(a)*r;
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0),new THREE.Vector3(x*.4,h*.5,z*.4),new THREE.Vector3(x,h,z)]),10,.007,5,false),sm));
+      const pad=new THREE.Mesh(new THREE.CircleGeometry(rnd(.1,.15),20,.15,Math.PI*2-.3),lm);pad.rotation.x=-Math.PI/2;pad.rotation.z=rnd(0,6.28);pad.position.set(x,h+.003,z);if(up){pad.rotation.x=-Math.PI/2+rnd(-.5,.5);pad.scale.setScalar(.9);}g.add(pad);}
+    const fh=top+.22,fl=new THREE.Group();fl.position.set(.03,fh,0);
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0),new THREE.Vector3(.02,fh*.5,0),new THREE.Vector3(.03,fh,0)]),10,.006,5,false),sm));
+    for(let i=0;i<9;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),pk);p.scale.set(.45,1,.2);const a=i/9*6.28;p.position.set(Math.cos(a)*.025,.03,Math.sin(a)*.025);p.rotation.set(Math.sin(a)*.5,-a,Math.cos(a)*-.5);fl.add(p);}
+    const pod=new THREE.Mesh(new THREE.CylinderGeometry(.015,.01,.02,10),yl);pod.position.y=.03;fl.add(pod);g.add(fl);g.userData.top=fh;}
   else if(t==='caulerpa')g=clump(['#4fa04a','#6abf5a','#3f8a3a'],34,.15,.03,.14);
   else if(t==='duckweed'){g=new THREE.Group();const m=mat(C.color,{side:THREE.DoubleSide});
     for(let i=0;i<14;i++){const l=new THREE.Mesh(new THREE.CircleGeometry(rnd(.025,.04),10),m);l.rotation.x=-Math.PI/2;const a=rnd(0,6.28),r=rnd(0,.2);l.position.set(Math.cos(a)*r,.004,Math.sin(a)*r);g.add(l);}g.userData.top=0;}
@@ -1732,7 +1747,7 @@ function renderCatList(){
       const n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id],full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
       const chips=paramChips(id);if(lim!=null)chips.push(L(`最多 ${lim}`,`max ${lim}`));
       if(!aq&&c.hab==='water'&&c.kind!=='microbe'&&!(S.level>0))chips.push(L('要先加水位','raise the water first'));
-      if(c.burrow)chips.push(L('要有細沙','needs fine sand'));
+      if(c.burrow)chips.push(L('要有細沙','needs fine sand'));if(c.root==='mud')chips.push(L('要有泥土','needs mud'));if(c.shade)chips.push(L('遮光減藻','shades out algae'));
       return`<div class="card"><div class="nm"><span class="dot" style="background:${c.color}"></span>${N(c.name)}<em>${c.sci}</em></div>
       <p>${N(c.desc)}</p><div class="ctr"><button class="minus" data-rm="${id}" aria-label="${L('減少','Remove')} ${esc(N(c.name))}" ${n?'':'disabled'}>−</button><output>${n}</output><button data-add="${id}" aria-label="${L('加入','Add')} ${esc(N(c.name))}" ${full?'disabled':''}>+</button></div>
       <div class="chips">${chips.map(x=>`<span class="chip">${x}</span>`).join('')}</div></div>`;}).join('')}</section>`;}).join('');
@@ -1803,7 +1818,7 @@ function renderEditor(){
   if(k==='animal')vit.push([L('飽肚程度','Fullness'),'v-sat'],[L('下次去廁所','Next poop'),'v-wc']);
   if(k==='plant')vit.push([L('而家產氧','O₂ now'),'v-prod'],[L('每日淨產氧','Net O₂ per day'),'v-day']);
   const notes=[];
-  if(c.root==='sand')notes.push(L('要種喺底沙。','Needs substrate to root.'));if(c.root==='rock')notes.push(L('要依附石頭或沉木。','Needs rock or wood to attach to.'));
+  if(c.root==='sand')notes.push(L('要種喺底沙。','Needs substrate to root.'));if(c.root==='rock')notes.push(L('要依附石頭或沉木。','Needs rock or wood to attach to.'));if(c.root==='mud')notes.push(L('要種喺泥土（喺「加入 › 造景」鋪泥土）。','Needs soil to root in (add it under Hardscape).'));
   if(c.hab==='amph')notes.push(L('要有水區同陸地。','Needs water and land.'));if(c.preys)notes.push(L('會食：','Eats: ')+c.preys.map(x=>N(CAT[x].name)).join(L('、',', '))+L('。','.'));
   if(c.flow)notes.push(L('開氧氣泵或者過濾會受傷。','Hurt by a pump or filter current.'));
   if(k==='animal')notes.unshift(L('食物：','Food: ')+Object.keys(c.diet).map(p=>N(POOLNAME[p])).join(L('、',', '))+L('（按喜好排序）。',' (in order of preference).'));
@@ -1885,7 +1900,7 @@ function budgets(){
   if(wL>0){
     const P=alive.filter(i=>isWater(i)&&CAT[i.type].kind==='plant'),A=alive.filter(i=>isWater(i)&&CAT[i.type].kind==='animal'),amph=alive.filter(i=>CAT[i.type].hab==='amph');
     let o2In=0,o2Out=0,hr=0,wIn=0,need=0;
-    P.forEach(it=>{const p=it.params;o2In+=p.o2Prod*it.health*L24*lm*(CAT[it.type].floating?.5:1);const r=p.resp*Math.max(.3,it.health)*q;o2Out+=r*24;hr+=r;});
+    P.forEach(it=>{const p=it.params;o2In+=p.o2Prod*it.health*L24*lm*(CAT[it.type].floating?.5:CAT[it.type].airO2?.35:1);const r=p.resp*Math.max(.3,it.health)*q;o2Out+=r*24;hr+=r;});
     A.forEach(it=>{const p=it.params;o2Out+=p.resp*q*24;hr+=p.resp*q;wIn+=p.wasteAmt*24/p.wasteEvery;need+=p.food;});
     amph.forEach(it=>{wIn+=it.params.wasteAmt*.1*24/it.params.wasteEvery;});
     const flakeEat=A.reduce((s,it)=>s+(CAT[it.type].diet.flake?it.params.food:0),0),landEat=alive.filter(i=>!isWater(i)&&CAT[i.type].kind==='animal'&&CAT[i.type].diet.feed).reduce((s,i)=>s+i.params.food,0);
@@ -2310,7 +2325,7 @@ const METER_FIX={wo2:v=>['pump','open','balance'],wnh3:v=>['wc','feedLess','nitr
   ao2:v=>['open'],co2:v=>['open'],waste:v=>['isopod','feedLess'],mould:v=>['spring','open'],
   hum:v=>{const r=rangeOf('hum');return r&&v<r[0]?['mistMore','seal']:['open','mistLess'];},T:v=>{const r=rangeOf('t');return r&&v<r[0]?['heat']:['cool'];}};
 const STRESS_FIX={noO2:['pump','open'],nh3:['wc','feedLess','nitri'],cold:['heat'],hot:['cool'],hungry:['feedNow','feedMore'],dry:['mistMore','seal'],wet:['open','mistLess'],
-  co2:['open'],mould:['spring','open'],flow:['flowOff'],noSand:['sand'],noRock:['stone'],noSoil:['soil'],lowLight:['lightMore'],hiN:['wc'],lowN:['feedMore']};
+  co2:['open'],mould:['spring','open'],flow:['flowOff'],noSand:['sand'],noMud:['soil'],noRock:['stone'],noSoil:['soil'],lowLight:['lightMore'],hiN:['wc'],lowN:['feedMore']};
 function liveIssues(){
   const out=[],aq=S.mode==='aqua',wL=wLOf(S);
   if(aq&&!wL)out.push({cls:'warn',t:L('未注水','No water'),d:L('水中生物冇水會死。','Water life dies without water.'),fixes:['fill']});

@@ -60,7 +60,7 @@ function step(st){
   const amb=RG.t+(w.d+(st.hour>=8&&st.hour<18?RG.sw/2:-RG.sw/2))*.6;
   let tgt=amb+(light?1.5:0)+(st.mode==='rain'&&st.heat&&light?5:0)+(st.sealed?.5:0);
   if(st.heater&&wL>0)tgt=Math.max(tgt,st.mode==='aqua'?25.5:23);
-  c.T+=(tgt-c.T)*.15;
+  c.T+=(tgt-c.T)*.15*(MATS[st.mat].therm||1);
   const q=clamp(1+.04*(c.T-25),.5,1.6);
   // 餵食：水中動物食飼料，陸上動物食昆蟲
   if(st.hour===st.feedHour&&st.feed>0){
@@ -110,7 +110,7 @@ function stepWater(st,c,wL,light,lm,q,E,w){
     const p=it.params,h=it.health,C=CAT[it.type];
     useO2(p.resp*Math.max(.3,h)*q);
     if(lm>0){
-      const prod=p.o2Prod*h*co2f*lm,kept=C.floating?.5:1;
+      const prod=p.o2Prod*h*co2f*lm,kept=C.floating?.5:C.airO2?.35:1;
       c.O2+=prod*kept;c.CO2=Math.max(0,c.CO2-prod*1.375);o2p+=prod*kept;it.lastProd=prod*kept;
       let need=p.uptake*h;const a=Math.min(c.NH3,need);c.NH3-=a;need-=a;const b=Math.min(c.NO3,need);c.NO3-=b;need-=b;
       it.nShort=need>p.uptake*h*.7?it.nShort+1:Math.max(0,it.nShort-2);
@@ -121,6 +121,7 @@ function stepWater(st,c,wL,light,lm,q,E,w){
     if(c.NH3/wL>3){dh-=.004;it.stress='hiN';}
     if(C.root==='sand'&&!E.sub){dh=Math.min(dh,0)-.004;it.stress='noSand';}
     if(C.root==='rock'&&!E.rocks){dh=Math.min(dh,0)-.002;it.stress='noRock';}
+    if(C.root==='mud'&&!E.subTypes.soil){dh=Math.min(dh,0)-.005;it.stress='noMud';}
     if(C.w!=='both'&&C.w!==wt){dh=Math.min(dh,0)-.02;it.stress=wt==='salt'?'needFresh':'needSalt';}
     hurt(it,dh,st);
   }
@@ -149,8 +150,9 @@ function stepWater(st,c,wL,light,lm,q,E,w){
     let conv=Math.min(c.NH3,.012*wL,c.O2/3.4);c.NH3-=conv;c.NO3+=conv;c.O2-=conv*3.4;o2u+=conv*3.4;
     const d=c.detritus*.04;c.detritus-=d;c.NO3+=d*.1;useO2(d*.1*3.4);
   }
+  const shade=Math.min(.7,plants.reduce((a,i)=>a+(CAT[i.type].shade||(CAT[i.type].floating?.04:0))*i.health,0)*Math.min(1,4/Math.sqrt(wL)));
   if(lm>0){
-    const no3c=c.NO3/wL;let g=(.04*c.algae+.01)*(no3c/(no3c+1.5))*Math.max(0,1-c.algae/60)*co2f*lm;
+    const no3c=c.NO3/wL;let g=(.04*c.algae+.01)*(no3c/(no3c+1.5))*Math.max(0,1-c.algae/60)*co2f*lm*(1-shade);
     g=Math.max(0,Math.min(g,c.NO3/.01));c.algae+=g;c.NO3-=g*.01;c.O2+=g*.6;c.CO2=Math.max(0,c.CO2-g*.8);o2p+=g*.6;grown=g;
   }
   useO2(.003*c.algae);

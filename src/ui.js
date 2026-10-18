@@ -125,7 +125,7 @@ function renderCatList(){
       const n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id],full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
       const chips=paramChips(id);if(lim!=null)chips.push(L(`最多 ${lim}`,`max ${lim}`));
       if(!aq&&c.hab==='water'&&c.kind!=='microbe'&&!(S.level>0))chips.push(L('要先加水位','raise the water first'));
-      if(c.burrow)chips.push(L('要有細沙','needs fine sand'));
+      if(c.burrow)chips.push(L('要有細沙','needs fine sand'));if(c.root==='mud')chips.push(L('要有泥土','needs mud'));if(c.shade)chips.push(L('遮光減藻','shades out algae'));
       return`<div class="card"><div class="nm"><span class="dot" style="background:${c.color}"></span>${N(c.name)}<em>${c.sci}</em></div>
       <p>${N(c.desc)}</p><div class="ctr"><button class="minus" data-rm="${id}" aria-label="${L('減少','Remove')} ${esc(N(c.name))}" ${n?'':'disabled'}>−</button><output>${n}</output><button data-add="${id}" aria-label="${L('加入','Add')} ${esc(N(c.name))}" ${full?'disabled':''}>+</button></div>
       <div class="chips">${chips.map(x=>`<span class="chip">${x}</span>`).join('')}</div></div>`;}).join('')}</section>`;}).join('');
@@ -196,7 +196,7 @@ function renderEditor(){
   if(k==='animal')vit.push([L('飽肚程度','Fullness'),'v-sat'],[L('下次去廁所','Next poop'),'v-wc']);
   if(k==='plant')vit.push([L('而家產氧','O₂ now'),'v-prod'],[L('每日淨產氧','Net O₂ per day'),'v-day']);
   const notes=[];
-  if(c.root==='sand')notes.push(L('要種喺底沙。','Needs substrate to root.'));if(c.root==='rock')notes.push(L('要依附石頭或沉木。','Needs rock or wood to attach to.'));
+  if(c.root==='sand')notes.push(L('要種喺底沙。','Needs substrate to root.'));if(c.root==='rock')notes.push(L('要依附石頭或沉木。','Needs rock or wood to attach to.'));if(c.root==='mud')notes.push(L('要種喺泥土（喺「加入 › 造景」鋪泥土）。','Needs soil to root in (add it under Hardscape).'));
   if(c.hab==='amph')notes.push(L('要有水區同陸地。','Needs water and land.'));if(c.preys)notes.push(L('會食：','Eats: ')+c.preys.map(x=>N(CAT[x].name)).join(L('、',', '))+L('。','.'));
   if(c.flow)notes.push(L('開氧氣泵或者過濾會受傷。','Hurt by a pump or filter current.'));
   if(k==='animal')notes.unshift(L('食物：','Food: ')+Object.keys(c.diet).map(p=>N(POOLNAME[p])).join(L('、',', '))+L('（按喜好排序）。',' (in order of preference).'));
@@ -278,7 +278,7 @@ function budgets(){
   if(wL>0){
     const P=alive.filter(i=>isWater(i)&&CAT[i.type].kind==='plant'),A=alive.filter(i=>isWater(i)&&CAT[i.type].kind==='animal'),amph=alive.filter(i=>CAT[i.type].hab==='amph');
     let o2In=0,o2Out=0,hr=0,wIn=0,need=0;
-    P.forEach(it=>{const p=it.params;o2In+=p.o2Prod*it.health*L24*lm*(CAT[it.type].floating?.5:1);const r=p.resp*Math.max(.3,it.health)*q;o2Out+=r*24;hr+=r;});
+    P.forEach(it=>{const p=it.params;o2In+=p.o2Prod*it.health*L24*lm*(CAT[it.type].floating?.5:CAT[it.type].airO2?.35:1);const r=p.resp*Math.max(.3,it.health)*q;o2Out+=r*24;hr+=r;});
     A.forEach(it=>{const p=it.params;o2Out+=p.resp*q*24;hr+=p.resp*q;wIn+=p.wasteAmt*24/p.wasteEvery;need+=p.food;});
     amph.forEach(it=>{wIn+=it.params.wasteAmt*.1*24/it.params.wasteEvery;});
     const flakeEat=A.reduce((s,it)=>s+(CAT[it.type].diet.flake?it.params.food:0),0),landEat=alive.filter(i=>!isWater(i)&&CAT[i.type].kind==='animal'&&CAT[i.type].diet.feed).reduce((s,i)=>s+i.params.food,0);
