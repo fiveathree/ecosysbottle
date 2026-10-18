@@ -1,0 +1,40 @@
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1 id="brandT">生態瓶實驗室</h1><small id="brandS">ECO JAR LAB</small></div>
+    <div class="jars" id="jarSeg" role="group" aria-label="Jars"></div>
+    <div class="seg mode" id="modeSeg" role="group" aria-label="Mode"></div>
+    <div class="clock"><b id="clkDay"></b><b id="clkTime"></b><span id="lightTag" class="tag"></span></div>
+    <div class="ctrls">
+      <button class="btn primary" id="playBtn"></button>
+      <div class="seg" id="speedSeg" role="group" aria-label="Speed"></div>
+      <button class="btn" id="feedBtn"></button>
+      <button class="btn magic" id="balBtn"></button>
+      <button class="btn lang" id="langBtn"></button>
+    </div>
+  </header>
+  <div class="main">
+    <section class="stage" id="stage">
+      <canvas id="c"></canvas>
+      <div class="hud"><div class="hud-l"><button class="pill click" id="status" aria-haspopup="dialog"><i></i><span></span></button><div class="pill wx" id="wxPill"></div><button class="tglbtn" id="tglL"></button></div>
+        <div class="hud-r"><div class="hud-rr"><button class="tglbtn" id="tglR"></button><button class="clearbtn" id="clearBtn"></button></div><span class="hint" id="hint"></span></div></div>
+      <div class="ov ovL" id="ovL" hidden></div><div class="ov ovR" id="ovR" hidden></div>
+      <div class="pop" id="pop" hidden></div><div class="pop issues" id="issuePop" hidden></div>
+      <div class="meters" id="meters"></div>
+    </section>
+    <aside class="panel">
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="add" aria-selected="true"></button>
+        <button role="tab" data-tab="jar" aria-selected="false"></button>
+        <button role="tab" data-tab="bal" aria-selected="false"></button>
+        <button role="tab" data-tab="env" aria-selected="false"></button>
+        <button role="tab" data-tab="ana" aria-selected="false"></button>
+      </nav>
+      <div class="pane" id="pane-add"></div>
+      <div class="pane" id="pane-jar" hidden></div>
+      <div class="pane" id="pane-bal" hidden></div>
+      <div class="pane" id="pane-env" hidden></div>
+      <div class="pane" id="pane-ana" hidden></div>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
