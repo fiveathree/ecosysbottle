@@ -59,12 +59,25 @@ function select(it,ev,anchor){
 }
 function openPop(it,ev,anchor){
   const pop=$('#pop'),st=$('#stage').getBoundingClientRect();let x,y;
-  if(anchor){const a=anchor.getBoundingClientRect();x=a.left-st.left-240;y=a.top-st.top-10;}
-  else{x=ev.clientX-st.left+14;y=ev.clientY-st.top-20;}
   popIt=it;pop.hidden=false;renderPop();
   const w=pop.offsetWidth,h=pop.offsetHeight;
+  if(anchor){const a=anchor.getBoundingClientRect();x=a.left-st.left-w-10;y=a.top-st.top-10;}
+  else{
+    // 擺喺物件側邊，唔遮住佢：用物件喺畫面上嘅範圍
+    let cx=ev.clientX-st.left,cy=ev.clientY-st.top,rx=40,ry=40;
+    if(it.g){const b=new THREE.Box3().setFromObject(it.g),pts=[];if(!b.isEmpty()){for(const X of [b.min.x,b.max.x])for(const Y of [b.min.y,b.max.y])for(const Z of [b.min.z,b.max.z]){const v=new THREE.Vector3(X,Y,Z).project(camera);pts.push([(v.x+1)/2*st.width,(1-v.y)/2*st.height]);}
+      const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);cx=(Math.min(...xs)+Math.max(...xs))/2;cy=(Math.min(...ys)+Math.max(...ys))/2;rx=(Math.max(...xs)-Math.min(...xs))/2;ry=(Math.max(...ys)-Math.min(...ys))/2;}}
+    const right=cx+rx+16,left=cx-rx-16-w;
+    x=right+w<=st.width-8?right:left>=8?left:(cx<st.width/2?st.width-w-8:8);
+    y=cy-h/2;if(x<cx+rx&&x+w>cx-rx){y=cy-ry-h-12;if(y<46)y=cy+ry+12;}
+  }
   pop.style.left=clamp(x,8,st.width-w-8)+'px';pop.style.top=clamp(y,46,Math.max(46,st.height-h-8))+'px';
 }
+function makeDraggable(box,handle){if(!handle)return;handle.classList.add('draghandle');
+  handle.onpointerdown=e=>{if(e.target.closest('button'))return;e.preventDefault();handle.setPointerCapture(e.pointerId);
+    const st=$('#stage').getBoundingClientRect(),ox=e.clientX-box.offsetLeft,oy=e.clientY-box.offsetTop;
+    handle.onpointermove=m=>{box.style.left=clamp(m.clientX-ox,4,st.width-box.offsetWidth-4)+'px';box.style.top=clamp(m.clientY-oy,4,st.height-box.offsetHeight-4)+'px';};
+    handle.onpointerup=handle.onpointercancel=()=>{handle.onpointermove=null;};};}
 function closePop(){$('#pop').hidden=true;popIt=null;}
 function popDyn(it){
   const c=CAT[it.type],k=c.kind,[t,cls]=statusOf(it),deco=['sub','decor'].includes(k),rows=[];
@@ -89,9 +102,12 @@ function renderPop(){
     ${k==='decor'&&it.alive?`<div class="rotpad"><span>${L('左右轉','Turn')}</span><button data-r="rot,-15">⟲</button><button data-r="rot,15">⟳</button>
       <span>${L('前後傾','Tilt F/B')}</span><button data-r="rotX,-15">▲</button><button data-r="rotX,15">▼</button>
       <span>${L('左右傾','Tilt L/R')}</span><button data-r="rotZ,15">◀</button><button data-r="rotZ,-15">▶</button>
+      <span>${L('大細','Size')} <b class="mono" id="popSz">${(+it.params.size).toFixed(2)}×</b></span><button data-sz="-.1" aria-label="${L('縮細','Smaller')}">－</button><button data-sz=".1" aria-label="${L('放大','Larger')}">＋</button>
       <button class="rotreset" data-r="reset">${L('擺返正','Level it')}</button></div>`:''}
     <div class="ed-actions"><button class="btn primary" id="popMore">${L('詳細設定','Settings')}</button><button class="btn danger" id="popDel">${it.alive?L('移走','Remove'):L('清走','Clear')}</button></div>`;
   $('#popX').onclick=closePop;
+  pop.querySelectorAll('[data-sz]').forEach(b=>b.onclick=()=>{const p=it.params;p.size=+clamp((+p.size)+(+b.dataset.sz),.4,2).toFixed(2);placeItem(it);const z=$('#popSz');if(z)z.textContent=p.size.toFixed(2)+'×';save();if(S.sel===it&&$('#editor'))renderEditor();});
+  makeDraggable(pop,pop.querySelector('.ed-head'));
   pop.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const v=b.dataset.r;
     if(v==='reset'){it.params.rotX=0;it.params.rotZ=0;}
     else{const [key,dv]=v.split(','),p=it.params;let n=(p[key]||0)+ +dv;if(key==='rot')n=(n%360+360)%360;else{if(n>180)n-=360;if(n<-180)n+=360;}p[key]=n;}

@@ -160,18 +160,36 @@ const WX={
   snow:{n:['落雪','Snow'],light:.55,d:-7,dh:6,snow:1}
 };
 /* 地區氣候：t 平均溫度、sw 日夜溫差、hum 平均濕度、light 日照強度、w 各種天氣出現比重 */
+/* 地區氣候：type city＝城市地方（所有模式、可自訂）；biome＝真實生態地域（按模式）
+   t 平均溫度、sw 日夜溫差、hum 平均濕度、light 日照強度、w 各種天氣出現比重 */
 const REGIONS={
-  hk:{n:['香港','Hong Kong'],t:24,sw:5,hum:76,light:1,w:{sunny:3,cloudy:3,rain:2,storm:1,fog:.5},d:['亞熱帶，濕熱多雨，夏天有雷暴。','Subtropical: warm, humid and wet, with summer storms.']},
-  amazon:{n:['亞馬遜雨林','Amazon rainforest'],t:27,sw:6,hum:88,light:.95,w:{sunny:2,cloudy:3,rain:4,storm:2,fog:1},d:['全年炎熱潮濕，幾乎日日落雨。','Hot and humid all year with rain most days.']},
-  borneo:{n:['婆羅洲雨林','Borneo rainforest'],t:26,sw:5,hum:90,light:.9,w:{cloudy:3,rain:4,storm:1.5,fog:1.5,sunny:1.5},d:['雲霧多，濕度好高。','Misty and extremely humid.']},
-  sahara:{n:['撒哈拉沙漠','Sahara Desert'],t:29,sw:16,hum:28,light:1.15,w:{sunny:7,cloudy:1,sand:1.5},d:['日頭好熱、夜晚好凍、極乾，會有沙塵暴。','Scorching days, cold nights, bone dry, with sandstorms.']},
-  gbr:{n:['大堡礁','Great Barrier Reef'],t:26,sw:3,hum:74,light:1.1,w:{sunny:5,cloudy:2,rain:1.5,storm:.8},d:['熱帶海洋，陽光猛、溫度穩定。','Tropical sea with strong sun and steady warmth.']},
-  med:{n:['地中海','Mediterranean'],t:21,sw:9,hum:60,light:1.1,w:{sunny:6,cloudy:2,rain:.8,storm:.3},d:['陽光充足、夏乾冬濕。','Sunny, with dry summers and wet winters.']},
-  kyoto:{n:['京都','Kyoto'],t:16,sw:8,hum:66,light:.95,w:{sunny:3,cloudy:3,rain:2,fog:.6,snow:.4},d:['四季分明，冬天會落雪。','Four distinct seasons with some winter snow.']},
-  baikal:{n:['貝加爾湖','Lake Baikal'],t:6,sw:9,hum:70,light:.8,w:{sunny:2,cloudy:3,fog:1.5,snow:2,rain:.5},d:['寒冷湖區，經常起霧同落雪。','A cold lake region with frequent fog and snow.']}
+  hk:{type:'city',n:['香港','Hong Kong'],t:24,sw:5,hum:76,light:1,w:{sunny:3,cloudy:3,rain:2,storm:1,fog:.5},d:['亞熱帶，濕熱多雨，夏天有雷暴。','Subtropical: warm, humid and wet, with summer storms.']},
+  kaohsiung:{type:'city',n:['高雄','Kaohsiung'],t:25.5,sw:6,hum:75,light:1.05,w:{sunny:4,cloudy:2.5,rain:1.5,storm:1},d:['陽光充足，夏天午後雷雨，冬天乾爽溫暖。','Sunny, with summer afternoon storms and mild dry winters.']},
+  taipei:{type:'city',n:['台北','Taipei'],t:23,sw:6,hum:78,light:.95,w:{sunny:2.5,cloudy:3,rain:3,storm:1,fog:.5},d:['盆地地形，潮濕多雨。','A humid basin with frequent rain.']},
+  tokyo:{type:'city',n:['東京','Tokyo'],t:16.5,sw:8,hum:65,light:.95,w:{sunny:3.5,cloudy:3,rain:2,snow:.3},d:['四季分明，冬天乾冷。','Distinct seasons with cold, dry winters.']},
+  kyoto:{type:'city',n:['京都','Kyoto'],t:16,sw:8,hum:66,light:.95,w:{sunny:3,cloudy:3,rain:2,fog:.6,snow:.4},d:['四季分明，冬天會落雪。','Four distinct seasons with some winter snow.']},
+  singapore:{type:'city',n:['新加坡','Singapore'],t:27.5,sw:5,hum:84,light:1,w:{sunny:2.5,cloudy:2.5,rain:3,storm:2},d:['赤道附近，全年炎熱潮濕。','Near the equator: hot and humid all year.']},
+  london:{type:'city',n:['倫敦','London'],t:11,sw:7,hum:78,light:.7,w:{cloudy:4,rain:3,fog:1.5,sunny:1.5,snow:.2},d:['陰天多、日照少、經常落微雨。','Overcast, little sun and frequent drizzle.']},
+  custom:{type:'city',custom:1,n:['自訂','Custom'],t:22,sw:6,hum:70,light:1,w:{sunny:3,cloudy:2,rain:2},d:['自己設定溫度、濕度、日照同天氣。','Set your own temperature, humidity, sunlight and weather.']},
+  gbr:{type:'biome',modes:['aqua'],n:['大堡礁','Great Barrier Reef'],t:26,sw:3,hum:74,light:1.1,w:{sunny:5,cloudy:2,rain:1.5,storm:.8},d:['熱帶珊瑚海，陽光猛、溫度穩定。','Tropical coral sea with strong sun and steady warmth.']},
+  redsea:{type:'biome',modes:['aqua'],n:['紅海','Red Sea'],t:27,sw:6,hum:60,light:1.15,w:{sunny:7,cloudy:1,sand:.4},d:['又熱又鹹嘅海，好少落雨。','A hot, very salty sea with little rain.']},
+  med:{type:'biome',modes:['aqua'],n:['地中海','Mediterranean'],t:21,sw:9,hum:60,light:1.1,w:{sunny:6,cloudy:2,rain:.8,storm:.3},d:['陽光充足、夏乾冬濕。','Sunny, with dry summers and wet winters.']},
+  amazonriver:{type:'biome',modes:['aqua','palu'],n:['亞馬遜河','Amazon River'],t:28,sw:5,hum:85,light:.9,w:{sunny:2,cloudy:3,rain:4,storm:2},d:['溫暖軟水嘅大河，好多熱帶魚嘅老家。','A warm, soft-water river and home to many tropical fish.']},
+  tanganyika:{type:'biome',modes:['aqua'],n:['坦干依喀湖','Lake Tanganyika'],t:26,sw:4,hum:65,light:1.05,w:{sunny:5,cloudy:2,rain:1.5,storm:.5},d:['非洲大湖，水溫穩定。','A great African lake with steady water temperature.']},
+  baikal:{type:'biome',modes:['aqua'],n:['貝加爾湖','Lake Baikal'],t:6,sw:9,hum:70,light:.8,w:{sunny:2,cloudy:3,fog:1.5,snow:2,rain:.5},d:['寒冷湖區，經常起霧同落雪。','A cold lake region with frequent fog and snow.']},
+  amazon:{type:'biome',modes:['rain','palu'],n:['亞馬遜雨林','Amazon rainforest'],t:27,sw:6,hum:88,light:.95,w:{sunny:2,cloudy:3,rain:4,storm:2,fog:1},d:['全年炎熱潮濕，幾乎日日落雨。','Hot and humid all year with rain most days.']},
+  borneo:{type:'biome',modes:['rain','palu'],n:['婆羅洲雨林','Borneo rainforest'],t:26,sw:5,hum:90,light:.9,w:{cloudy:3,rain:4,storm:1.5,fog:1.5,sunny:1.5},d:['雲霧多，濕度好高。','Misty and extremely humid.']},
+  cloudforest:{type:'biome',modes:['rain'],n:['哥斯達黎加雲霧林','Costa Rica cloud forest'],t:18,sw:6,hum:95,light:.8,w:{fog:4,cloudy:3,rain:3,sunny:1},d:['高山雲霧終年唔散，涼爽潮濕。','Mountain mist all year; cool and damp.']},
+  sahara:{type:'biome',modes:['rain'],n:['撒哈拉沙漠','Sahara Desert'],t:29,sw:16,hum:28,light:1.15,w:{sunny:7,cloudy:1,sand:1.5},d:['日頭好熱、夜晚好凍、極乾，會有沙塵暴。','Scorching days, cold nights, bone dry, with sandstorms.']},
+  pantanal:{type:'biome',modes:['palu'],n:['潘塔納爾濕地','Pantanal wetland'],t:26,sw:8,hum:80,light:1,w:{sunny:3,cloudy:2,rain:3,storm:1.5},d:['世界最大濕地，水陸交替。','The largest wetland on Earth, half water and half land.']},
+  mekong:{type:'biome',modes:['palu'],n:['湄公河三角洲','Mekong Delta'],t:27,sw:6,hum:80,light:1,w:{sunny:3,cloudy:2.5,rain:3,storm:1},d:['河道、稻田同紅樹林交錯。','Channels, rice paddies and mangroves.']}
 };
-const regionOf=st=>REGIONS[st.region]||REGIONS.hk;
-function typicalWx(r){const w=(REGIONS[r]||REGIONS.hk).w;return Object.entries(w).sort((a,b)=>b[1]-a[1])[0][0];}
+const CUSTOM_DEF={name:'',t:22,sw:6,hum:70,light:1,rain:2,fog:.5,snow:0};
+function regionOf(st){const r=REGIONS[st.region]||REGIONS.hk;if(!r.custom)return r;
+  const c=Object.assign({},CUSTOM_DEF,st.customRegion||S.customRegion||{});
+  return{type:'city',custom:1,n:[c.name||'自訂',c.name||'Custom'],t:c.t,sw:c.sw,hum:c.hum,light:c.light,d:r.d,
+    w:{sunny:Math.max(.5,5-c.rain),cloudy:2,rain:c.rain,storm:c.rain*.3,fog:c.fog,snow:c.snow}};}
+function typicalWx(r){const w=regionOf({region:r}).w;return Object.entries(w).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0][0];}
 
 const PRESETS={
   aqua:{

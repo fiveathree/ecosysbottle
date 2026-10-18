@@ -1,6 +1,6 @@
 /* ================= 狀態 ================= */
 const S={mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,feedHour:9,pump:false,filter:false,heater:false,wc:0,mist:0,heat:false,
-  water:'fresh',filled:true,level:0,hillH:6,breed:true,wL:0,wFrac:0,region:'hk',real:false,
+  water:'fresh',filled:true,level:0,hillH:6,breed:true,wL:0,wFrac:0,region:'hk',real:false,customRegion:null,
   wxMode:'auto',wx:'sunny',wxLeft:6,hour:6,day:1,c:{},items:[],hist:[],log:[],running:true,speed:4,uid:1,sel:null,report:null,
   jarName:'',cur:0,jars:[null,null,null],ana:null};
 const isLight=(st,h)=>{const on=7,off=7+st.light;return st.light>=24||(h>=on&&h<off)||(off>24&&h<off-24);};
@@ -258,7 +258,7 @@ function breedStep(st){
 }
 
 /* ================= 試算：預測 & 一鍵平衡 ================= */
-const ST_KEYS=['terra','region','mode','V','shape','mat','sealed','light','feed','feedHour','pump','filter','heater','wc','mist','heat','water','filled','level','hillH','breed','wL','wFrac'];
+const ST_KEYS=['customRegion','terra','region','mode','V','shape','mat','sealed','light','feed','feedHour','pump','filter','heater','wc','mist','heat','water','filled','level','hillH','breed','wL','wFrac'];
 function trialState(cfg){
   const st={wx:S.wxMode==='auto'?typicalWx(S.region):S.wxMode,wxMode:'fixed',hour:S.hour,day:S.day,trial:true,t:0,deaths:[],c:Object.assign({},S.c),hist:[],
     items:S.items.filter(i=>i.alive).map(i=>({type:i.type,uid:i.uid,n:i.n,params:Object.assign({},i.params),alive:true,health:i.health,satiety:i.satiety,wt:i.wt,nShort:i.nShort,stress:'',lastProd:0,age:i.age}))};
