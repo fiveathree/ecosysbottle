@@ -854,7 +854,8 @@ function stepLand(st,c,wL,light,lm,q,E,w){
 }
 function eat(it,c){
   const p=it.params,per=p.food/24*(it.age!=null&&it.age<4?.5:1);if(per<=0)return;
-  let need=per,got=0;
+  // 肚餓時食多啲（最多正常 3 倍）先追得返；以前最多食正常份量，飽肚度只會跌唔會升
+  let need=per*(1+2*(1-it.satiety)),got=0;
   for(const [pool,w] of Object.entries(CAT[it.type].diet).sort((a,b)=>b[1]-a[1])){
     if(need<=1e-9)break;const take=Math.min(c[pool]||0,need/w);c[pool]-=take;got+=take*w;need-=take*w;}
   it.satiety=clamp(it.satiety+(got/per-1)/36,0,1);
