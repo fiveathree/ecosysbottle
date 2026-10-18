@@ -327,6 +327,40 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   .pane{flex:1}
 }
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+/* ---- 玩法：挑戰、成就、收藏、時間旅行 ---- */
+#pane-play section{display:flex;flex-direction:column;gap:8px}
+.chals{display:grid;gap:8px}
+.chal{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface-2);display:flex;flex-direction:column;gap:6px;font-size:13px}
+.chal p{margin:0;color:var(--muted)}
+.chal.on{border-color:var(--accent);background:var(--accent-soft)}
+.chal.done{border-color:color-mix(in srgb,var(--good) 50%,var(--line))}
+.chal .bh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.chal .ed-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.prog{display:flex;flex-direction:column;gap:4px;font-size:12px}
+.prog i{display:block;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.prog i b{display:block;height:100%;background:var(--accent);transition:width .3s}
+.achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ach{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted);opacity:.7}
+.ach b{color:var(--ink);font-size:13px}
+.ach.got{opacity:1;border-color:var(--accent);background:var(--accent-soft)}
+.cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.colc{display:flex;align-items:center;gap:6px;border:1px dashed var(--line);border-radius:8px;padding:6px 8px;font-size:12px;color:var(--muted);min-width:0}
+.colc span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.colc.got{border-style:solid;color:var(--ink);background:var(--surface-2)}
+.tt{display:flex;flex-direction:column;gap:8px}
+.tt input[type=range]{width:100%;accent-color:var(--accent)}
+.tt-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tt-head b{font-family:var(--f-display);font-size:16px}
+.tt-head .btn{margin-left:auto}
+.tt-spark{display:flex;flex-direction:column;gap:2px}
+.spark{width:100%;height:44px;display:block}
+.spark polyline{fill:none;stroke:var(--accent);stroke-width:2;vector-effect:non-scaling-stroke}
+.tt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px}
+.tt-sp{display:grid;grid-template-columns:8px minmax(0,1fr) auto 28px;gap:6px;align-items:center;font-size:12.5px}
+.tt-sp span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tt-sp em{font-style:normal;font-size:11px;text-align:right}
+.tt-sp em.up{color:var(--good)}.tt-sp em.down{color:var(--bad)}
+.tt p{margin:0}.tt p.good{color:var(--good)}.tt p.bad{color:var(--bad)}
 </style>
 <div class="app">
   <header class="top">
@@ -359,11 +393,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <button role="tab" data-tab="jar" aria-selected="false"></button>
         <button role="tab" data-tab="env" aria-selected="false"></button>
         <button role="tab" data-tab="ana" aria-selected="false"></button>
+        <button role="tab" data-tab="play" aria-selected="false"></button>
       </nav>
       <div class="pane" id="pane-add"></div>
       <div class="pane" id="pane-jar" hidden></div>
       <div class="pane" id="pane-env" hidden></div>
       <div class="pane" id="pane-ana" hidden></div>
+      <div class="pane" id="pane-play" hidden></div>
     </aside>
   </div>
 </div>
@@ -635,7 +671,7 @@ Object.entries(PREYS).forEach(([k,v])=>{CAT[k].preys=[...new Set([...(CAT[k].pre
 const S={mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,feedHour:9,pump:false,filter:false,heater:false,fan:false,wc:0,mist:0,heat:false,
   water:'fresh',filled:true,level:0,hillH:6,breed:true,wL:0,wFrac:0,region:'hk',real:false,customRegion:null,
   wxMode:'auto',wx:'sunny',wxLeft:6,hour:6,day:1,c:{},items:[],hist:[],log:[],running:true,speed:4,uid:1,sel:null,report:null,
-  jarName:'',cur:0,jars:[null,null,null],ana:null};
+  jarName:'',cur:0,jars:[null,null,null],ana:null,chal:null,deathN:0};
 const isLight=(st,h)=>{const on=7,off=7+st.light;return st.light>=24||(h>=on&&h<off)||(off>24&&h<off-24);};
 const aliveIn=(st,k)=>st.items.filter(i=>i.alive&&CAT[i.type].kind===k);
 const sat=T=>468/(31.6+T);
@@ -681,7 +717,7 @@ function die(it,why,st,by){
   if(st.trial){st.deaths.push({type:it.type,why,uid:it.uid});return;}
   const zh=`${label(it)}${it.name?'（'+CAT[it.type].name[0]+'）':''} ${k==='microbe'?'失效':'死亡'}（${why==='eaten'&&by?'俾'+by+'食咗':why==='attacked'&&by?'俾'+by+'咬死':STR[why]?STR[why][0]:why}）`;
   const en=`${it.name||CAT[it.type].name[1]+' #'+it.n}${it.name?' ('+CAT[it.type].name[1]+')':''} ${k==='microbe'?'stopped working':'died'} (${why==='eaten'&&by?'eaten by '+by:why==='attacked'&&by?'killed by '+by:STR[why]?STR[why][1]:why})`;
-  logEv(zh,en,'bad');
+  logEv(zh,en,'bad');if(k==='animal')S.deathN=(S.deathN||0)+1;
   if(S.sel===it)renderEditor();
   dirtyList=true;
 }
@@ -888,7 +924,7 @@ function breedStep(st){
         if(st.trial){const b=makeItem(t,p);S.uid--;b.age=0;b.satiety=.8;st.items.push(b);}
         else{const b=addItem(t,Object.assign({},p),true);b.age=0;b.satiety=.8;}
       }
-      if(!st.trial){logEv(`${CAT[t].name[0]}生咗 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
+      if(!st.trial){unlock('baby');logEv(`${CAT[t].name[0]}生咗 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
     }
   }
 }
@@ -966,6 +1002,7 @@ function autoBalance(){
   for(const k of Object.keys(e))if(e[k]!==base[k])envCh.push(lab[k](e[k]));
   if(cfg.wcNow)envCh.unshift(L('即刻換 30% 水','Change 30% of the water now'));
   const beforeDead=deadNames(before.deaths),afterDead=deadNames(best.deaths);
+  const nDead=r=>r.deaths.filter(d=>CAT[d.type].kind==='animal').length;if(!real&&nDead(best)<nDead(before))unlock('saved');
   if(!real){
     for(const k of Object.keys(e))S[k]=e[k];
     Object.entries(ad).forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);});
@@ -1471,7 +1508,7 @@ function camFollow(it,mode){
   camF.mode=mode;camF.it=it;camF.yaw=0;camF.pitch=0;cam.idle=0;
   const ry=it.g?it.g.rotation.y:0;camF.dir.set(Math.cos(ry),0,-Math.sin(ry));
   if(mode==='follow'){cam.dist=J.H*.55;if(it.g)it.g.visible=true;camera.fov=38;camera.near=.05;stage.classList.remove('pov-water');}
-  else{camera.fov=70;camera.near=.004;}
+  else{camera.fov=70;camera.near=.004;unlock('pov');}
   camera.updateProjectionMatrix();if(typeof renderCamBar==='function')renderCamBar();}
 function camStop(){
   if(camF.it&&camF.it.g)camF.it.g.visible=true;const was=camF.mode;camF.mode=null;camF.it=null;
@@ -1788,7 +1825,7 @@ function enterBuild(){
   S.build=true;closePop();issueOpen=false;renderIssuePop();buildTool='paint';paintMat=S.mode==='rain'?3:(S.water==='salt'?5:1);
   renderChrome();  renderBuildBar();toast(L('一隻手指／左鍵：砌（同一位置撳多幾下會疊高）；兩隻手指或右鍵：轉視角；捏或滾輪：縮放。','One finger or left click builds (tap the same spot to stack higher); two fingers or right-drag rotates; pinch or scroll zooms.'));
 }
-function exitBuild(){S.build=false;setTimeout(renderChrome,0);S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));}
+function exitBuild(){S.build=false;setTimeout(renderChrome,0);S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));if(S.terra)unlock('builder');}
 function renderBuildBar(){
   const b=$('#buildBar');b.hidden=!S.build;$('#meters').hidden=!!S.build;if(!S.build)return;
   const lvl=S.mode==='rain'?`<label class="bb-sl">${L('水位','Water')} <output id="bbLvO">${S.level} cm</output><input type="range" id="bbLv" min="0" max="14" step="1" value="${S.level}"></label>`:'';
@@ -1861,7 +1898,7 @@ function addFromCatalog(t){
 
 /* ================= 外框 ================= */
 function showTab(t){if(t==='bal'){openBal();return;}curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
-  ['add','jar','env','ana'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='jar')renderJarList();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
+  ['add','jar','env','ana','play'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='jar')renderJarList();if(t==='play')renderPlay();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 let toastT;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1900);}
 function renderChrome(){
@@ -1871,7 +1908,7 @@ function renderChrome(){
   $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('分享','Share');$('#presetBtn').textContent=L('預設組合','Presets');
   $('#langBtn').textContent=LANG==='en'?'中文':'EN';$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
-  const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank']};
+  const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank'],play:['玩法','Play']};
   document.querySelectorAll('.tabs button').forEach(b=>{b.textContent=N(tabs[b.dataset.tab])+(b.dataset.tab==='jar'?` (${S.items.filter(i=>i.alive).length})`:'');});
   $('#c').setAttribute('aria-label',L('3D 生態瓶，拖動旋轉，撳生物睇參數','3D jar: drag to rotate, tap a creature to see its settings'));
 }
@@ -1974,7 +2011,7 @@ function setLevel(v){if(v===S.level)return;const before=S.level;S.level=v;buildJ
 function emptyJar(){
   S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
   S.terra=null;
-  Object.assign(S,{filled:false,level:0,feed:0,pump:false,filter:false,heater:false,fan:false,mist:0,heat:false,wc:0,hour:6,day:1});
+  Object.assign(S,{chal:null,filled:false,level:0,feed:0,pump:false,filter:false,heater:false,fan:false,mist:0,heat:false,wc:0,hour:6,day:1});
   buildJar({keepCam:true});resetChem(S);S.log=[];logEv('清空咗個瓶','Emptied the jar','muted');
   renderAll();save();toast(S.mode==='aqua'?L('已清空，連水都冇','Emptied: no water, nothing inside'):L('已清空，連泥都冇','Emptied: no soil, nothing inside'));
 }
@@ -2220,7 +2257,7 @@ function loadPreset(key){
   const p=PRESETS[S.mode][key];camStop();S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;S.report=null;
   S.terra=null;S.build=false;
   Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat||'glass',sealed:p.sealed,light:p.light,feed:p.feed,pump:!!p.pump,filter:!!p.filter,heater:!!p.heater,fan:!!p.fan,wc:p.wc||0,mist:p.mist||0,heat:!!p.heat,
-    region:p.region||'hk',real:false,water:p.water||'fresh',filled:p.filled!==false,level:p.level||0,hillH:p.hillH??6,log:[],hour:6,day:1});
+    region:p.region||'hk',real:false,chal:null,deathN:0,water:p.water||'fresh',filled:p.filled!==false,level:p.level||0,hillH:p.hillH??6,log:[],hour:6,day:1});
   p.items.forEach(([t,n,par])=>{for(let i=0;i<n;i++){const it=makeItem(t,par);it.n=nextN(t);S.items.push(it);}});
   buildJar({keepChem:true});resetChem(S);renderAll();save();toast(L('已載入：','Loaded: ')+N(p.n));
 }
@@ -2289,13 +2326,13 @@ function renderEnv(){
 function renderAll(){if(S.build)renderBuildBar();if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(ovOpen.L)renderBalance();}
 
 /* ================= 三個瓶 & 儲存 ================= */
-const SNAP_KEYS=['customRegion','terra','region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','fan','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day'];
+const SNAP_KEYS=['customRegion','terra','region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','fan','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day','chal','deathN'];
 function snapshot(){if(S.terra)delete S.terra._info;const o={name:S.jarName,c:Object.assign({},S.c),log:S.log.slice(0,40),hist:S.hist.slice(-120),
   items:S.items.filter(i=>i.alive).map(i=>({type:i.type,params:i.params,name:i.name||'',n:i.n,health:+i.health.toFixed(3),satiety:+i.satiety.toFixed(3),rx:+i.rx.toFixed(3),rz:+i.rz.toFixed(3),age:i.age,up:i.userPlaced?1:0}))};
   SNAP_KEYS.forEach(k=>o[k]=S[k]);return o;}
 function restoreSnap(d){
   camStop();S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
-  SNAP_KEYS.forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});S.jarName=d.name||'';if(d.fan===undefined)S.fan=false;
+  SNAP_KEYS.forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});S.jarName=d.name||'';if(d.fan===undefined)S.fan=false;if(d.chal===undefined)S.chal=null;if(d.deathN===undefined)S.deathN=0;
   if(S.terra){S.terra=JSON.parse(JSON.stringify(S.terra));delete S.terra._info;}S.build=false;
   if(!SHAPES[S.shape])S.shape='jar';if(!MATS[S.mat])S.mat='glass';if(!PRESETS[S.mode])S.mode='aqua';if(S.wxMode!=='auto'&&!WX[S.wxMode])S.wxMode='auto';if(!WX[S.wx])S.wx='sunny';
   (d.items||[]).forEach(o=>{if(!CAT[o.type])return;const it=makeItem(o.type,o.params);Object.assign(it,{n:o.n||nextN(o.type),name:o.name||'',health:o.health??1,satiety:o.satiety??1});
@@ -2657,7 +2694,7 @@ function moveDoomed(){
   if(slot==null){toast(L('冇空瓶：先清空另一個瓶','No empty jar: empty another jar first'));return;}
   const snap=snapshot(),name=(S.jarName||jarNames()[S.cur])+L('（分出）',' (split)');
   snap.items=snap.items.filter((o,k)=>CAT[o.type].kind!=='animal'||ids.has(alive[k].uid));
-  S.jars[slot]=Object.assign(snap,{name,real:false,log:[],hist:[]});
+  S.jars[slot]=Object.assign(snap,{name,real:false,log:[],hist:[],chal:null,deathN:0});
   mv.forEach(i=>{disposeObj(i.g);if(S.sel===i)S.sel=null;});S.items=S.items.filter(i=>!mv.includes(i));
   const names=[...new Set(mv.map(i=>N(CAT[i.type].name)))].join(L('、',', '));
   logEv(`將 ${names} 搬咗去「${name}」`,`Moved ${names} to "${name}"`,'muted');S.report=null;
@@ -2666,7 +2703,7 @@ function moveDoomed(){
 function copyToTrial(){
   const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j);if(slot<0)slot=(S.cur+1)%3;
   const name=(S.jarName||jarNames()[S.cur])+L('（試）',' (trial)');
-  S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false}));S.report=null;
+  S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false,chal:null,deathN:0}));S.report=null;
   renderAll();save();toast(L(`複製咗去「${name}」，而家套用建議`,`Copied to "${name}" and applying the suggestions`));setTimeout(autoBalance,60);
 }
 
@@ -2675,13 +2712,13 @@ function copyToTrial(){
 const b64u={enc:u=>{let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');},
   dec:t=>Uint8Array.from(atob(t.replace(/-/g,'+').replace(/_/g,'/')),ch=>ch.charCodeAt(0))};
 const zpipe=(u,T)=>new Response(new Blob([u]).stream().pipeThrough(new T('deflate-raw'))).arrayBuffer().then(b=>new Uint8Array(b));
-async function packJar(){const o=snapshot();delete o.log;delete o.hist;o.real=false;return b64u.enc(await zpipe(new TextEncoder().encode(JSON.stringify(o)),CompressionStream));}
+async function packJar(){const o=snapshot();delete o.log;delete o.hist;o.real=false;delete o.chal;delete o.deathN;return b64u.enc(await zpipe(new TextEncoder().encode(JSON.stringify(o)),CompressionStream));}
 async function unpackJar(t){return JSON.parse(new TextDecoder().decode(await zpipe(b64u.dec(t),DecompressionStream)));}
 function openDlg(html){const d=$('#dlg');d.innerHTML=html;if(!d.open)d.showModal();d.onclick=e=>{if(e.target===d)d.close();};d.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>d.close());return d;}
 $('#shareBtn').onclick=async()=>{
   if(!S.items.some(i=>i.alive)){toast(L('個瓶仲係空嘅，砌啲嘢先分享','The jar is empty; add something first'));return;}
   let url;try{url=location.href.split('#')[0]+'#s='+await packJar();}catch(e){toast(L('呢個瀏覽器整唔到分享連結','This browser cannot make share links'));return;}
-  const name=jarNames()[S.cur],title=L('生態瓶實驗室','Eco Jar Lab')+' · '+name,text=L('睇吓我砌嘅生態瓶，撳「複製呢個瓶」就可以自己玩。','Have a look at my eco jar. Tap "Copy this jar" to play with it yourself.');
+  unlock('share');const name=jarNames()[S.cur],title=L('生態瓶實驗室','Eco Jar Lab')+' · '+name,text=L('睇吓我砌嘅生態瓶，撳「複製呢個瓶」就可以自己玩。','Have a look at my eco jar. Tap "Copy this jar" to play with it yourself.');
   if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title,text,url});return;}catch(e){if(e.name==='AbortError')return;}}
   const d=openDlg(`<h4>${L('分享','Share')}「${esc(name)}」</h4>
     <p class="lede">${L('成個瓶已經包咗喺呢條連結入面，唔使登入。朋友打開之後可以撳「複製呢個瓶」，喺佢自己部機繼續玩；佢點改都唔會影響你個瓶。','The whole jar is packed into this link; no login needed. Friends can tap "Copy this jar" to keep playing on their own device. Nothing they change affects your jar.')}</p>
@@ -2695,7 +2732,7 @@ async function checkShareLink(){
   const m=location.hash.match(/^#s=([\w-]+)$/);if(!m)return;
   history.replaceState(null,'',location.pathname+location.search);
   let d;try{d=await unpackJar(m[1]);if(!d||!Array.isArray(d.items))throw 0;}catch(e){toast(L('呢條分享連結唔完整，開唔到','This share link is incomplete and cannot be opened'));return;}
-  d.real=false;d.items=d.items.filter(o=>CAT[o.type]);const name=String(d.name||L('朋友嘅瓶','A friend\'s jar')).slice(0,24);d.name=name;
+  d.real=false;d.chal=null;d.deathN=0;d.items=d.items.filter(o=>CAT[o.type]);const name=String(d.name||L('朋友嘅瓶','A friend\'s jar')).slice(0,24);d.name=name;
   const cnt={};d.items.forEach(o=>{if(['plant','animal'].includes(CAT[o.type].kind))cnt[o.type]=(cnt[o.type]||0)+1;});
   const life=Object.entries(cnt).map(([t,n])=>`${N(CAT[t].name)} ×${n}`).join(L('、',', '));
   const mk=d.mode==='aqua'?'aqua':(d.level>0?'palu':'rain'),modeN=N({aqua:['水族','Aquatic'],rain:['雨林','Rainforest'],palu:['水陸','Paludarium']}[mk]);
@@ -2712,6 +2749,152 @@ async function checkShareLink(){
     if(S.build)exitBuild();if(i!==S.cur){S.jars[S.cur]=snapshot();S.cur=i;}
     restoreSnap(d);S.log=[];logEv(`複製咗朋友分享嘅「${name}」`,`Copied the shared jar "${name}"`,'muted');
     renderAll();save();dl.close();toast(L(`已經複製咗「${name}」`,`Copied "${name}"`));};
+}
+
+/* ================= 玩法：挑戰、成就、收藏、時間旅行 =================
+   成就同收藏屬於玩家（每個瀏覽器一份，用 pref 存）；挑戰進度屬於個瓶（S.chal，跟 SNAP_KEYS 存）。
+   全部只係睇模擬結果，唔會改個瓶。 */
+const PLAY={ach:pref.json('ecojar.ach')||{},col:pref.json('ecojar.col')||{},lastDay:null,tt:null,ttDay:30};
+const savePlay=()=>{pref.set('ecojar.ach',JSON.stringify(PLAY.ach));pref.set('ecojar.col',JSON.stringify(PLAY.col));};
+const PLAY_TAGS=[['all',['全部','All']],['chal',['挑戰','Challenges']],['ach',['成就','Achievements']],['col',['收藏','Collection']],['travel',['時間旅行','Time travel']]];
+paneTag.play='all';
+
+const aliveK=k=>S.items.filter(i=>i.alive&&CAT[i.type].kind===k);
+const chalHours=()=>S.chal?(S.day*24+S.hour)-(S.chal.d0*24+S.chal.h0):0;
+
+/* ---- 挑戰 ----
+   req：開始前要啱嘅條件（唔啱就話佢知差咩）；keep：途中要一直保持，唔啱就失敗；
+   survive＝撐夠日數冇動物死；reach＝限期內達到 goal */
+const CHAL=[
+  {id:'sealed7',n:['密封一星期','Sealed for a week'],d:['水族缸密封、唔餵食，最少 3 隻動物，7 日冇動物死。','Sealed aquatic jar, no feeding, at least 3 animals, no animal deaths for 7 days.'],days:7,type:'survive',
+    req:()=>S.mode!=='aqua'?L('要用水族模式','Use aquatic mode'):!S.filled?L('要注水','Fill it with water'):!S.sealed?L('要密封瓶口','Seal the jar'):S.feed>0?L('每日餵食要係 0','Set daily food to 0'):aliveK('animal').length<3?L('最少要 3 隻動物','Needs at least 3 animals'):null,
+    keep:()=>!S.sealed?L('打開咗瓶口','The lid was opened'):S.feed>0?L('開始餵食','Feeding started'):null},
+  {id:'tiny',n:['細瓶大世界','Tiny world'],d:['瓶容量 3L 或以下，最少 4 隻動物，5 日冇動物死。','A jar of 3 L or less with at least 4 animals and no deaths for 5 days.'],days:5,type:'survive',
+    req:()=>S.V>3?L('瓶容量要 3L 或以下','Volume must be 3 L or less'):aliveK('animal').length<4?L('最少要 4 隻動物','Needs at least 4 animals'):null,
+    keep:()=>S.V>3?L('瓶容量加大咗','The jar was made bigger'):null},
+  {id:'nogear',n:['零設備','No gadgets'],d:['水族缸唔開氧氣泵、過濾、加熱棒同風扇，最少 5 隻動物，7 日冇動物死。','Aquatic jar with no air pump, filter, heater or fan, at least 5 animals, no deaths for 7 days.'],days:7,type:'survive',
+    req:()=>S.mode!=='aqua'?L('要用水族模式','Use aquatic mode'):(S.pump||S.filter||S.heater||S.fan)?L('要關晒氧氣泵、過濾、加熱棒同風扇','Turn off the pump, filter, heater and fan'):aliveK('animal').length<5?L('最少要 5 隻動物','Needs at least 5 animals'):null,
+    keep:()=>(S.pump||S.filter||S.heater||S.fan)?L('開咗設備','A gadget was switched on'):null},
+  {id:'shrimp15',n:['蝦丁興旺','Shrimp boom'],d:['14 日內，米蝦生到 15 隻或以上。','Grow your cherry shrimp to 15 or more within 14 days.'],days:14,type:'reach',
+    req:()=>S.items.filter(i=>i.alive&&i.type==='shrimp').length<2?L('最少要 2 隻米蝦先生到','Needs at least 2 cherry shrimp to breed'):!S.breed?L('要開「生物繁殖」','Turn on breeding'):null,
+    keep:()=>!S.breed?L('關咗繁殖','Breeding was turned off'):null,goal:()=>S.items.filter(i=>i.alive&&i.type==='shrimp').length>=15,
+    prog:()=>L(`米蝦 ${S.items.filter(i=>i.alive&&i.type==='shrimp').length}／15 隻`,`${S.items.filter(i=>i.alive&&i.type==='shrimp').length}/15 shrimp`)},
+  {id:'palu2',n:['水陸兩棲','Both worlds'],d:['水陸缸入面，水中動物同陸地／兩棲動物各最少 2 隻，7 日冇動物死。','A paludarium with at least 2 water animals and 2 land or amphibious animals, no deaths for 7 days.'],days:7,type:'survive',
+    req:()=>{if(S.mode!=='rain'||!(S.level>0))return L('要用水陸模式（雨林加水位）','Use paludarium mode (rainforest with water)');const a=aliveK('animal');
+      return a.filter(isWater).length<2?L('水中動物最少 2 隻','Needs 2 or more water animals'):a.filter(i=>!isWater(i)).length<2?L('陸地或兩棲動物最少 2 隻','Needs 2 or more land or amphibious animals'):null;},
+    keep:()=>!(S.level>0)?L('抽乾咗水區','The water area was drained'):null},
+  {id:'month',n:['一個月老手','Old hand'],d:['任何瓶，最少 3 隻動物，30 日冇動物死。可以用時間旅行快轉。','Any jar with at least 3 animals and no deaths for 30 days. Time travel can fast-forward.'],days:30,type:'survive',
+    req:()=>aliveK('animal').length<3?L('最少要 3 隻動物','Needs at least 3 animals'):null,keep:()=>null},
+];
+
+/* ---- 成就 ---- */
+const ACH=[
+  {id:'baby',n:['第一隻 BB','First baby'],d:['有動物喺你個瓶生 BB。','An animal had young in your jar.']},
+  {id:'week',n:['平安一星期','A calm week'],d:['一個瓶去到第 8 日，冇動物死過，仲有 2 隻以上動物。','A jar reached day 8 with 2+ animals and no deaths.']},
+  {id:'month',n:['一個月','A whole month'],d:['一個瓶去到第 31 日，冇動物死過。','A jar reached day 31 with no deaths.']},
+  {id:'saved',n:['救命恩人','Lifesaver'],d:['一鍵平衡保住咗原本會死嘅生物。','Auto-balance saved creatures that were going to die.']},
+  {id:'builder',n:['砌缸師','Landscaper'],d:['用「自己砌缸」砌好一次地形。','Shaped your own terrain with Build.']},
+  {id:'pov',n:['魚眼看世界','Through its eyes'],d:['用生物嘅第一視角睇過個瓶。','Saw the jar from a creature\'s point of view.']},
+  {id:'share',n:['分享','Show and tell'],d:['整咗一條分享連結。','Made a share link.']},
+  {id:'col10',n:['收藏家','Collector'],d:['收藏 10 種生物。','Collected 10 species.']},
+  {id:'col30',n:['生態學家','Ecologist'],d:['收藏 30 種生物。','Collected 30 species.']},
+  {id:'ch1',n:['挑戰者','Challenger'],d:['完成第一個挑戰。','Completed your first challenge.']},
+  {id:'chAll',n:['全部過關','Clean sweep'],d:['完成全部挑戰。','Completed every challenge.']},
+];
+function unlock(id){
+  if(PLAY.ach[id])return;PLAY.ach[id]=Date.now();savePlay();
+  const a=ACH.find(x=>x.id===id),c=CHAL.find(x=>'ch_'+x.id===id);
+  if(a)toast(L('🏆 解鎖成就：','🏆 Achievement: ')+N(a.n));
+  const done=CHAL.filter(x=>PLAY.ach['ch_'+x.id]).length;if(c){if(done>=1)unlock('ch1');if(done>=CHAL.length)unlock('chAll');}
+  if(curTab==='play')renderPlay();
+}
+
+/* ---- 收藏：一種生物喺瓶入面撐過一個午夜就收錄 ---- */
+const COL_TYPES=()=>Object.keys(CAT).filter(t=>['plant','animal'].includes(CAT[t].kind));
+function collectNow(){let n=0;for(const it of S.items){if(!it.alive||!['plant','animal'].includes(CAT[it.type].kind)||PLAY.col[it.type])continue;PLAY.col[it.type]=Date.now();n++;}
+  if(!n)return;savePlay();const c=Object.keys(PLAY.col).length;if(c>=10)unlock('col10');if(c>=30)unlock('col30');if(curTab==='play')renderPlay();}
+
+/* ---- 每秒檢查一次（main.js 叫） ---- */
+function playTick(){
+  const animals=aliveK('animal').length,dn=S.deathN||0;
+  if(PLAY.lastDay!=null&&S.day!==PLAY.lastDay){collectNow();
+    if(S.day>=8&&!dn&&animals>=2)unlock('week');if(S.day>=31&&!dn&&animals>=1)unlock('month');}
+  PLAY.lastDay=S.day;
+  if(!S.chal)return;const c=CHAL.find(x=>x.id===S.chal.id);if(!c){S.chal=null;return;}
+  const why=(c.type==='survive'&&dn>S.chal.dead0?L('有動物死咗','An animal died'):null)||c.keep();
+  const h=chalHours();
+  if(why){S.chal=null;logEv(`挑戰「${c.n[0]}」失敗：${why}`,`Challenge "${c.n[1]}" failed: ${why}`,'bad');toast(L(`挑戰失敗：${why}`,`Challenge failed: ${why}`));save();if(curTab==='play')renderPlay();return;}
+  if(c.type==='reach'&&c.goal()||c.type==='survive'&&h>=c.days*24){S.chal=null;logEv(`完成挑戰「${c.n[0]}」`,`Completed the challenge "${c.n[1]}"`,'good');toast(L(`🎉 完成挑戰：${c.n[0]}`,`🎉 Challenge complete: ${c.n[1]}`));unlock('ch_'+c.id);save();if(curTab==='play')renderPlay();return;}
+  if(c.type==='reach'&&h>=c.days*24){S.chal=null;logEv(`挑戰「${c.n[0]}」失敗：夠鐘`,`Challenge "${c.n[1]}" failed: out of time`,'bad');toast(L('挑戰失敗：夠鐘','Challenge failed: out of time'));save();if(curTab==='play')renderPlay();return;}
+  const pg=$('#chProg');if(pg){const f=Math.min(1,h/(c.days*24));pg.querySelector('b').style.width=(f*100)+'%';pg.querySelector('span').textContent=chalProgText(c,h);}
+}
+const chalProgText=(c,h)=>(c.prog?c.prog()+' · ':'')+L(`第 ${Math.floor(h/24)}／${c.days} 日`,`Day ${Math.floor(h/24)}/${c.days}`);
+function startChal(id){const c=CHAL.find(x=>x.id===id),why=c.req();if(why){toast(L('未啱條件：','Not ready: ')+why);return;}
+  S.chal={id,d0:S.day,h0:S.hour,dead0:S.deathN||0};logEv(`開始挑戰「${c.n[0]}」`,`Started the challenge "${c.n[1]}"`,'muted');save();renderPlay();toast(L(`開始挑戰：${c.n[0]}`,`Challenge started: ${c.n[1]}`));}
+
+/* ---- 時間旅行：用試算預覽未來 30 日，唔會改個瓶；想真係去到嗰日先撳「快轉」 ---- */
+function travelPreview(days=30){
+  return seeded(BAL_SEED+S.day,()=>{const st=trialState(null);st.breed=S.breed;const rec=[],cnt=()=>{const m={};st.items.forEach(i=>{if(i.alive&&['plant','animal'].includes(CAT[i.type].kind))m[i.type]=(m[i.type]||0)+1;});return m;};
+    rec.push({d:0,day:st.day,counts:cnt(),deaths:0,env:null});
+    for(let d=1;d<=days;d++){for(let h=0;h<24;h++)step(st);const hs=st.hist.slice(-24),avg=k=>hs.reduce((a,r)=>a+(r[k]||0),0)/hs.length;
+      rec.push({d,day:st.day,counts:cnt(),deaths:st.deaths.filter(x=>CAT[x.type].kind==='animal').length,
+        env:{T:avg('T'),wo2:hs[0].hasW?Math.min(...hs.map(r=>r.wo2)):null,nh3:hs[0].hasW?Math.max(...hs.map(r=>r.wnh3)):null,hum:S.mode==='rain'?avg('hum'):null}});}
+    rec.deathList=st.deaths.filter(x=>CAT[x.type].kind==='animal');return rec;});
+}
+function fastForward(days){
+  if(S.real){toast(L('真實嘅瓶唔可以快轉','A real tank cannot be fast-forwarded'));return;}
+  const t0=performance.now();for(let i=0;i<days*24;i++){step(S);if(i%24===23)playTick();}
+  wasteFx.length=0;buildJar({keepCam:true,keepChem:true});PLAY.tt=null;renderAll();save();
+  toast(L(`快轉咗 ${days} 日，而家第 ${S.day} 日`,`Fast-forwarded ${days} days; now day ${S.day}`));return performance.now()-t0;
+}
+function sparkSvg(vals,cls){const w=260,h=44,mx=Math.max(1,...vals),pts=vals.map((v,i)=>`${(i/(vals.length-1)*w).toFixed(1)},${(h-2-v/mx*(h-6)).toFixed(1)}`).join(' ');
+  return`<svg class="spark ${cls||''}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}"/></svg>`;}
+function travelHtml(){
+  const R=PLAY.tt;if(!R)return`<p class="lede">${L('用而家個瓶預覽之後 30 日：每種生物數量、有冇生物死、水質點變。只係預覽，唔會改個瓶。','Preview the next 30 days of this jar: how many of each species, any deaths, and how the water changes. It is only a preview and changes nothing.')}</p><div class="ed-actions"><button class="btn primary" id="ttGo">${L('預覽未來 30 日','Preview the next 30 days')}</button></div>`;
+  const animalsAt=x=>Object.entries(x.counts).filter(([t])=>CAT[t].kind==='animal').reduce((a,[,n])=>a+n,0);
+  return`<div class="tt"><input type="range" id="ttSl" min="0" max="${R.length-1}" step="1" value="${PLAY.ttDay}" aria-label="${L('揀日子','Pick a day')}">
+    <div class="tt-spark"><span class="lede">${L('動物數量','Animals')}</span>${sparkSvg(R.map(animalsAt))}</div>
+    <div id="ttBody">${ttBody()}</div>
+    <p class="lede">${L('預覽用典型天氣同固定隨機數；真係快轉時天氣會變，結果可能有少少出入。','The preview uses typical weather and a fixed random seed; a real fast-forward has changing weather, so results may differ a little.')}</p>
+    <div class="ed-actions"><button class="btn" id="ttRe">${L('重新預覽','Preview again')}</button></div>
+    ${S.real?`<p class="lede">${L('真實嘅瓶只可以預覽，唔可以快轉。','A real tank can be previewed but not fast-forwarded.')}</p>`:''}</div>`;
+}
+function ttBody(){
+  const R=PLAY.tt,k=PLAY.ttDay,r=R[k],r0=R[0],types=[...new Set([...Object.keys(r0.counts),...Object.keys(r.counts)])].sort((a,b)=>(CAT[a].kind==='animal'?0:1)-(CAT[b].kind==='animal'?0:1));
+  const deadSoFar=R.deathList.slice(0,r.deaths),dm={};deadSoFar.forEach(x=>{const n=N(CAT[x.type].name);dm[n]=(dm[n]||0)+1;});const e=r.env;
+  return`<div class="tt-head"><b>${L(`第 ${r.day} 日`,`Day ${r.day}`)}</b><span class="lede">${k?L(`（${k} 日後）`,`(in ${k} day${k>1?'s':''})`):L('（今日）','(today)')}</span>${k&&!S.real?`<button class="btn primary" id="ttFf">${L(`快轉到第 ${r.day} 日`,`Fast-forward to day ${r.day}`)}</button>`:''}</div>
+    <div class="tt-grid">${types.map(t=>{const a=r0.counts[t]||0,b=r.counts[t]||0,dv=b-a;return`<div class="tt-sp"><span class="dot" style="background:${CAT[t].color}"></span><span>${N(CAT[t].name)}</span><b class="mono">${b}</b><em class="${dv>0?'up':dv<0?'down':''}">${dv>0?'+'+dv:dv<0?dv:''}</em></div>`;}).join('')}</div>
+    <p class="${deadSoFar.length?'bad':'good'}">${deadSoFar.length?L('期間死咗：','Deaths so far: ')+Object.entries(dm).map(([n,c])=>c>1?`${n} ×${c}`:n).join(L('、',', ')):L('到呢日都冇動物死。','No animal deaths up to this day.')}</p>
+    ${e?`<p class="lede">${L('平均溫度','Avg temp')} ${fx(e.T)}°C${e.wo2!=null?L(`；水中溶氧最低 ${fx(e.wo2)} mg/L；氨最高 ${fx(e.nh3,2)} mg/L`,`; water O₂ low ${fx(e.wo2)} mg/L; ammonia high ${fx(e.nh3,2)} mg/L`):''}${e.hum!=null?L(`；平均濕度 ${fx(e.hum,0)}%`,`; avg humidity ${fx(e.hum,0)}%`):''}</p>`:''}`;
+}
+
+function renderPlay(){
+  const pe=$('#pane-play');if(!pe)return;const nCol=Object.keys(PLAY.col).length,all=COL_TYPES(),done=id=>!!PLAY.ach['ch_'+id];
+  const cur=S.chal&&CHAL.find(x=>x.id===S.chal.id);
+  pe.innerHTML=`${paneTagBar('play',PLAY_TAGS)}
+   <section data-sec="chal"><h3>${L('挑戰','Challenges')} · ${CHAL.filter(c=>done(c.id)).length}/${CHAL.length}</h3>
+    ${cur?`<div class="chal on"><div class="bh"><b>${N(cur.n)}</b><button class="linkbtn" id="chQuit">${L('放棄','Give up')}</button></div><p>${N(cur.d)}</p>
+      <div class="prog" id="chProg"><span>${chalProgText(cur,chalHours())}</span><i><b style="width:${Math.min(100,chalHours()/(cur.days*24)*100)}%"></b></i></div></div>`:''}
+    <div class="chals">${CHAL.filter(c=>c!==cur).map(c=>{const why=cur?null:c.req();return`<div class="chal${done(c.id)?' done':''}"><div class="bh"><b>${done(c.id)?'✓ ':''}${N(c.n)}</b><span class="lede">${L(`${c.days} 日`,`${c.days} days`)}</span></div><p>${N(c.d)}</p>
+      ${cur?'':`<div class="ed-actions"><button class="btn${why?'':' primary'}" data-chal="${c.id}">${done(c.id)?L('再玩一次','Play again'):L('開始','Start')}</button>${why?`<span class="lede">${L('未啱：','Not yet: ')}${why}</span>`:''}</div>`}</div>`;}).join('')}</div>
+    ${cur?`<p class="lede">${L('同一時間每個瓶只可以做一個挑戰。','Each jar can run one challenge at a time.')}</p>`:''}</section>
+   <section data-sec="ach"><h3>${L('成就','Achievements')} · ${ACH.filter(a=>PLAY.ach[a.id]).length}/${ACH.length}</h3>
+    <div class="achs">${ACH.map(a=>`<div class="ach${PLAY.ach[a.id]?' got':''}"><b>${PLAY.ach[a.id]?'🏆':'🔒'} ${N(a.n)}</b><span>${N(a.d)}</span></div>`).join('')}</div></section>
+   <section data-sec="col"><h3>${L('收藏','Collection')} · ${nCol}/${all.length}</h3><p class="lede">${L('一種生物喺你個瓶撐過一個午夜，就會收錄。','A species is collected once it makes it through a night in one of your jars.')}</p>
+    <div class="cols">${all.map(t=>{const got=!!PLAY.col[t],c=CAT[t];return`<div class="colc${got?' got':''}" title="${esc(N(c.name))}"><span class="dot" style="background:${got?c.color:'var(--line)'}"></span><span>${got?esc(N(c.name)):'？？？'}</span></div>`;}).join('')}</div></section>
+   <section data-sec="travel"><h3>${L('時間旅行','Time travel')}</h3><div id="ttBox">${travelHtml()}</div></section>`;
+  bindPaneTags('play',pe);
+  pe.querySelectorAll('[data-chal]').forEach(b=>b.onclick=()=>startChal(b.dataset.chal));
+  const q=$('#chQuit');if(q)q.onclick=()=>{const c=CHAL.find(x=>x.id===S.chal.id);S.chal=null;logEv(`放棄挑戰「${c.n[0]}」`,`Gave up the challenge "${c.n[1]}"`,'muted');save();renderPlay();};
+  bindTravel();
+}
+function bindTravel(){
+  const box=$('#ttBox');if(!box)return;
+  const run=()=>{toast(L('計緊未來 30 日…','Working out the next 30 days…'));setTimeout(()=>{PLAY.tt=travelPreview(30);PLAY.ttDay=30;box.innerHTML=travelHtml();bindTravel();},30);};
+  const go=$('#ttGo'),rr=$('#ttRe'),sl=$('#ttSl');if(go)go.onclick=run;if(rr)rr.onclick=run;
+  const bindFf=()=>{const ff=$('#ttFf');if(ff)ff.onclick=()=>{if(S.build){toast(L('先完成砌缸','Finish building first'));return;}const d=PLAY.ttDay;toast(L('快轉緊…','Fast-forwarding…'));setTimeout(()=>fastForward(d),30);};};
+  if(sl)sl.oninput=()=>{PLAY.ttDay=+sl.value;$('#ttBody').innerHTML=ttBody();bindFf();};
+  bindFf();
 }
 
 /* ================= 開始 ================= */
@@ -2732,7 +2915,7 @@ function frame(t){
     if(dirtyList&&!editing()){renderJarList();updateCatCounts();if(S.sel&&!S.items.includes(S.sel)){S.sel=null;}renderOvR();}else updateJarLive();
     if(popIt)updatePop();
     if(ovOpen.L&&t-lastBal>2500&&!document.activeElement?.closest?.('#pane-bal')&&!($('#repBox')&&$('#repBox').matches(':hover'))){lastBal=t;renderBalance();}}
-  if(t-lastOv>1000){lastOv=t;renderOvL();if(!dirtyList)renderOvR();if(issueOpen)renderIssuePop();}
+  if(t-lastOv>1000){lastOv=t;playTick();renderOvL();if(!dirtyList)renderOvR();if(issueOpen)renderIssuePop();}
   if(t-lastSave>15000){lastSave=t;save();}
   requestAnimationFrame(frame);
 }

@@ -231,7 +231,7 @@ function moveDoomed(){
   if(slot==null){toast(L('冇空瓶：先清空另一個瓶','No empty jar: empty another jar first'));return;}
   const snap=snapshot(),name=(S.jarName||jarNames()[S.cur])+L('（分出）',' (split)');
   snap.items=snap.items.filter((o,k)=>CAT[o.type].kind!=='animal'||ids.has(alive[k].uid));
-  S.jars[slot]=Object.assign(snap,{name,real:false,log:[],hist:[]});
+  S.jars[slot]=Object.assign(snap,{name,real:false,log:[],hist:[],chal:null,deathN:0});
   mv.forEach(i=>{disposeObj(i.g);if(S.sel===i)S.sel=null;});S.items=S.items.filter(i=>!mv.includes(i));
   const names=[...new Set(mv.map(i=>N(CAT[i.type].name)))].join(L('、',', '));
   logEv(`將 ${names} 搬咗去「${name}」`,`Moved ${names} to "${name}"`,'muted');S.report=null;
@@ -240,7 +240,7 @@ function moveDoomed(){
 function copyToTrial(){
   const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j);if(slot<0)slot=(S.cur+1)%3;
   const name=(S.jarName||jarNames()[S.cur])+L('（試）',' (trial)');
-  S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false}));S.report=null;
+  S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false,chal:null,deathN:0}));S.report=null;
   renderAll();save();toast(L(`複製咗去「${name}」，而家套用建議`,`Copied to "${name}" and applying the suggestions`));setTimeout(autoBalance,60);
 }
 
@@ -249,13 +249,13 @@ function copyToTrial(){
 const b64u={enc:u=>{let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');},
   dec:t=>Uint8Array.from(atob(t.replace(/-/g,'+').replace(/_/g,'/')),ch=>ch.charCodeAt(0))};
 const zpipe=(u,T)=>new Response(new Blob([u]).stream().pipeThrough(new T('deflate-raw'))).arrayBuffer().then(b=>new Uint8Array(b));
-async function packJar(){const o=snapshot();delete o.log;delete o.hist;o.real=false;return b64u.enc(await zpipe(new TextEncoder().encode(JSON.stringify(o)),CompressionStream));}
+async function packJar(){const o=snapshot();delete o.log;delete o.hist;o.real=false;delete o.chal;delete o.deathN;return b64u.enc(await zpipe(new TextEncoder().encode(JSON.stringify(o)),CompressionStream));}
 async function unpackJar(t){return JSON.parse(new TextDecoder().decode(await zpipe(b64u.dec(t),DecompressionStream)));}
 function openDlg(html){const d=$('#dlg');d.innerHTML=html;if(!d.open)d.showModal();d.onclick=e=>{if(e.target===d)d.close();};d.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>d.close());return d;}
 $('#shareBtn').onclick=async()=>{
   if(!S.items.some(i=>i.alive)){toast(L('個瓶仲係空嘅，砌啲嘢先分享','The jar is empty; add something first'));return;}
   let url;try{url=location.href.split('#')[0]+'#s='+await packJar();}catch(e){toast(L('呢個瀏覽器整唔到分享連結','This browser cannot make share links'));return;}
-  const name=jarNames()[S.cur],title=L('生態瓶實驗室','Eco Jar Lab')+' · '+name,text=L('睇吓我砌嘅生態瓶，撳「複製呢個瓶」就可以自己玩。','Have a look at my eco jar. Tap "Copy this jar" to play with it yourself.');
+  unlock('share');const name=jarNames()[S.cur],title=L('生態瓶實驗室','Eco Jar Lab')+' · '+name,text=L('睇吓我砌嘅生態瓶，撳「複製呢個瓶」就可以自己玩。','Have a look at my eco jar. Tap "Copy this jar" to play with it yourself.');
   if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title,text,url});return;}catch(e){if(e.name==='AbortError')return;}}
   const d=openDlg(`<h4>${L('分享','Share')}「${esc(name)}」</h4>
     <p class="lede">${L('成個瓶已經包咗喺呢條連結入面，唔使登入。朋友打開之後可以撳「複製呢個瓶」，喺佢自己部機繼續玩；佢點改都唔會影響你個瓶。','The whole jar is packed into this link; no login needed. Friends can tap "Copy this jar" to keep playing on their own device. Nothing they change affects your jar.')}</p>
@@ -269,7 +269,7 @@ async function checkShareLink(){
   const m=location.hash.match(/^#s=([\w-]+)$/);if(!m)return;
   history.replaceState(null,'',location.pathname+location.search);
   let d;try{d=await unpackJar(m[1]);if(!d||!Array.isArray(d.items))throw 0;}catch(e){toast(L('呢條分享連結唔完整，開唔到','This share link is incomplete and cannot be opened'));return;}
-  d.real=false;d.items=d.items.filter(o=>CAT[o.type]);const name=String(d.name||L('朋友嘅瓶','A friend\'s jar')).slice(0,24);d.name=name;
+  d.real=false;d.chal=null;d.deathN=0;d.items=d.items.filter(o=>CAT[o.type]);const name=String(d.name||L('朋友嘅瓶','A friend\'s jar')).slice(0,24);d.name=name;
   const cnt={};d.items.forEach(o=>{if(['plant','animal'].includes(CAT[o.type].kind))cnt[o.type]=(cnt[o.type]||0)+1;});
   const life=Object.entries(cnt).map(([t,n])=>`${N(CAT[t].name)} ×${n}`).join(L('、',', '));
   const mk=d.mode==='aqua'?'aqua':(d.level>0?'palu':'rain'),modeN=N({aqua:['水族','Aquatic'],rain:['雨林','Rainforest'],palu:['水陸','Paludarium']}[mk]);

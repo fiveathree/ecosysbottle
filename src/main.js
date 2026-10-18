@@ -16,7 +16,7 @@ function frame(t){
     if(dirtyList&&!editing()){renderJarList();updateCatCounts();if(S.sel&&!S.items.includes(S.sel)){S.sel=null;}renderOvR();}else updateJarLive();
     if(popIt)updatePop();
     if(ovOpen.L&&t-lastBal>2500&&!document.activeElement?.closest?.('#pane-bal')&&!($('#repBox')&&$('#repBox').matches(':hover'))){lastBal=t;renderBalance();}}
-  if(t-lastOv>1000){lastOv=t;renderOvL();if(!dirtyList)renderOvR();if(issueOpen)renderIssuePop();}
+  if(t-lastOv>1000){lastOv=t;playTick();renderOvL();if(!dirtyList)renderOvR();if(issueOpen)renderIssuePop();}
   if(t-lastSave>15000){lastSave=t;save();}
   requestAnimationFrame(frame);
 }

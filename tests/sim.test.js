@@ -5,7 +5,8 @@
    2. 一鍵平衡唔會令預設變差，亦唔會出錯
    3. 雜亂嘅缸：一鍵平衡之後，搬走保唔住嘅動物，兩個瓶都要撐到 6 日
    4. 肚餓嘅動物餵咗食會回復
-   5. 分享連結：壓縮再解壓，內容一樣 */
+   5. 玩法：時間旅行預覽、挑戰完成同失敗、成就、收藏、真實缸唔快轉
+   6. 分享連結：壓縮再解壓，內容一樣 */
 const {JSDOM}=require('jsdom');
 const THREE=require('three');
 const {read,bundleJs}=require('../build.js');
@@ -28,7 +29,7 @@ function boot(){
   if(w.HTMLDialogElement){w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};}
   w.CompressionStream=globalThis.CompressionStream;w.DecompressionStream=globalThis.DecompressionStream;
   w.Response=globalThis.Response;w.Blob=globalThis.Blob;w.TextEncoder=globalThis.TextEncoder;w.TextDecoder=globalThis.TextDecoder;
-  w.eval('(()=>{\n'+bundleJs()+'\nwindow.__T={S,CAT,PRESETS,step,trialState,runTrial,autoBalance,addItem,loadPreset,buildJar,resetChem,moveDoomed,packJar,unpackJar,snapshot,switchJar};\n})();');
+  w.eval('(()=>{\n'+bundleJs()+'\nwindow.__T={S,CAT,PRESETS,step,trialState,runTrial,autoBalance,addItem,loadPreset,buildJar,resetChem,moveDoomed,packJar,unpackJar,snapshot,switchJar,PLAY,CHAL,startChal,playTick,travelPreview,fastForward,renderPlay};\n})();');
   return w.__T;
 }
 
@@ -69,8 +70,23 @@ console.log('\n4. 肚餓嘅動物餵咗食會回復');
 setup('aqua','betta');{const st=T.trialState(null),b=st.items.find(i=>i.type==='betta');b.satiety=0;st.feed=1.5;st.c.flake+=1;for(let h=0;h<48;h++)T.step(st);
   ok(b.satiety>.5,`鬥魚飽肚度由 0 回到 ${Math.round(b.satiety*100)}%`);}
 
+console.log('\n5. 玩法：時間旅行、挑戰、成就、收藏');
+setup('aqua','eco');
+{const R=T.travelPreview(30);ok(R.length===31&&R[30].day===S.day+30,`預覽 30 日（第 ${R[0].day} → ${R[30].day} 日），動物 ${Object.entries(R[30].counts).filter(([t])=>CAT[t].kind==='animal').reduce((a,[,n])=>a+n,0)} 隻`);
+  ok(S.day===1&&S.hour===6,'預覽冇改到個瓶');}
+T.startChal('sealed7');ok(S.chal&&S.chal.id==='sealed7','密封瓶可以開始「密封一星期」');
+T.fastForward(7);T.playTick();
+ok(!S.chal&&!!T.PLAY.ach.ch_sealed7,`快轉 7 日後完成挑戰（而家第 ${S.day} 日）`);
+ok(!!T.PLAY.ach.ch1,'解鎖「挑戰者」成就');
+ok(!!T.PLAY.col.shrimp&&!!T.PLAY.col.hornwort,`收藏咗 ${Object.keys(T.PLAY.col).length} 種生物`);
+ok(!!T.PLAY.ach.week,'解鎖「平安一星期」');
+T.startChal('sealed7');S.sealed=false;T.playTick();ok(!S.chal,'途中打開瓶口，挑戰會失敗');
+setup('rain','palu');S.chal=null;T.startChal('sealed7');ok(!S.chal,'唔啱條件（雨林）唔會開始');
+S.real=true;const d0=S.day;T.fastForward(2);ok(S.day===d0,'真實嘅瓶唔可以快轉');S.real=false;
+{let err=null;try{T.renderPlay();}catch(e){err=e;}ok(!err,'「玩法」分頁畫得出'+(err?`：${err.message}`:''));}
+
 (async()=>{
-  console.log('\n5. 分享連結');
+  console.log('\n6. 分享連結');
   setup('aqua','shrimp');S.jarName='測試瓶';
   const packed=await T.packJar(),back=await T.unpackJar(packed);
   ok(/^[\w-]+$/.test(packed),`連結只用網址安全字元（長度 ${packed.length}）`);

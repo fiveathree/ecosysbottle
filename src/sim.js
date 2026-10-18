@@ -2,7 +2,7 @@
 const S={mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,feedHour:9,pump:false,filter:false,heater:false,fan:false,wc:0,mist:0,heat:false,
   water:'fresh',filled:true,level:0,hillH:6,breed:true,wL:0,wFrac:0,region:'hk',real:false,customRegion:null,
   wxMode:'auto',wx:'sunny',wxLeft:6,hour:6,day:1,c:{},items:[],hist:[],log:[],running:true,speed:4,uid:1,sel:null,report:null,
-  jarName:'',cur:0,jars:[null,null,null],ana:null};
+  jarName:'',cur:0,jars:[null,null,null],ana:null,chal:null,deathN:0};
 const isLight=(st,h)=>{const on=7,off=7+st.light;return st.light>=24||(h>=on&&h<off)||(off>24&&h<off-24);};
 const aliveIn=(st,k)=>st.items.filter(i=>i.alive&&CAT[i.type].kind===k);
 const sat=T=>468/(31.6+T);
@@ -48,7 +48,7 @@ function die(it,why,st,by){
   if(st.trial){st.deaths.push({type:it.type,why,uid:it.uid});return;}
   const zh=`${label(it)}${it.name?'（'+CAT[it.type].name[0]+'）':''} ${k==='microbe'?'失效':'死亡'}（${why==='eaten'&&by?'俾'+by+'食咗':why==='attacked'&&by?'俾'+by+'咬死':STR[why]?STR[why][0]:why}）`;
   const en=`${it.name||CAT[it.type].name[1]+' #'+it.n}${it.name?' ('+CAT[it.type].name[1]+')':''} ${k==='microbe'?'stopped working':'died'} (${why==='eaten'&&by?'eaten by '+by:why==='attacked'&&by?'killed by '+by:STR[why]?STR[why][1]:why})`;
-  logEv(zh,en,'bad');
+  logEv(zh,en,'bad');if(k==='animal')S.deathN=(S.deathN||0)+1;
   if(S.sel===it)renderEditor();
   dirtyList=true;
 }
@@ -255,7 +255,7 @@ function breedStep(st){
         if(st.trial){const b=makeItem(t,p);S.uid--;b.age=0;b.satiety=.8;st.items.push(b);}
         else{const b=addItem(t,Object.assign({},p),true);b.age=0;b.satiety=.8;}
       }
-      if(!st.trial){logEv(`${CAT[t].name[0]}生咗 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
+      if(!st.trial){unlock('baby');logEv(`${CAT[t].name[0]}生咗 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
     }
   }
 }
@@ -333,6 +333,7 @@ function autoBalance(){
   for(const k of Object.keys(e))if(e[k]!==base[k])envCh.push(lab[k](e[k]));
   if(cfg.wcNow)envCh.unshift(L('即刻換 30% 水','Change 30% of the water now'));
   const beforeDead=deadNames(before.deaths),afterDead=deadNames(best.deaths);
+  const nDead=r=>r.deaths.filter(d=>CAT[d.type].kind==='animal').length;if(!real&&nDead(best)<nDead(before))unlock('saved');
   if(!real){
     for(const k of Object.keys(e))S[k]=e[k];
     Object.entries(ad).forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);});

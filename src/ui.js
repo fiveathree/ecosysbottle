@@ -49,7 +49,7 @@ function addFromCatalog(t){
 
 /* ================= 外框 ================= */
 function showTab(t){if(t==='bal'){openBal();return;}curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
-  ['add','jar','env','ana'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='jar')renderJarList();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
+  ['add','jar','env','ana','play'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='jar')renderJarList();if(t==='play')renderPlay();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 let toastT;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1900);}
 function renderChrome(){
@@ -59,7 +59,7 @@ function renderChrome(){
   $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('分享','Share');$('#presetBtn').textContent=L('預設組合','Presets');
   $('#langBtn').textContent=LANG==='en'?'中文':'EN';$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
-  const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank']};
+  const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank'],play:['玩法','Play']};
   document.querySelectorAll('.tabs button').forEach(b=>{b.textContent=N(tabs[b.dataset.tab])+(b.dataset.tab==='jar'?` (${S.items.filter(i=>i.alive).length})`:'');});
   $('#c').setAttribute('aria-label',L('3D 生態瓶，拖動旋轉，撳生物睇參數','3D jar: drag to rotate, tap a creature to see its settings'));
 }
@@ -162,7 +162,7 @@ function setLevel(v){if(v===S.level)return;const before=S.level;S.level=v;buildJ
 function emptyJar(){
   S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
   S.terra=null;
-  Object.assign(S,{filled:false,level:0,feed:0,pump:false,filter:false,heater:false,fan:false,mist:0,heat:false,wc:0,hour:6,day:1});
+  Object.assign(S,{chal:null,filled:false,level:0,feed:0,pump:false,filter:false,heater:false,fan:false,mist:0,heat:false,wc:0,hour:6,day:1});
   buildJar({keepCam:true});resetChem(S);S.log=[];logEv('清空咗個瓶','Emptied the jar','muted');
   renderAll();save();toast(S.mode==='aqua'?L('已清空，連水都冇','Emptied: no water, nothing inside'):L('已清空，連泥都冇','Emptied: no soil, nothing inside'));
 }
@@ -408,7 +408,7 @@ function loadPreset(key){
   const p=PRESETS[S.mode][key];camStop();S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;S.report=null;
   S.terra=null;S.build=false;
   Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat||'glass',sealed:p.sealed,light:p.light,feed:p.feed,pump:!!p.pump,filter:!!p.filter,heater:!!p.heater,fan:!!p.fan,wc:p.wc||0,mist:p.mist||0,heat:!!p.heat,
-    region:p.region||'hk',real:false,water:p.water||'fresh',filled:p.filled!==false,level:p.level||0,hillH:p.hillH??6,log:[],hour:6,day:1});
+    region:p.region||'hk',real:false,chal:null,deathN:0,water:p.water||'fresh',filled:p.filled!==false,level:p.level||0,hillH:p.hillH??6,log:[],hour:6,day:1});
   p.items.forEach(([t,n,par])=>{for(let i=0;i<n;i++){const it=makeItem(t,par);it.n=nextN(t);S.items.push(it);}});
   buildJar({keepChem:true});resetChem(S);renderAll();save();toast(L('已載入：','Loaded: ')+N(p.n));
 }
@@ -477,13 +477,13 @@ function renderEnv(){
 function renderAll(){if(S.build)renderBuildBar();if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(ovOpen.L)renderBalance();}
 
 /* ================= 三個瓶 & 儲存 ================= */
-const SNAP_KEYS=['customRegion','terra','region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','fan','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day'];
+const SNAP_KEYS=['customRegion','terra','region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','fan','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day','chal','deathN'];
 function snapshot(){if(S.terra)delete S.terra._info;const o={name:S.jarName,c:Object.assign({},S.c),log:S.log.slice(0,40),hist:S.hist.slice(-120),
   items:S.items.filter(i=>i.alive).map(i=>({type:i.type,params:i.params,name:i.name||'',n:i.n,health:+i.health.toFixed(3),satiety:+i.satiety.toFixed(3),rx:+i.rx.toFixed(3),rz:+i.rz.toFixed(3),age:i.age,up:i.userPlaced?1:0}))};
   SNAP_KEYS.forEach(k=>o[k]=S[k]);return o;}
 function restoreSnap(d){
   camStop();S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
-  SNAP_KEYS.forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});S.jarName=d.name||'';if(d.fan===undefined)S.fan=false;
+  SNAP_KEYS.forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});S.jarName=d.name||'';if(d.fan===undefined)S.fan=false;if(d.chal===undefined)S.chal=null;if(d.deathN===undefined)S.deathN=0;
   if(S.terra){S.terra=JSON.parse(JSON.stringify(S.terra));delete S.terra._info;}S.build=false;
   if(!SHAPES[S.shape])S.shape='jar';if(!MATS[S.mat])S.mat='glass';if(!PRESETS[S.mode])S.mode='aqua';if(S.wxMode!=='auto'&&!WX[S.wxMode])S.wxMode='auto';if(!WX[S.wx])S.wx='sunny';
   (d.items||[]).forEach(o=>{if(!CAT[o.type])return;const it=makeItem(o.type,o.params);Object.assign(it,{n:o.n||nextN(o.type),name:o.name||'',health:o.health??1,satiety:o.satiety??1});

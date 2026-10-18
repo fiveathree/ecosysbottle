@@ -2,7 +2,7 @@
    用法：node build.js        （或者 npm run build） */
 const fs=require('fs'),path=require('path');
 const root=__dirname,src=path.join(root,'src');
-const JS=['data.js','sim.js','scene.js','terra.js','ui.js','ui2.js','main.js'];
+const JS=['data.js','sim.js','scene.js','terra.js','ui.js','ui2.js','play.js','main.js'];
 const read=f=>fs.readFileSync(path.join(src,f),'utf8').replace(/\r\n/g,'\n');
 
 function bundleJs(){return JS.map(read).join('\n');}

@@ -1,7 +1,7 @@
 """Build index.html (GitHub Pages) and dist/artifact.html from src/."""
 import pathlib
 root=pathlib.Path(__file__).parent;src=root/'src'
-js='\n'.join((src/f).read_text() for f in ['data.js','sim.js','scene.js','terra.js','ui.js','ui2.js','main.js'])
+js='\n'.join((src/f).read_text() for f in ['data.js','sim.js','scene.js','terra.js','ui.js','ui2.js','play.js','main.js'])
 inner=(src/'head.html').read_text()+'<style>\n'+(src/'style.css').read_text()+'</style>\n'+(src/'body.html').read_text()+ \
   '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>\n<script>\n(()=>{\n'+js+'\n})();\n</script>\n'
 (root/'dist').mkdir(exist_ok=True)

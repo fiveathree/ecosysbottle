@@ -17,7 +17,7 @@ npm test             # build + automated tests (needs `npm install` once)
 ```
 - `build.js` also syntax-checks the bundle. Python is not installed on the owner's PC, so prefer the Node build.
 - The script concatenates `src/head.html`, `style.css`, `body.html` and the JS files, in this order:
-  `data.js, sim.js, scene.js, terra.js, ui.js, ui2.js, main.js`
+  `data.js, sim.js, scene.js, terra.js, ui.js, ui2.js, play.js, main.js`
 - The JS is wrapped in one IIFE `(()=>{ ... })()`, so every function shares one scope.
 - Outputs:
   - `index.html`: GitHub Pages, with the full doctype wrapper.
@@ -37,13 +37,14 @@ npm test             # build + automated tests (needs `npm install` once)
 | `terra.js` | Build-your-own terrain:<br>• heightmap `S.terra={n:24,h[],m[]}`<br>• 11 materials `TMATS`<br>• brushes and stacking<br>• `enterBuild`/`exitBuild` (build mode: paused, daytime, clear weather, no auto-rotate)<br>• build toolbar |
 | `ui.js` | Right panel tabs (Add / Jar / Env / Analysis, each with tag filters)<br>Header chrome (`renderChrome`), meters, balance budgets, environment pane<br>Save/load, 3 jars (snapshot/restore) |
 | `ui2.js` | Mode switching aqua/rain/palu, which keeps the items<br>Left (balance) and right (list) overlays, opened/closed by the edge arrows (`setOv`)<br>Camera bar, day/night view lock (`viewLight`, view only)<br>Presets dialog, share link (`#s=` deflate + base64url) and "copy this jar"<br>Object popover: draggable, sits beside the object; decor rotation and size<br>Issue pill with one-tap fixes<br>Auto-balance report |
+| `play.js` | 「玩法」tab: challenges `CHAL` (per jar, `S.chal`; `survive` = no animal deaths for N days, `reach` = hit a goal in time), achievements `ACH` and the species collection (per viewer, `pref` keys `ecojar.ach` / `ecojar.col`; `unlock(id)`), 30-day time-travel preview (`travelPreview`, seeded trial) and `fastForward` (not for real tanks)<br>`playTick()` runs once a second from main.js; `S.deathN` counts animal deaths per jar |
 | `main.js` | Boot and the frame loop: sim step, render, and throttled UI refresh |
 
 ## Persistence
 - `localStorage['ecojar.v4']` = `{cur, jars[3], ana}`, with migration from v2.
 - Overlay prefs: `ecojar.ov`.
 - Language: `ecojar.lang`. Day/night view lock: `ecojar.dn`. Use the `pref` helper (data.js) for these per-viewer settings.
-- New per-jar state must be added to `SNAP_KEYS` in `ui.js`.
+- New per-jar state must be added to `SNAP_KEYS` in `ui.js` (e.g. `fan`, `chal`, `deathN`). Shared links and split/trial copies clear `chal` and `deathN`.
 
 ## Conventions
 - Keep it a single page: there is no npm runtime dependency.

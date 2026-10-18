@@ -73,7 +73,7 @@ function enterBuild(){
   S.build=true;closePop();issueOpen=false;renderIssuePop();buildTool='paint';paintMat=S.mode==='rain'?3:(S.water==='salt'?5:1);
   renderChrome();  renderBuildBar();toast(L('一隻手指／左鍵：砌（同一位置撳多幾下會疊高）；兩隻手指或右鍵：轉視角；捏或滾輪：縮放。','One finger or left click builds (tap the same spot to stack higher); two fingers or right-drag rotates; pinch or scroll zooms.'));
 }
-function exitBuild(){S.build=false;setTimeout(renderChrome,0);S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));}
+function exitBuild(){S.build=false;setTimeout(renderChrome,0);S.running=S._wasRunning!==false;$('#playBtn').classList.toggle('primary',S.running);$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));if(S.terra)unlock('builder');}
 function renderBuildBar(){
   const b=$('#buildBar');b.hidden=!S.build;$('#meters').hidden=!!S.build;if(!S.build)return;
   const lvl=S.mode==='rain'?`<label class="bb-sl">${L('水位','Water')} <output id="bbLvO">${S.level} cm</output><input type="range" id="bbLv" min="0" max="14" step="1" value="${S.level}"></label>`:'';

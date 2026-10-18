@@ -466,7 +466,7 @@ function camFollow(it,mode){
   camF.mode=mode;camF.it=it;camF.yaw=0;camF.pitch=0;cam.idle=0;
   const ry=it.g?it.g.rotation.y:0;camF.dir.set(Math.cos(ry),0,-Math.sin(ry));
   if(mode==='follow'){cam.dist=J.H*.55;if(it.g)it.g.visible=true;camera.fov=38;camera.near=.05;stage.classList.remove('pov-water');}
-  else{camera.fov=70;camera.near=.004;}
+  else{camera.fov=70;camera.near=.004;unlock('pov');}
   camera.updateProjectionMatrix();if(typeof renderCamBar==='function')renderCamBar();}
 function camStop(){
   if(camF.it&&camF.it.g)camF.it.g.visible=true;const was=camF.mode;camF.mode=null;camF.it=null;
