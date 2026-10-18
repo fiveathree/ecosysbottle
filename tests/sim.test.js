@@ -56,7 +56,8 @@ setup('aqua','betta');{const st=T.trialState(null),b=st.items.find(i=>i.type==='
 
 console.log('\n5. 玩法：時間旅行、挑戰、成就、收藏');
 setup('aqua','eco');
-ok(!!T.lockOf('type','seahorse')&&!!T.presetLock(T.PRESETS.aqua.sea)&&!T.presetLock(T.PRESETS.aqua.eco),'新玩家：海馬同海馬缸鎖住，密封生態瓶開放');
+ok(!!T.lockOf('type','seahorse')&&!!T.presetLock('aqua','sea',T.PRESETS.aqua.sea)&&!T.presetLock('aqua','eco',T.PRESETS.aqua.eco),'新玩家：海馬同海馬缸鎖住，密封生態瓶開放');
+ok(Object.entries(T.PRESETS.aqua).filter(([k,p])=>!T.presetLock('aqua',k,p)).length===4&&!!T.lockOf('feature','rain')&&!!T.lockOf('feature','palu'),'新玩家：只開 3 個預設（加由零開始），雨林同水陸鎖住');
 {const n=S.items.length;T.addFromCatalog('seahorse');ok(S.items.length===n,'鎖住嘅生物加唔到');}
 {const R=T.travelPreview(30);ok(R.length===31&&R[30].day===S.day+30,`預覽 30 日（第 ${R[0].day} → ${R[30].day} 日），動物 ${Object.entries(R[30].counts).filter(([t])=>CAT[t].kind==='animal').reduce((a,[,n])=>a+n,0)} 隻`);
   ok(S.day===1&&S.hour===6,'預覽冇改到個瓶');}
@@ -65,10 +66,13 @@ T.startChal('sealed7');ok(S.chal&&S.chal.id==='sealed7','密封瓶可以開始�
 for(let h=0;h<7*24;h++){T.step(S);if(h%24===23)T.playTick();}T.playTick();
 ok(!S.chal&&!!T.PLAY.ach.ch_sealed7,`快轉 7 日後完成挑戰（而家第 ${S.day} 日）`);
 ok(!!T.PLAY.ach.ch1,'解鎖「挑戰者」成就');
-ok(!T.lockOf('type','seahorse')&&!T.lockOf('feature','salt'),'完成 1 個挑戰：海水同海馬解鎖');
+ok(!T.lockOf('feature','rain')&&!!T.lockOf('feature','salt'),'完成 1 個挑戰：雨林解鎖，海水仲鎖住');
+ok(T.$('#celDlg').open,'解鎖時彈出恭喜視窗');
 ok(!!T.PLAY.col.shrimp&&!!T.PLAY.col.hornwort,`收藏咗 ${Object.keys(T.PLAY.col).length} 種生物`);
 ok(!!T.PLAY.ach.week,'解鎖「平安一星期」');
 {const d0=S.day;T.fastForward(2);ok(S.day===d0+2,'平安一星期之後可以快轉');}
+ok(!T.lockOf('feature','palu'),'平安一星期：水陸解鎖');
+T.setUnlockAll(true);ok(!T.lockOf('type','leopard')&&!T.lockOf('feature','salt'),'隱藏開關：全部解鎖');T.setUnlockAll(false);ok(!!T.lockOf('type','leopard'),'關返全部解鎖');
 T.startChal('sealed7');S.sealed=false;T.playTick();ok(!S.chal,'途中打開瓶口，挑戰會失敗');
 setup('rain','palu');S.chal=null;T.startChal('sealed7');ok(!S.chal,'唔啱條件（雨林）唔會開始');
 S.real=true;const d0=S.day;T.fastForward(2);ok(S.day===d0,'真實嘅瓶唔可以快轉');S.real=false;

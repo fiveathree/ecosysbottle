@@ -157,7 +157,9 @@ function fillWater(on){
   if(on){freshWater(c,wLOf(S),true);logEv('注滿咗水','Filled with water','muted');}else logEv('抽乾咗水','Drained the water','muted');
   renderAll();save();toast(on?L('注滿水。新水未有細菌，記得加硝化菌。','Filled. Fresh water has no bacteria yet, so add some.'):L('已抽乾水','Water drained'));
 }
-function setLevel(v){if(v===S.level)return;const before=S.level;S.level=v;buildJar({keepCam:true});
+function setLevel(v){if(v===S.level)return;
+  if(S.mode==='rain'&&!(S.level>0)&&v>0){const u=lockOf('feature','palu');if(u){toast(lockText(u));if(curTab==='env')renderEnv();return;}}
+  const before=S.level;S.level=v;buildJar({keepCam:true});
   if(before===0&&v>0)logEv('加咗水區','Added a water area','muted');if(v===0)logEv('抽乾咗水區','Drained the water area','muted');
   renderAll();save();}
 function emptyJar(){

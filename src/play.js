@@ -51,23 +51,87 @@ const ACH=[
 /* ---- 解鎖：完成挑戰、成就、收藏，開放更多生物、地區同玩法 ----
    已經喺瓶入面嘅嘢唔會被收走；分享連結同「分析水缸」唔受限制。 */
 const colN=()=>Object.keys(PLAY.col).length,chN=()=>CHAL.filter(c=>PLAY.ach['ch_'+c.id]).length;
+/* 解鎖次序：先玩好淡水水族 → 雨林 → 水陸 → 海水 → 稀有動物。開頭只開 3 個預設（加「由零開始」） */
 const UNLOCKS=[
-  {id:'u_col5',t:['收藏 5 種生物','Collect 5 species'],prog:()=>`${Math.min(5,colN())}/5`,cond:()=>colN()>=5,types:['minnow','nerite','amano','lotus']},
-  {id:'u_baby',t:['有動物生 BB','Have an animal give birth'],cond:()=>!!PLAY.ach.baby,types:['frog','bromeliad']},
-  {id:'u_ch1',t:['完成 1 個挑戰','Complete 1 challenge'],prog:()=>`${Math.min(1,chN())}/1`,cond:()=>chN()>=1,types:['caulerpa','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],features:['salt']},
-  {id:'u_week',t:['平安一星期','A calm week'],cond:()=>!!PLAY.ach.week,types:['jelly','pleco','crab'],regions:['amazon','amazonriver','borneo','pantanal','mekong'],features:['ff']},
-  {id:'u_col12',t:['收藏 12 種生物','Collect 12 species'],prog:()=>`${Math.min(12,colN())}/12`,cond:()=>colN()>=12,types:['gecko','newt'],regions:['cloudforest','tanganyika','baikal']},
-  {id:'u_ch3',t:['完成 3 個挑戰','Complete 3 challenges'],prog:()=>`${Math.min(3,chN())}/3`,cond:()=>chN()>=3,types:['turtle','slider','leopard'],regions:['sahara']},
+  {id:'u_col5',t:['收藏 5 種生物','Collect 5 species'],prog:()=>`${Math.min(5,colN())}/5`,cond:()=>colN()>=5,
+    types:['minnow','nerite','amano','lotus'],presets:['aqua.shrimp','aqua.stream','aqua.lotus','aqua.bad']},
+  {id:'u_ch1',t:['完成 1 個挑戰','Complete 1 challenge'],prog:()=>`${Math.min(1,chN())}/1`,cond:()=>chN()>=1,
+    features:['rain'],types:['fern','cmoss','pothos','fittonia','isopod','springtail','soilmic'],presets:['rain.moss','rain.zero']},
+  {id:'u_baby',t:['有動物生 BB','Have an animal give birth'],cond:()=>!!PLAY.ach.baby,
+    types:['frog','bromeliad'],presets:['aqua.medaka','rain.forest']},
+  {id:'u_week',t:['平安一星期','A calm week'],cond:()=>!!PLAY.ach.week,
+    features:['palu','ff'],types:['jelly','pleco','crab'],regions:['amazon','amazonriver','borneo','pantanal','mekong'],presets:['aqua.jelly','rain.palu','rain.amazon']},
+  {id:'u_col12',t:['收藏 12 種生物','Collect 12 species'],prog:()=>`${Math.min(12,colN())}/12`,cond:()=>colN()>=12,
+    features:['salt'],types:['caulerpa','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],presets:['aqua.sea']},
+  {id:'u_ch3',t:['完成 3 個挑戰','Complete 3 challenges'],prog:()=>`${Math.min(3,chN())}/3`,cond:()=>chN()>=3,
+    types:['gecko','newt','turtle','slider','leopard'],regions:['sahara','cloudforest','tanganyika','baikal'],presets:['rain.gecko','rain.newt','rain.turtle','rain.desert']},
 ];
-const FEAT_N={salt:['海水','Salt water'],ff:['時間旅行快轉','Time-travel fast-forward']};
-/* 回傳鎖住佢嘅解鎖項目（冇鎖就 null）；kind = type／region／feature */
-function lockOf(kind,key){const f=kind==='type'?'types':kind==='region'?'regions':'features';for(const u of UNLOCKS)if(u[f]&&u[f].includes(key)&&!u.cond())return u;return null;}
+const FEAT={salt:{n:['海水','Salt water'],i:'🌊',d:['水族缸可以轉做海水，養海馬、海月水母、花園鰻同寄居蟹。淡水生物放入海水會死。','Aquatic jars can switch to salt water for seahorses, moon jellies, garden eels and hermit crabs. Freshwater life dies in salt water.']},
+  ff:{n:['時間旅行快轉','Time-travel fast-forward'],i:'⏩',d:['喺「玩法 › 時間旅行」預覽完未來，可以直接快轉個瓶去嗰一日。','After previewing the future in Play › Time travel, you can jump the jar straight to that day.']},
+  rain:{n:['雨林模式','Rainforest mode'],i:'🌿',d:['冇水嘅陸缸：泥土、苔蘚、蕨類，養跳蟲、鼠婦，之後仲有箭毒蛙同守宮。要顧住濕度同霉菌。','A dry-land terrarium with soil, moss and ferns, home to springtails and isopods, and later dart frogs and geckos. Watch the humidity and mould.']},
+  palu:{n:['水陸模式','Paludarium mode'],i:'🐸',d:['雨林加水區：後面陸地、前面水，魚同兩棲動物一齊養。','A rainforest with a water area: land at the back, water at the front, fish and amphibians together.']}};
+const FEAT_N=Object.fromEntries(Object.entries(FEAT).map(([k,v])=>[k,v.n]));
+const FREE_PRESETS=['aqua.eco','aqua.tank','aqua.betta','aqua.zero'];
+/* 隱藏開關：連撳標題 7 下 → 全部解鎖（方便測試） */
+PLAY.all=pref.get('ecojar.all')==='1';
+/* 回傳鎖住佢嘅解鎖項目（冇鎖就 null）；kind = type／region／feature／preset */
+function lockOf(kind,key){if(PLAY.all)return null;const f=kind+'s';
+  if(kind==='preset'&&!FREE_PRESETS.includes(key)&&!UNLOCKS.some(u=>(u.presets||[]).includes(key)))return null;
+  for(const u of UNLOCKS)if(u[f]&&u[f].includes(key)&&!u.cond())return u;return null;}
 const lockText=u=>L('🔒 解鎖條件：','🔒 Unlock by: ')+N(u.t)+(u.prog?L(`（${u.prog()}）`,` (${u.prog()})`):'');
-function presetLock(p){for(const [t] of p.items){const u=lockOf('type',t);if(u)return u;}return lockOf('region',p.region||'hk')||(p.water==='salt'?lockOf('feature','salt'):null);}
-function rewardNames(u){return[...(u.types||[]).map(t=>N(CAT[t].name)),...(u.regions||[]).map(k=>N(REGIONS[k].n)),...(u.features||[]).map(k=>N(FEAT_N[k]))];}
-function checkUnlocks(quiet){let got=[];for(const u of UNLOCKS)if(!PLAY.unl[u.id]&&u.cond()){PLAY.unl[u.id]=Date.now();got.push(u);}
-  if(!got.length)return;savePlay();if(!quiet){toast(L('🔓 解鎖：','🔓 Unlocked: ')+got.flatMap(rewardNames).join(L('、',', ')));if(typeof renderCatalog==='function')renderCatalog();}}
+function presetLock(mode,key,p){const u0=lockOf('preset',mode+'.'+key);if(u0)return u0;
+  if(mode==='rain'){const u=lockOf('feature',p.level>0?'palu':'rain')||lockOf('feature','rain');if(u)return u;}
+  for(const [t] of p.items){const u=lockOf('type',t);if(u)return u;}return lockOf('region',p.region||'hk')||(p.water==='salt'?lockOf('feature','salt'):null);}
+const PRESET_N=k=>{const [m,p]=k.split('.');return N(PRESETS[m][p].n);};
+function rewardNames(u){return[...(u.features||[]).map(k=>N(FEAT[k].n)),...(u.types||[]).map(t=>N(CAT[t].name)),...(u.regions||[]).map(k=>N(REGIONS[k].n)),...(u.presets||[]).map(k=>L('預設：','Preset: ')+PRESET_N(k))];}
+function checkUnlocks(quiet){if(PLAY.all)return;let got=[];for(const u of UNLOCKS)if(!PLAY.unl[u.id]&&u.cond()){PLAY.unl[u.id]=Date.now();got.push(u);}
+  if(!got.length)return;savePlay();if(!quiet){celebrate(got);if(typeof renderCatalog==='function'){renderCatalog();renderModeSeg();}}}
 checkUnlocks(true);
+function setUnlockAll(on){PLAY.all=on;pref.set('ecojar.all',on?'1':'0');renderAll();if(curTab==='play')renderPlay();
+  toast(on?L('🔓 全部解鎖：開（再連撳標題 7 下就關）','🔓 Unlock all: on (tap the title 7 times again to turn off)'):L('全部解鎖：關，返回正常進度','Unlock all: off, back to normal progress'));}
+{let taps=[];$('#brandT').addEventListener('click',()=>{const now=Date.now();taps=taps.filter(t=>now-t<3000);taps.push(now);if(taps.length>=7){taps=[];setUnlockAll(!PLAY.all);}});}
+
+/* ---- 解鎖慶祝彈窗：置中、會郁嘅預覽、下面有介紹 ---- */
+const CEL={q:[],i:0,r:null,scene:null,cam:null,obj:null,raf:0,t0:0};
+function celebrate(tiers){for(const u of tiers){const why=N(u.t);
+    (u.features||[]).forEach(k=>CEL.q.push({kind:'feature',key:k,why}));(u.types||[]).filter(t=>t!=='soilmic').forEach(k=>CEL.q.push({kind:'type',key:k,why}));
+    (u.regions||[]).forEach(k=>CEL.q.push({kind:'region',key:k,why}));(u.presets||[]).length&&CEL.q.push({kind:'presets',key:u.presets,why});}
+  const d=$('#celDlg');if(!d.open){CEL.i=0;d.showModal();}renderCel();}
+function celPreview(item){
+  if(!CEL.r){const cv=$('#celCv');CEL.r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});CEL.r.setPixelRatio(Math.min(2,devicePixelRatio||1));
+    CEL.scene=new THREE.Scene();CEL.cam=new THREE.PerspectiveCamera(35,1,.01,50);CEL.scene.add(new THREE.HemisphereLight(0xffffff,0x445566,1.1));const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(1,2,1.5);CEL.scene.add(dl);}
+  if(CEL.obj){disposeObj(CEL.obj);CEL.obj=null;}
+  if(item.kind!=='type')return;
+  const it={uid:-1,type:item.key,n:1,params:Object.assign({},CAT[item.key].params)},g=itemModel(it);
+  const b=new THREE.Box3().setFromObject(g),sz=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3()),s=1/Math.max(.001,sz.x,sz.y,sz.z);
+  const holder=new THREE.Group();g.position.sub(c);holder.add(g);holder.scale.setScalar(s);holder.userData.kind=CAT[item.key].kind;holder.userData.g=g;
+  CEL.scene.add(holder);CEL.obj=holder;CEL.cam.position.set(0,.35,2.3);CEL.cam.lookAt(0,0,0);
+}
+function celLoop(t){const d=$('#celDlg');if(!d.open||!CEL.obj){CEL.raf=0;return;}
+  const o=CEL.obj,k=o.userData.kind,s=(t-CEL.t0)/1000;
+  o.rotation.y=s*.8;if(k==='animal'){o.position.y=Math.sin(s*2.2)*.06;o.rotation.z=Math.sin(s*3)*.08;const tail=o.userData.g.userData.tail;if(tail)tail.rotation.y=Math.sin(s*9)*.5;}
+  else o.rotation.z=Math.sin(s*1.4)*.06;
+  const cv=$('#celCv'),w=cv.clientWidth||240,h=cv.clientHeight||170;CEL.r.setSize(w,h,false);CEL.cam.aspect=w/h;CEL.cam.updateProjectionMatrix();CEL.r.render(CEL.scene,CEL.cam);
+  CEL.raf=requestAnimationFrame(celLoop);}
+function renderCel(){
+  const d=$('#celDlg'),item=CEL.q[CEL.i];if(!item){d.close();return;}
+  let icon='',name='',sub='',desc='',chips=[];
+  if(item.kind==='type'){const c=CAT[item.key];name=N(c.name);sub=c.sci;desc=N(c.desc);chips=typeof paramChips==='function'?paramChips(item.key):[];}
+  else if(item.kind==='region'){const r=REGIONS[item.key];icon=({sunny:'☀️',cloudy:'⛅',rain:'🌧️',storm:'⛈️',fog:'🌫️',snow:'❄️',sand:'🏜️'})[typicalWx(item.key)]||'🌍';name=N(r.n);sub=L(`平均 ${r.t}°C · 濕度 ${r.hum}%`,`Avg ${r.t}°C · humidity ${r.hum}%`);desc=N(r.d);}
+  else if(item.kind==='feature'){const f=FEAT[item.key];icon=f.i;name=N(f.n);desc=N(f.d);}
+  else {icon='📦';name=L('新預設組合','New presets');desc=item.key.map(PRESET_N).join(L('、',', '))+L('：喺頂部「預設組合」揀。',': choose them under Presets at the top.');}
+  if(CEL.obj){disposeObj(CEL.obj);CEL.obj=null;}if(CEL.r){CEL.r.dispose();CEL.r=null;}
+  d.innerHTML=`<div class="cel"><p class="cel-top">🎉 ${L('恭喜解鎖','Unlocked!')}</p>
+    <div class="cel-stage ${item.kind}">${item.kind==='type'?'<canvas id="celCv"></canvas>':`<span class="cel-icon" aria-hidden="true">${icon}</span>`}</div>
+    <h4>${esc(name)}</h4>${sub?`<p class="cel-sub">${esc(sub)}</p>`:''}<p class="cel-desc">${esc(desc)}</p>
+    ${chips.length?`<div class="chips">${chips.map(x=>`<span class="chip">${x}</span>`).join('')}</div>`:''}
+    <p class="lede">${L('因為你達成咗：','Because you reached: ')}${esc(item.why)}</p>
+    <div class="acts">${CEL.q.length>1?`<span class="lede">${CEL.i+1} / ${CEL.q.length}</span><button class="btn" id="celPrev" ${CEL.i?'':'disabled'}>‹</button>`:''}<button class="btn primary" id="celNext">${CEL.i<CEL.q.length-1?L('下一個','Next'):L('好嘢！','Great!')}</button></div></div>`;
+  if(item.kind==='type'){celPreview(item);if(!CEL.raf){CEL.t0=performance.now();CEL.raf=requestAnimationFrame(celLoop);}}
+  const p=$('#celPrev');if(p)p.onclick=()=>{CEL.i--;renderCel();};
+  $('#celNext').onclick=()=>{if(CEL.i<CEL.q.length-1){CEL.i++;renderCel();}else{d.close();}};
+  d.onclose=()=>{CEL.q=[];CEL.i=0;if(CEL.obj){disposeObj(CEL.obj);CEL.obj=null;}if(CEL.r){CEL.r.dispose();CEL.r=null;}};
+}
 function unlock(id){
   if(PLAY.ach[id])return;PLAY.ach[id]=Date.now();savePlay();
   const a=ACH.find(x=>x.id===id),c=CHAL.find(x=>'ch_'+x.id===id);

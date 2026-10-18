@@ -330,7 +330,8 @@ function buildMicrobeLayer(){
   microbeLayer=new THREE.Points(geo,new THREE.PointsMaterial({color:S.mode==='aqua'?0xf2e2a0:0xd9b98a,size:.022,transparent:true,opacity:0,depthWrite:false}));
   world.add(microbeLayer);
 }
-function buildItem(it){
+/* 只砌 3D 模型（唔放入瓶）；解鎖彈窗嘅預覽都用呢個 */
+function itemModel(it){
   const t=it.type,C=CAT[t],k=C.kind;let g;
   const wH=(J.waterTop!=null?J.waterTop:J.H*.8)-J.sTop;
   if(k==='sub')g=subModel(it);
@@ -386,6 +387,10 @@ function buildItem(it){
     for(let i=0;i<8;i++){const b=new THREE.Mesh(new THREE.SphereGeometry(.013,8,6),m);b.scale.set(1.7,.55,1.1);g.add(b);it.agents.push({mesh:b,p:new THREE.Vector3(),hd:rnd(0,6.28)});}}
   else if(t==='springtail')g=swarmPoints(70,0xeeeeea,.014,.2);
   else {g=new THREE.Group();g.add(new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.02,24),new THREE.MeshBasicMaterial({visible:false})));}
+  return g;
+}
+function buildItem(it){
+  const k=CAT[it.type].kind,g=itemModel(it);
   if(k==='animal'){const b=new THREE.Box3().setFromObject(g);g.userData.br=b.isEmpty()?.05:Math.max(Math.abs(b.min.x),Math.abs(b.max.x),Math.abs(b.min.z),Math.abs(b.max.z))||.05;}
   g.userData.uid=it.uid;it.g=g;world.add(g);
   it.m={p:new THREE.Vector3(),v:new THREE.Vector3(),tgt:new THREE.Vector3(),prev:new THREE.Vector3(),tt:0,spd:.05,hd:rnd(0,6.28),ph:rnd(0,6),hop:0,h0:new THREE.Vector3()};

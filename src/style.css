@@ -355,3 +355,21 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tt-sp em{font-style:normal;font-size:11px;text-align:right}
 .tt-sp em.up{color:var(--good)}.tt-sp em.down{color:var(--bad)}
 .tt p{margin:0}.tt p.good{color:var(--good)}.tt p.bad{color:var(--bad)}
+/* ---- 解鎖慶祝彈窗 ---- */
+.cel-dlg{width:min(380px,calc(100vw - 32px));text-align:center}
+.cel{display:flex;flex-direction:column;gap:8px;align-items:center}
+.cel-top{margin:0;font-weight:700;color:var(--accent);letter-spacing:.04em;animation:celPop .5s ease-out}
+.cel-stage{width:100%;height:180px;border-radius:12px;background:radial-gradient(circle at 50% 45%,var(--accent-soft),var(--surface-2) 70%);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.cel-stage.type{background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--o2) 22%,var(--surface)),var(--surface-2) 75%)}
+.cel-stage canvas{width:100%;height:100%;display:block}
+.cel-icon{font-size:64px;animation:celFloat 2.4s ease-in-out infinite}
+.cel h4{margin:2px 0 0;font-family:var(--f-display);font-size:20px}
+.cel-sub{margin:0;color:var(--muted);font-size:12px;font-style:italic}
+.cel-desc{margin:0;font-size:13.5px;text-align:left}
+.cel .chips{justify-content:center}
+.cel .acts{width:100%;align-items:center}
+@keyframes celPop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes celFloat{0%,100%{transform:translateY(4px) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
+.cel-dlg[open]{animation:celPop .35s ease-out}
+@media (prefers-reduced-motion:reduce){.cel-icon,.cel-top,.cel-dlg[open]{animation:none}}
+.seg button.locked{opacity:.55}

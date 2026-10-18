@@ -4,6 +4,7 @@ let modeArm=null,modeArmT=0;
 function armMode(t,msg){if(modeArm===t)return true;modeArm=t;clearTimeout(modeArmT);modeArmT=setTimeout(()=>modeArm=null,3500);toast(msg);return false;}
 function setMode(t){
   const cur=modeKey();if(t===cur)return;
+  {const u=t!=='aqua'&&(lockOf('feature','rain')||t==='palu'&&lockOf('feature','palu'));if(u){toast(lockText(u));return;}}
   const life=S.items.filter(i=>i.alive&&['plant','animal'].includes(CAT[i.type].kind));
   if(t==='aqua'){
     const land=life.filter(i=>!isWater(i));
@@ -21,7 +22,7 @@ function setMode(t){
   modeArm=null;buildJar({keepCam:true});renderAll();save();
   toast(L('轉咗做','Switched to ')+N({aqua:['水族','aquatic'],rain:['雨林','rainforest'],palu:['水陸共生','paludarium']}[t])+L('，保留晒原有嘅嘢',', keeping everything'));
 }
-function renderModeSeg(){$('#modeSeg').innerHTML=[['aqua',['水族','Aquatic']],['rain',['雨林','Rainforest']],['palu',['水陸','Paludarium']]].map(([k,l])=>`<button aria-pressed="${modeKey()===k}" data-m="${k}">${N(l)}</button>`).join('');
+function renderModeSeg(){$('#modeSeg').innerHTML=[['aqua',['水族','Aquatic']],['rain',['雨林','Rainforest']],['palu',['水陸','Paludarium']]].map(([k,l])=>{const u=modeKey()!==k&&k!=='aqua'&&(lockOf('feature','rain')||k==='palu'&&lockOf('feature','palu'));return`<button aria-pressed="${modeKey()===k}" data-m="${k}" ${u?`class="locked" title="${esc(lockText(u))}"`:''}>${u?'🔒':''}${N(l)}</button>`;}).join('');
   $('#modeSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));}
 
 /* ================= 疊加清單（左：平衡；右：生物） ================= */
@@ -51,7 +52,7 @@ $('#dnBtn').onclick=()=>{viewLight={auto:'day',day:'night',night:'auto'}[viewLig
 $('#presetBtn').onclick=()=>{const ps=PRESETS[S.mode],real=S.real;
   const d=openDlg(`<h4>${L('預設組合','Presets')} · ${N({aqua:['水族','Aquatic'],rain:['雨林／水陸','Rainforest / paludarium']}[S.mode])}</h4>
     <p class="lede">${real?L('呢個係真實嘅瓶，唔可以用預設取代。請先轉去另一個瓶。','This is a real tank and cannot be replaced by a preset. Switch to another jar first.'):L('揀一個會取代而家呢個瓶入面所有嘢。想保留而家個瓶，就先轉去一個空瓶。','Picking one replaces everything in this jar. To keep this jar, switch to an empty one first.')}</p>
-    <div class="plist">${Object.entries(ps).map(([k,p])=>{const lk=presetLock(p);return`<button class="preset" data-pp="${k}" ${real||lk?'disabled':''}><b>${lk?'🔒 ':''}${N(p.n)}</b><span>${lk?esc(lockText(lk)):N(p.d)}</span></button>`;}).join('')}</div>
+    <div class="plist">${Object.entries(ps).map(([k,p])=>[k,p,presetLock(S.mode,k,p)]).sort((a,b)=>!!a[2]-!!b[2]).map(([k,p,lk])=>{return`<button class="preset" data-pp="${k}" ${real||lk?'disabled':''}><b>${lk?'🔒 ':''}${N(p.n)}</b><span>${lk?esc(lockText(lk)):N(p.d)}</span></button>`;}).join('')}</div>
     <div class="acts"><button class="btn" data-close>${L('取消','Cancel')}</button></div>`);
   d.querySelectorAll('[data-pp]').forEach(b=>b.onclick=()=>{d.close();loadPreset(b.dataset.pp);});};
 function renderOv(){renderCamBar();renderDn();renderOvToggles();renderOvL();renderOvR();fitOverlays();}
