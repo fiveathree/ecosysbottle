@@ -81,7 +81,7 @@ function renderBuildBar(){
     <div class="bb-tools" role="group" aria-label="${L('地形工具','Shape tools')}">${BRUSH_TOOLS.filter(([k])=>k!=='water'||S.mode==='rain').map(([k,n])=>`<button data-tool="${k}" aria-pressed="${buildTool===k}"><i class="sw2 t-${k}"></i>${N(n)}</button>`).join('')}
       <span class="bb-cam"><button data-cam="l" aria-label="${L('向左轉','Rotate left')}">⟲</button><button data-cam="r" aria-label="${L('向右轉','Rotate right')}">⟳</button><button data-cam="top">${L('俯視','Top')}</button><button data-cam="side">${L('側視','Side')}</button><button id="bbDay" aria-pressed="${S.buildDay}">${S.buildDay?L('日頭','Day'):L('夜晚','Night')}</button></span></div>
     <div class="bb-row"><label class="bb-sl">${L('筆刷','Brush')} <input type="range" id="bbSz" min=".06" max=".45" step=".01" value="${brushSize}"></label>${lvl}
-    <button class="btn" id="bbFlat">${L('全部鋪平','Flatten all')}</button><button class="btn primary" id="bbDone">${L('完成','Done')}</button></div>`;
+    <button class="btn" id="bbFlat">${L('全部鋪平','Flatten all')}</button><button class="btn" id="bbReset">${L('還原','Reset')}</button><button class="btn primary" id="bbDone">${L('完成','Done')}</button></div>`;
   b.querySelectorAll('[data-tool]').forEach(x=>x.onclick=()=>{buildTool=x.dataset.tool;renderBuildBar();});
   b.querySelectorAll('[data-mat]').forEach(x=>x.onclick=()=>{buildTool='paint';paintMat=+x.dataset.mat;renderBuildBar();});
   $('#bbDay').onclick=()=>{S.buildDay=!S.buildDay;renderBuildBar();};
@@ -89,6 +89,7 @@ function renderBuildBar(){
   $('#bbSz').oninput=e=>{brushSize=+e.target.value;};
   const lv=$('#bbLv');if(lv){lv.oninput=()=>{$('#bbLvO').textContent=lv.value+' cm';};lv.onchange=()=>{setLevel(+lv.value);renderBuildBar();};}
   $('#bbFlat').onclick=()=>{const T=S.terra;const avg=T.h.reduce((a,b)=>a+b,0)/T.h.length;T.h=T.h.map(()=>+avg.toFixed(1));delete T._info;buildJar({keepCam:true});};
+  $('#bbReset').onclick=()=>{exitBuild();resetTerra();};
   $('#bbDone').onclick=exitBuild;
 }
 function resetTerra(){S.terra=null;buildJar({keepCam:true});renderAll();save();toast(L('已還原做一層層嘅底材','Back to simple substrate layers'));}

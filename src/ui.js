@@ -130,9 +130,6 @@ function renderCatList(){
   const grp=c=>['sub','decor'].includes(c.kind)?'scape':c.kind==='microbe'?'microbe':c.kind==='plant'?(c.hab==='water'?'wplant':'lplant'):(c.hab==='water'?'wanimal':'lanimal');
   const subN=S.items.filter(i=>i.alive&&CAT[i.type].kind==='sub').length;
   const showWater=(catTag==='all'||catTag==='scape')&&!qq;
-  const buildCard=!showWater?'':`<div class="card build"><div class="nm"><span class="dot" style="background:#b08a5a"></span>${L('自己砌缸','Build your own')}<em>${S.terra?L('已經自訂地形','custom terrain'):L('沙、泥、水嘅位置','place sand, soil and water')}</em></div>
-      <p>${L('用筆刷喺瓶底鋪細沙、碎石、泥土，堆高或者挖低。地勢低過水位嘅地方就會係水。','Brush sand, gravel or soil onto the floor and raise or dig the ground. Anything below the water level becomes water.')}</p>
-      <div class="ctr"><button class="wide" id="buildBtn">${S.terra?L('繼續砌','Edit'):L('開始砌','Start')}</button>${S.terra?`<button class="minus wide" id="terraReset">${L('還原','Reset')}</button>`:''}</div></div>`;
   const waterCard=!showWater?'':aq?`<div class="card"><div class="nm"><span class="dot" style="background:#7fc4d6"></span>${L('水','Water')}<em>${S.water==='salt'?L('海水','salt'):L('淡水','fresh')}</em></div>
       <p>${S.filled?L('已經注滿水。抽乾會令水中生物死亡。','Filled. Draining it kills everything living in the water.'):L('個瓶未有水。鋪好底沙同石頭之後先注水；新水未有細菌。','No water yet. Add substrate and stones first; fresh water has no bacteria.')}</p>
       <div class="ctr"><button class="${S.filled?'minus':''} wide" id="waterBtn">${S.filled?L('抽乾','Drain'):L('注水','Fill')}</button></div></div>`
@@ -140,7 +137,7 @@ function renderCatList(){
       <p>${S.level>0?L(`水位 ${S.level} cm。前面低處係水區，後面土坡係陸地。`,`${S.level} cm deep. The low front is water; the slope at the back is land.`):L('而家係純陸缸。加水位就會變成水陸共生缸，可以養魚。','Land only for now. Raise the water level to make a paludarium with fish.')}</p>
       <div class="ctr"><button class="minus" id="lvDown" ${S.level>0?'':'disabled'} aria-label="${L('降低水位','Lower water')}">−</button><output>${S.level}</output><button id="lvUp" ${S.level<14?'':'disabled'} aria-label="${L('提高水位','Raise water')}">+</button></div></div>`;
   const html=groups.map(([gk,t])=>{const list=Object.keys(CAT).filter(id=>match(id)&&grp(CAT[id])===gk);if(!list.length&&!(gk==='scape'&&waterCard))return'';
-    return`<section class="cards"><h3>${N(t)}</h3>${gk==='scape'?buildCard+waterCard:''}${list.map(id=>{const c=CAT[id];
+    return`<section class="cards"><h3>${N(t)}</h3>${gk==='scape'?waterCard:''}${list.map(id=>{const c=CAT[id];
       const n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id],full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
       const chips=paramChips(id);if(lim!=null)chips.push(L(`最多 ${lim}`,`max ${lim}`));
       if(!aq&&c.hab==='water'&&c.kind!=='microbe'&&!(S.level>0))chips.push(L('要先加水位','raise the water first'));
@@ -152,9 +149,7 @@ function renderCatList(){
   cl.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addFromCatalog(b.dataset.add));
   cl.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>removeOne(b.dataset.rm));
   const wb=$('#waterBtn');if(wb)wb.onclick=()=>fillWater(!S.filled);
-  const lu=$('#lvUp'),ld=$('#lvDown');if(lu){lu.onclick=()=>setLevel(Math.min(14,S.level+1));ld.onclick=()=>setLevel(Math.max(0,S.level-1));}
-  const bb=$('#buildBtn');if(bb)bb.onclick=enterBuild;const tr=$('#terraReset');if(tr)tr.onclick=resetTerra;
-}
+  const lu=$('#lvUp'),ld=$('#lvDown');if(lu){lu.onclick=()=>setLevel(Math.min(14,S.level+1));ld.onclick=()=>setLevel(Math.max(0,S.level-1));}}
 function fillWater(on){
   S.filled=on;const c=S.c;['O2','CO2','NH3','NO3','algae','flake','detritus'].forEach(k=>c[k]=0);
   buildJar({keepChem:true,keepCam:true});
