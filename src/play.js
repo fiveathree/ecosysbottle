@@ -1,9 +1,9 @@
 /* ================= 玩法：挑戰、成就、收藏、時間旅行 =================
    成就同收藏屬於玩家（每個瀏覽器一份，用 pref 存）；挑戰進度屬於個瓶（S.chal，跟 SNAP_KEYS 存）。
    全部只係睇模擬結果，唔會改個瓶。 */
-const PLAY={ach:pref.json('ecojar.ach')||{},col:pref.json('ecojar.col')||{},lastDay:null,tt:null,ttDay:30};
-const savePlay=()=>{pref.set('ecojar.ach',JSON.stringify(PLAY.ach));pref.set('ecojar.col',JSON.stringify(PLAY.col));};
-const PLAY_TAGS=[['all',['全部','All']],['chal',['挑戰','Challenges']],['ach',['成就','Achievements']],['col',['收藏','Collection']],['travel',['時間旅行','Time travel']]];
+const PLAY={ach:pref.json('ecojar.ach')||{},col:pref.json('ecojar.col')||{},unl:pref.json('ecojar.unl')||{},lastDay:null,tt:null,ttDay:30};
+const savePlay=()=>{pref.set('ecojar.ach',JSON.stringify(PLAY.ach));pref.set('ecojar.col',JSON.stringify(PLAY.col));pref.set('ecojar.unl',JSON.stringify(PLAY.unl));};
+const PLAY_TAGS=[['all',['全部','All']],['unlock',['解鎖','Unlocks']],['chal',['挑戰','Challenges']],['ach',['成就','Achievements']],['col',['收藏','Collection']],['travel',['時間旅行','Time travel']]];
 paneTag.play='all';
 
 const aliveK=k=>S.items.filter(i=>i.alive&&CAT[i.type].kind===k);
@@ -30,7 +30,7 @@ const CHAL=[
     req:()=>{if(S.mode!=='rain'||!(S.level>0))return L('要用水陸模式（雨林加水位）','Use paludarium mode (rainforest with water)');const a=aliveK('animal');
       return a.filter(isWater).length<2?L('水中動物最少 2 隻','Needs 2 or more water animals'):a.filter(i=>!isWater(i)).length<2?L('陸地或兩棲動物最少 2 隻','Needs 2 or more land or amphibious animals'):null;},
     keep:()=>!(S.level>0)?L('抽乾咗水區','The water area was drained'):null},
-  {id:'month',n:['一個月老手','Old hand'],d:['任何瓶，最少 3 隻動物，30 日冇動物死。可以用時間旅行快轉。','Any jar with at least 3 animals and no deaths for 30 days. Time travel can fast-forward.'],days:30,type:'survive',
+  {id:'month',n:['一個月老手','Old hand'],d:['任何瓶，最少 3 隻動物，30 日冇動物死。解鎖咗快轉之後，可以用時間旅行快轉。','Any jar with at least 3 animals and no deaths for 30 days. Once fast-forward is unlocked, time travel can speed it up.'],days:30,type:'survive',
     req:()=>aliveK('animal').length<3?L('最少要 3 隻動物','Needs at least 3 animals'):null,keep:()=>null},
 ];
 
@@ -48,18 +48,38 @@ const ACH=[
   {id:'ch1',n:['挑戰者','Challenger'],d:['完成第一個挑戰。','Completed your first challenge.']},
   {id:'chAll',n:['全部過關','Clean sweep'],d:['完成全部挑戰。','Completed every challenge.']},
 ];
+/* ---- 解鎖：完成挑戰、成就、收藏，開放更多生物、地區同玩法 ----
+   已經喺瓶入面嘅嘢唔會被收走；分享連結同「分析水缸」唔受限制。 */
+const colN=()=>Object.keys(PLAY.col).length,chN=()=>CHAL.filter(c=>PLAY.ach['ch_'+c.id]).length;
+const UNLOCKS=[
+  {id:'u_col5',t:['收藏 5 種生物','Collect 5 species'],prog:()=>`${Math.min(5,colN())}/5`,cond:()=>colN()>=5,types:['minnow','nerite','amano','lotus']},
+  {id:'u_baby',t:['有動物生 BB','Have an animal give birth'],cond:()=>!!PLAY.ach.baby,types:['frog','bromeliad']},
+  {id:'u_ch1',t:['完成 1 個挑戰','Complete 1 challenge'],prog:()=>`${Math.min(1,chN())}/1`,cond:()=>chN()>=1,types:['caulerpa','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],features:['salt']},
+  {id:'u_week',t:['平安一星期','A calm week'],cond:()=>!!PLAY.ach.week,types:['jelly','pleco','crab'],regions:['amazon','amazonriver','borneo','pantanal','mekong'],features:['ff']},
+  {id:'u_col12',t:['收藏 12 種生物','Collect 12 species'],prog:()=>`${Math.min(12,colN())}/12`,cond:()=>colN()>=12,types:['gecko','newt'],regions:['cloudforest','tanganyika','baikal']},
+  {id:'u_ch3',t:['完成 3 個挑戰','Complete 3 challenges'],prog:()=>`${Math.min(3,chN())}/3`,cond:()=>chN()>=3,types:['turtle','slider','leopard'],regions:['sahara']},
+];
+const FEAT_N={salt:['海水','Salt water'],ff:['時間旅行快轉','Time-travel fast-forward']};
+/* 回傳鎖住佢嘅解鎖項目（冇鎖就 null）；kind = type／region／feature */
+function lockOf(kind,key){const f=kind==='type'?'types':kind==='region'?'regions':'features';for(const u of UNLOCKS)if(u[f]&&u[f].includes(key)&&!u.cond())return u;return null;}
+const lockText=u=>L('🔒 解鎖條件：','🔒 Unlock by: ')+N(u.t)+(u.prog?L(`（${u.prog()}）`,` (${u.prog()})`):'');
+function presetLock(p){for(const [t] of p.items){const u=lockOf('type',t);if(u)return u;}return lockOf('region',p.region||'hk')||(p.water==='salt'?lockOf('feature','salt'):null);}
+function rewardNames(u){return[...(u.types||[]).map(t=>N(CAT[t].name)),...(u.regions||[]).map(k=>N(REGIONS[k].n)),...(u.features||[]).map(k=>N(FEAT_N[k]))];}
+function checkUnlocks(quiet){let got=[];for(const u of UNLOCKS)if(!PLAY.unl[u.id]&&u.cond()){PLAY.unl[u.id]=Date.now();got.push(u);}
+  if(!got.length)return;savePlay();if(!quiet){toast(L('🔓 解鎖：','🔓 Unlocked: ')+got.flatMap(rewardNames).join(L('、',', ')));if(typeof renderCatalog==='function')renderCatalog();}}
+checkUnlocks(true);
 function unlock(id){
   if(PLAY.ach[id])return;PLAY.ach[id]=Date.now();savePlay();
   const a=ACH.find(x=>x.id===id),c=CHAL.find(x=>'ch_'+x.id===id);
   if(a)toast(L('🏆 解鎖成就：','🏆 Achievement: ')+N(a.n));
   const done=CHAL.filter(x=>PLAY.ach['ch_'+x.id]).length;if(c){if(done>=1)unlock('ch1');if(done>=CHAL.length)unlock('chAll');}
-  if(curTab==='play')renderPlay();
+  checkUnlocks();if(curTab==='play')renderPlay();
 }
 
 /* ---- 收藏：一種生物喺瓶入面撐過一個午夜就收錄 ---- */
 const COL_TYPES=()=>Object.keys(CAT).filter(t=>['plant','animal'].includes(CAT[t].kind));
 function collectNow(){let n=0;for(const it of S.items){if(!it.alive||!['plant','animal'].includes(CAT[it.type].kind)||PLAY.col[it.type])continue;PLAY.col[it.type]=Date.now();n++;}
-  if(!n)return;savePlay();const c=Object.keys(PLAY.col).length;if(c>=10)unlock('col10');if(c>=30)unlock('col30');if(curTab==='play')renderPlay();}
+  if(!n)return;savePlay();const c=Object.keys(PLAY.col).length;if(c>=10)unlock('col10');if(c>=30)unlock('col30');checkUnlocks();if(curTab==='play')renderPlay();}
 
 /* ---- 每秒檢查一次（main.js 叫） ---- */
 function playTick(){
@@ -90,6 +110,7 @@ function travelPreview(days=30){
 }
 function fastForward(days){
   if(S.real){toast(L('真實嘅瓶唔可以快轉','A real tank cannot be fast-forwarded'));return;}
+  {const u=lockOf('feature','ff');if(u){toast(lockText(u));return;}}
   const t0=performance.now();for(let i=0;i<days*24;i++){step(S);if(i%24===23)playTick();}
   wasteFx.length=0;buildJar({keepCam:true,keepChem:true});PLAY.tt=null;renderAll();save();
   toast(L(`快轉咗 ${days} 日，而家第 ${S.day} 日`,`Fast-forwarded ${days} days; now day ${S.day}`));return performance.now()-t0;
@@ -109,7 +130,7 @@ function travelHtml(){
 function ttBody(){
   const R=PLAY.tt,k=PLAY.ttDay,r=R[k],r0=R[0],types=[...new Set([...Object.keys(r0.counts),...Object.keys(r.counts)])].sort((a,b)=>(CAT[a].kind==='animal'?0:1)-(CAT[b].kind==='animal'?0:1));
   const deadSoFar=R.deathList.slice(0,r.deaths),dm={};deadSoFar.forEach(x=>{const n=N(CAT[x.type].name);dm[n]=(dm[n]||0)+1;});const e=r.env;
-  return`<div class="tt-head"><b>${L(`第 ${r.day} 日`,`Day ${r.day}`)}</b><span class="lede">${k?L(`（${k} 日後）`,`(in ${k} day${k>1?'s':''})`):L('（今日）','(today)')}</span>${k&&!S.real?`<button class="btn primary" id="ttFf">${L(`快轉到第 ${r.day} 日`,`Fast-forward to day ${r.day}`)}</button>`:''}</div>
+  return`<div class="tt-head"><b>${L(`第 ${r.day} 日`,`Day ${r.day}`)}</b><span class="lede">${k?L(`（${k} 日後）`,`(in ${k} day${k>1?'s':''})`):L('（今日）','(today)')}</span>${k&&!S.real&&lockOf('feature','ff')?`<span class="lede">${L('快轉','Fast-forward')} ${lockText(lockOf('feature','ff'))}</span>`:''}${k&&!S.real&&!lockOf('feature','ff')?`<button class="btn primary" id="ttFf">${L(`快轉到第 ${r.day} 日`,`Fast-forward to day ${r.day}`)}</button>`:''}</div>
     <div class="tt-grid">${types.map(t=>{const a=r0.counts[t]||0,b=r.counts[t]||0,dv=b-a;return`<div class="tt-sp"><span class="dot" style="background:${CAT[t].color}"></span><span>${N(CAT[t].name)}</span><b class="mono">${b}</b><em class="${dv>0?'up':dv<0?'down':''}">${dv>0?'+'+dv:dv<0?dv:''}</em></div>`;}).join('')}</div>
     <p class="${deadSoFar.length?'bad':'good'}">${deadSoFar.length?L('期間死咗：','Deaths so far: ')+Object.entries(dm).map(([n,c])=>c>1?`${n} ×${c}`:n).join(L('、',', ')):L('到呢日都冇動物死。','No animal deaths up to this day.')}</p>
     ${e?`<p class="lede">${L('平均溫度','Avg temp')} ${fx(e.T)}°C${e.wo2!=null?L(`；水中溶氧最低 ${fx(e.wo2)} mg/L；氨最高 ${fx(e.nh3,2)} mg/L`,`; water O₂ low ${fx(e.wo2)} mg/L; ammonia high ${fx(e.nh3,2)} mg/L`):''}${e.hum!=null?L(`；平均濕度 ${fx(e.hum,0)}%`,`; avg humidity ${fx(e.hum,0)}%`):''}</p>`:''}`;
@@ -119,6 +140,8 @@ function renderPlay(){
   const pe=$('#pane-play');if(!pe)return;const nCol=Object.keys(PLAY.col).length,all=COL_TYPES(),done=id=>!!PLAY.ach['ch_'+id];
   const cur=S.chal&&CHAL.find(x=>x.id===S.chal.id);
   pe.innerHTML=`${paneTagBar('play',PLAY_TAGS)}
+   <section data-sec="unlock"><h3>${L('解鎖','Unlocks')} · ${UNLOCKS.filter(u=>u.cond()).length}/${UNLOCKS.length}</h3><p class="lede">${L('完成挑戰、成就同收藏，就會開放更多生物、地區同玩法。','Complete challenges, achievements and collections to open up more species, regions and features.')}</p>
+    <div class="unls">${UNLOCKS.map(u=>{const ok=u.cond();return`<div class="unl${ok?' got':''}"><b>${ok?'🔓':'🔒'} ${N(u.t)}${!ok&&u.prog?` <span class="lede">${u.prog()}</span>`:''}</b><span>${rewardNames(u).join(L('、',', '))}</span></div>`;}).join('')}</div></section>
    <section data-sec="chal"><h3>${L('挑戰','Challenges')} · ${CHAL.filter(c=>done(c.id)).length}/${CHAL.length}</h3>
     ${cur?`<div class="chal on"><div class="bh"><b>${N(cur.n)}</b><button class="linkbtn" id="chQuit">${L('放棄','Give up')}</button></div><p>${N(cur.d)}</p>
       <div class="prog" id="chProg"><span>${chalProgText(cur,chalHours())}</span><i><b style="width:${Math.min(100,chalHours()/(cur.days*24)*100)}%"></b></i></div></div>`:''}

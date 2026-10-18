@@ -51,7 +51,7 @@ $('#dnBtn').onclick=()=>{viewLight={auto:'day',day:'night',night:'auto'}[viewLig
 $('#presetBtn').onclick=()=>{const ps=PRESETS[S.mode],real=S.real;
   const d=openDlg(`<h4>${L('預設組合','Presets')} · ${N({aqua:['水族','Aquatic'],rain:['雨林／水陸','Rainforest / paludarium']}[S.mode])}</h4>
     <p class="lede">${real?L('呢個係真實嘅瓶，唔可以用預設取代。請先轉去另一個瓶。','This is a real tank and cannot be replaced by a preset. Switch to another jar first.'):L('揀一個會取代而家呢個瓶入面所有嘢。想保留而家個瓶，就先轉去一個空瓶。','Picking one replaces everything in this jar. To keep this jar, switch to an empty one first.')}</p>
-    <div class="plist">${Object.entries(ps).map(([k,p])=>`<button class="preset" data-pp="${k}" ${real?'disabled':''}><b>${N(p.n)}</b><span>${N(p.d)}</span></button>`).join('')}</div>
+    <div class="plist">${Object.entries(ps).map(([k,p])=>{const lk=presetLock(p);return`<button class="preset" data-pp="${k}" ${real||lk?'disabled':''}><b>${lk?'🔒 ':''}${N(p.n)}</b><span>${lk?esc(lockText(lk)):N(p.d)}</span></button>`;}).join('')}</div>
     <div class="acts"><button class="btn" data-close>${L('取消','Cancel')}</button></div>`);
   d.querySelectorAll('[data-pp]').forEach(b=>b.onclick=()=>{d.close();loadPreset(b.dataset.pp);});};
 function renderOv(){renderCamBar();renderDn();renderOvToggles();renderOvL();renderOvR();fitOverlays();}

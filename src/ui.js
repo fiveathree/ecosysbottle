@@ -38,6 +38,7 @@ function removeOne(type){
   const it=list.find(i=>!i.alive)||list[list.length-1];removeItem(it);toast(L('已移走 ','Removed ')+N(CAT[type].name));
 }
 function addFromCatalog(t){
+  {const u=lockOf('type',t);if(u){toast(lockText(u));return;}}
   const c=CAT[t],n=S.items.filter(i=>i.type===t&&i.alive).length;
   if(c.kind==='sub'&&S.terra){terraEnsure(t);renderCatalog();save();toast(L(`已經喺空位鋪咗${c.name[0]}；想揀位置就用「自己砌缸」`,`Laid ${c.name[1].toLowerCase()} on bare floor; use Build to choose where`));return;}
   if(LIMIT[t]!=null&&n>=LIMIT[t]){toast(L(`${c.name[0]}最多 ${LIMIT[t]} 個`,`Up to ${LIMIT[t]} ${c.name[1].toLowerCase()}`));return;}
@@ -138,11 +139,11 @@ function renderCatList(){
       <div class="ctr"><button class="minus" id="lvDown" ${S.level>0?'':'disabled'} aria-label="${L('降低水位','Lower water')}">−</button><output>${S.level}</output><button id="lvUp" ${S.level<14?'':'disabled'} aria-label="${L('提高水位','Raise water')}">+</button></div></div>`;
   const html=groups.map(([gk,t])=>{const list=Object.keys(CAT).filter(id=>match(id)&&grp(CAT[id])===gk);if(!list.length&&!(gk==='scape'&&waterCard))return'';
     return`<section class="cards"><h3>${N(t)}</h3>${gk==='scape'?waterCard:''}${list.map(id=>{const c=CAT[id];
-      const n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id],full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
-      const chips=paramChips(id);if(lim!=null)chips.push(L(`最多 ${lim}`,`max ${lim}`));
+      const lk=lockOf('type',id),n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id],full=!!lk||(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
+      const chips=lk?[lockText(lk)]:paramChips(id);if(lim!=null)chips.push(L(`最多 ${lim}`,`max ${lim}`));
       if(!aq&&c.hab==='water'&&c.kind!=='microbe'&&!(S.level>0))chips.push(L('要先加水位','raise the water first'));
       if(c.burrow)chips.push(L('要有細沙','needs fine sand'));if(c.root==='mud')chips.push(L('要有泥土','needs mud'));if(c.attacks)chips.push(L('會攻擊其他生物','attacks others'));if(c.preys)chips.push(L('會食細生物','eats small animals'));if(c.shade)chips.push(L('遮光減藻','shades out algae'));
-      return`<div class="card" data-card="${id}"><div class="nm"><span class="dot" style="background:${c.color}"></span>${N(c.name)}<em>${c.sci}</em></div>
+      return`<div class="card${lk?' locked':''}" data-card="${id}"><div class="nm"><span class="dot" style="background:${c.color}"></span>${N(c.name)}<em>${c.sci}</em></div>
       <p>${N(c.desc)}</p><div class="ctr"><button class="minus" data-rm="${id}" aria-label="${L('減少','Remove')} ${esc(N(c.name))}" ${n?'':'disabled'}>−</button><output>${n}</output><button data-add="${id}" aria-label="${L('加入','Add')} ${esc(N(c.name))}" ${full?'disabled':''}>+</button></div>
       <div class="chips">${chips.map(x=>`<span class="chip">${x}</span>`).join('')}</div></div>`;}).join('')}</section>`;}).join('');
   const cl=$('#catList');cl.innerHTML=html||`<div class="empty">${L('冇符合嘅項目。','Nothing matches.')}</div>`;
@@ -184,7 +185,7 @@ function updateCatCounts(){
   const subN=S.items.filter(i=>i.alive&&CAT[i.type].kind==='sub').length;
   document.querySelectorAll('#catList [data-card]').forEach(card=>{const id=card.dataset.card,c=CAT[id],n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id];
     const full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
-    card.querySelector('output').textContent=n;card.querySelector('[data-rm]').disabled=!n;card.querySelector('[data-add]').disabled=full;});
+    card.querySelector('output').textContent=n;card.querySelector('[data-rm]').disabled=!n;card.querySelector('[data-add]').disabled=full||!!lockOf('type',id);});
 }
 function renderJarList(){
   const el=$('#pane-jar');renderChrome();
@@ -431,11 +432,11 @@ function renderEnv(){
      <div class="opts">${Object.entries(REGIONS).filter(([,r])=>r.type==='city').map(([k,r])=>{const rr=r.custom?regionOf({region:'custom'}):r;return`<button class="opt" data-region="${k}" aria-pressed="${S.region===k}"><span>${esc(N(rr.n))}</span><em>${rr.t}°C · ${rr.hum}%</em></button>`;}).join('')}</div>
      ${S.region==='custom'?customRegionHtml():''}
      <p class="subhead">${L('真實生態地域','Real biomes')} · ${N({aqua:['水族','aquatic'],rain:['雨林','rainforest'],palu:['水陸','paludarium']}[modeKey()])}</p>
-     <div class="opts">${Object.entries(REGIONS).filter(([k,r])=>r.type==='biome'&&(r.modes.includes(modeKey())||S.region===k)).map(([k,r])=>`<button class="opt" data-region="${k}" aria-pressed="${S.region===k}"><span>${N(r.n)}</span><em>${r.t}°C · ${r.hum}%</em></button>`).join('')}</div>
+     <div class="opts">${Object.entries(REGIONS).filter(([k,r])=>r.type==='biome'&&(r.modes.includes(modeKey())||S.region===k)).map(([k,r])=>{const lk=S.region!==k&&lockOf('region',k);return`<button class="opt" data-region="${k}" aria-pressed="${S.region===k}" ${lk?`disabled title="${esc(lockText(lk))}"`:''}><span>${lk?'🔒 ':''}${N(r.n)}</span><em>${lk?esc(N(lk.t)):`${r.t}°C · ${r.hum}%`}</em></button>`;}).join('')}</div>
      <small class="lede">${N(regionOf(S).d)} ${L(`平均 ${regionOf(S).t}°C，日夜溫差 ${regionOf(S).sw}°C，濕度 ${regionOf(S).hum}%。`,`Average ${regionOf(S).t}°C, day–night swing ${regionOf(S).sw}°C, humidity ${regionOf(S).hum}%.`)}</small></section>
    <section class="field" data-sec="place"><h3>${L('天氣','Weather')}</h3><div class="opts">${[['auto',['自動','Auto']],...Object.entries(WX).filter(([k])=>regionOf(S).w[k]>0).map(([k,w])=>[k,w.n])].map(([k,n])=>`<button class="opt" data-wx="${k}" aria-pressed="${S.wxMode===k}"><span>${N(n)}</span></button>`).join('')}</div>
      <small class="lede">${L('個瓶放喺窗邊：天氣會改變光照同溫度；開口時落雨會沖淡氨、提高濕度；雷暴會閃電。','The jar sits by a window: weather changes light and temperature; rain dilutes ammonia and raises humidity when open; storms bring lightning.')}</small></section>
-   ${aq?`<section class="field" data-sec="water"><h3>${L('水質','Water type')}</h3><div class="opts">${[['fresh',['淡水','Fresh']],['salt',['海水','Salt']]].map(([k,n])=>`<button class="opt" data-water="${k}" aria-pressed="${S.water===k}"><span>${N(n)}</span></button>`).join('')}</div><small class="lede">${L('海馬、海月水母、寄居蟹同海葡萄要海水；其他淡水生物放入海水會死。','Seahorses, moon jellies, hermit crabs and sea grapes need salt water; freshwater life dies in it.')}</small></section>`:''}
+   ${aq?`<section class="field" data-sec="water"><h3>${L('水質','Water type')}</h3><div class="opts">${[['fresh',['淡水','Fresh']],['salt',['海水','Salt']]].map(([k,n])=>{const lk=k==='salt'&&S.water!=='salt'&&lockOf('feature','salt');return`<button class="opt" data-water="${k}" aria-pressed="${S.water===k}" ${lk?`disabled title="${esc(lockText(lk))}"`:''}><span>${lk?'🔒 ':''}${N(n)}</span>${lk?`<em>${esc(N(lk.t))}</em>`:''}</button>`;}).join('')}</div><small class="lede">${L('海馬、海月水母、寄居蟹同海葡萄要海水；其他淡水生物放入海水會死。','Seahorses, moon jellies, hermit crabs and sea grapes need salt water; freshwater life dies in it.')}</small></section>`:''}
    <section class="field" data-sec="jar"><h3>${L('瓶形狀','Shape')}</h3><div class="opts">${Object.entries(SHAPES).map(([k,sh])=>`<button class="opt" data-shape="${k}" aria-pressed="${S.shape===k}">${shapeIcon(k)}<span>${N(sh.n)}</span></button>`).join('')}</div>
      <small class="lede">${L(`開口越窄，打開蓋時換氣越慢。而家開口換氣效率：${Math.round(J.open*100)}%`,`A narrower neck exchanges less air when open. Current opening efficiency: ${Math.round(J.open*100)}%`)}</small></section>
    <section class="field" data-sec="jar"><h3>${L('瓶材質','Material')}</h3><div class="opts">${Object.entries(MATS).map(([k,m])=>`<button class="opt" data-mat="${k}" aria-pressed="${S.mat===k}"><i class="sw" style="background:${matHex(k)};opacity:${Math.min(1,m.op*2.5+.3)}"></i><span>${N(m.n)}</span><em>${L('透光','light')} ${Math.round(m.tr*100)}%</em></button>`).join('')}</div>
