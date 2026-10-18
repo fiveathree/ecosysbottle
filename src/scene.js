@@ -478,6 +478,8 @@ canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);
   if(ptrs.size===1){const it=hitItem(e,draggable);drag=it?{it,moved:false}:null;}else drag=null;
   if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);mid0={x:(a.x+b.x)/2,y:(a.y+b.y)/2};}});
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
+/* 觸控：canvas 係 touch-action:pan-y，單指上下掃會捲成版；砌缸、兩隻手指、或者拖緊裝飾／植物先鎖住唔俾捲 */
+canvas.addEventListener('touchstart',e=>{const t=e.touches[0];if(S.build||e.touches.length>1||(t&&hitItem(t,draggable)))e.preventDefault();},{passive:false});
 canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;
   if(painting&&ptrs.size===1){paintEv(e);p.x=e.clientX;p.y=e.clientY;cam.idle=0;return;}
   if(drag&&ptrs.size===1){
