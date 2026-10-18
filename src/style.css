@@ -257,6 +257,18 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .acc .editor{border:0;border-radius:0;background:none}
 .flash{animation:fl 1s ease 2}
 @keyframes fl{50%{box-shadow:0 0 0 3px var(--accent)}}
+.dlg{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:16px;width:min(420px,calc(100vw - 32px));box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.dlg::backdrop{background:rgba(0,0,0,.45)}
+.dlg h4{margin:0 0 6px;font-size:16px}
+.dlg .linkrow{display:flex;gap:6px;margin:12px 0 4px}
+.dlg .linkrow input{flex:1;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-family:var(--f-mono);font-size:12px}
+.dlg .sum{margin:10px 0;font-size:13px}
+.dlg .slots{display:flex;flex-direction:column;gap:6px;margin:6px 0 4px;border:0;padding:0}
+.dlg .slots label{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:13px}
+.dlg .slots label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.dlg .slots label:has(input:disabled){opacity:.55;cursor:not-allowed}
+.dlg .slots small{color:var(--muted)}
+.dlg .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 .realtag{font-size:10px;padding:0 5px;border-radius:4px;background:var(--warn);color:var(--on-accent);margin-left:5px;font-weight:700}
 .buildbar{position:absolute;left:10px;right:10px;bottom:10px;z-index:5;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:12px;background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--accent)}
 .bb-tools{display:flex;flex-wrap:wrap;gap:5px}

@@ -207,3 +207,47 @@ function copyToTrial(){
   S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false}));S.report=null;
   renderAll();save();toast(L(`複製咗去「${name}」，而家套用建議`,`Copied to "${name}" and applying the suggestions`));setTimeout(autoBalance,60);
 }
+
+/* ================= 分享連結 & 複製呢個瓶 =================
+   成個瓶壓縮後放喺網址 #s= 後面，唔使伺服器同登入。 */
+const b64u={enc:u=>{let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');},
+  dec:t=>Uint8Array.from(atob(t.replace(/-/g,'+').replace(/_/g,'/')),ch=>ch.charCodeAt(0))};
+const zpipe=(u,T)=>new Response(new Blob([u]).stream().pipeThrough(new T('deflate-raw'))).arrayBuffer().then(b=>new Uint8Array(b));
+async function packJar(){const o=snapshot();delete o.log;delete o.hist;o.real=false;return b64u.enc(await zpipe(new TextEncoder().encode(JSON.stringify(o)),CompressionStream));}
+async function unpackJar(t){return JSON.parse(new TextDecoder().decode(await zpipe(b64u.dec(t),DecompressionStream)));}
+function openDlg(html){const d=$('#dlg');d.innerHTML=html;if(!d.open)d.showModal();d.onclick=e=>{if(e.target===d)d.close();};d.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>d.close());return d;}
+$('#shareBtn').onclick=async()=>{
+  if(!S.items.some(i=>i.alive)){toast(L('個瓶仲係空嘅，砌啲嘢先分享','The jar is empty; add something first'));return;}
+  let url;try{url=location.href.split('#')[0]+'#s='+await packJar();}catch(e){toast(L('呢個瀏覽器整唔到分享連結','This browser cannot make share links'));return;}
+  const name=jarNames()[S.cur],title=L('生態瓶實驗室','Eco Jar Lab')+' · '+name,text=L('睇吓我砌嘅生態瓶，撳「複製呢個瓶」就可以自己玩。','Have a look at my eco jar. Tap "Copy this jar" to play with it yourself.');
+  if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title,text,url});return;}catch(e){if(e.name==='AbortError')return;}}
+  const d=openDlg(`<h4>${L('分享','Share')}「${esc(name)}」</h4>
+    <p class="lede">${L('成個瓶已經包咗喺呢條連結入面，唔使登入。朋友打開之後可以撳「複製呢個瓶」，喺佢自己部機繼續玩；佢點改都唔會影響你個瓶。','The whole jar is packed into this link; no login needed. Friends can tap "Copy this jar" to keep playing on their own device. Nothing they change affects your jar.')}</p>
+    <div class="linkrow"><input id="shareUrl" readonly value="${esc(url)}" aria-label="${L('分享連結','Share link')}"><button class="btn primary" id="shareCopy">${L('複製連結','Copy link')}</button></div>
+    ${S.real?`<p class="lede">${L('呢個係真實嘅瓶；朋友收到嘅只係模擬副本。','This is a real tank; friends only get a simulated copy.')}</p>`:''}
+    <div class="acts"><button class="btn" data-close>${L('完成','Done')}</button></div>`);
+  const inp=d.querySelector('#shareUrl');inp.onfocus=()=>inp.select();
+  d.querySelector('#shareCopy').onclick=async()=>{try{await navigator.clipboard.writeText(url);}catch(e){inp.focus();inp.select();document.execCommand&&document.execCommand('copy');}toast(L('已複製連結','Link copied'));};
+};
+async function checkShareLink(){
+  const m=location.hash.match(/^#s=([\w-]+)$/);if(!m)return;
+  history.replaceState(null,'',location.pathname+location.search);
+  let d;try{d=await unpackJar(m[1]);if(!d||!Array.isArray(d.items))throw 0;}catch(e){toast(L('呢條分享連結唔完整，開唔到','This share link is incomplete and cannot be opened'));return;}
+  d.real=false;d.items=d.items.filter(o=>CAT[o.type]);const name=String(d.name||L('朋友嘅瓶','A friend\'s jar')).slice(0,24);d.name=name;
+  const cnt={};d.items.forEach(o=>{if(['plant','animal'].includes(CAT[o.type].kind))cnt[o.type]=(cnt[o.type]||0)+1;});
+  const life=Object.entries(cnt).map(([t,n])=>`${N(CAT[t].name)} ×${n}`).join(L('、',', '));
+  const mk=d.mode==='aqua'?'aqua':(d.level>0?'palu':'rain'),modeN=N({aqua:['水族','Aquatic'],rain:['雨林','Rainforest'],palu:['水陸','Paludarium']}[mk]);
+  const snapOf=i=>i===S.cur?snapshot():S.jars[i],names=jarNames();
+  const slots=[0,1,2].map(i=>{const j=snapOf(i),n=j?(j.items||[]).length:0;return{i,n,real:!!(j&&j.real)};});
+  const def=(slots.find(s=>!s.n&&!s.real)||{}).i;
+  const dl=openDlg(`<h4>${L('朋友分享咗個生態瓶','A friend shared an eco jar')}</h4>
+    <p class="sum"><b>${esc(name)}</b> · ${modeN} · ${d.V} L<br><span class="lede">${life||L('未有生物','No living things yet')}</span></p>
+    <p class="lede">${L('揀放入你邊個瓶：','Choose which of your jars to put it in:')}</p>
+    <fieldset class="slots">${slots.map(s=>`<label><input type="radio" name="slot" value="${s.i}" ${s.real?'disabled':''} ${s.i===def?'checked':''}><span>${esc(names[s.i])} <small>${s.real?L('真實嘅瓶，唔會取代','real tank, never replaced'):s.n?L(`會取代入面 ${s.n} 樣嘢`,`replaces ${s.n} thing${s.n>1?'s':''} inside`):L('空','empty')}</small></span></label>`).join('')}</fieldset>
+    <div class="acts"><button class="btn" data-close>${L('唔使喇','No thanks')}</button><button class="btn primary" id="cpyGo" ${def==null?'disabled':''}>${L('複製呢個瓶','Copy this jar')}</button></div>`);
+  const go=dl.querySelector('#cpyGo');dl.querySelectorAll('[name=slot]').forEach(r=>r.onchange=()=>go.disabled=false);
+  go.onclick=()=>{const r=dl.querySelector('[name=slot]:checked');if(!r)return;const i=+r.value;if(slots[i].real)return;
+    if(S.build)exitBuild();if(i!==S.cur){S.jars[S.cur]=snapshot();S.cur=i;}
+    restoreSnap(d);S.log=[];logEv(`複製咗朋友分享嘅「${name}」`,`Copied the shared jar "${name}"`,'muted');
+    renderAll();save();dl.close();toast(L(`已經複製咗「${name}」`,`Copied "${name}"`));};
+}
