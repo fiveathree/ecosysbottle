@@ -324,7 +324,7 @@ function autoBalance(){
     if(cfg.wcNow&&wLOf(S)>0){const c=S.c;c.NH3*=.7;c.NO3*=.7;c.detritus*=.85;c.algae*=.9;freshWater(c,wLOf(S)*.3,false);c.O2=Math.min(c.O2,sat(c.T)*wLOf(S));}
     buildJar({keepCam:true,keepChem:true});
   }
-  S.report={suggest:real,pre,plantCh,envCh,beforeDead,afterDead,changes:[...pre,...plantCh,...envCh]};
+  S.reportOpen=true;S.report={suggest:real,pre,plantCh,envCh,beforeDead,afterDead,changes:[...pre,...plantCh,...envCh]};
   const all=S.report.changes;
   logEv((real?'一鍵平衡建議：':'一鍵平衡：')+(all.length?all.map(x=>x).join('、'):'冇需要改'),(real?'Auto-balance suggestions: ':'Auto-balance: ')+(all.length?all.join(', '):'nothing to change'),real?'muted':'good');
   renderAll();save();showTab('bal');

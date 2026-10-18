@@ -36,8 +36,9 @@ $('#tglR').onclick=()=>{ovOpen.R=!ovOpen.R;try{localStorage.setItem('ecojar.ov',
 function renderOv(){renderOvToggles();renderOvL();renderOvR();}
 function renderOvL(){
   const el=$('#ovL');el.hidden=!ovOpen.L;if(!ovOpen.L)return;
-  if(S.mode==='aqua'&&!wLOf(S)){el.innerHTML=`<h4>${L('平衡','Balance')}</h4><p class="ovnote">${L('未注水','No water')}</p>`;return;}
+  if(S.mode==='aqua'&&!wLOf(S)){el.hidden=true;return;}
   const items=budgets();
+  if(!items.length){el.hidden=true;return;}
   el.innerHTML=`<h4>${L('平衡','Balance')}</h4>`+(items.length?items.map((b,i)=>`<button class="ovrow" data-bi="${i}"><i class="${b.cls==='good'?'':b.cls}"></i><span>${b.title}</span><em>${b.right}</em></button>`).join(''):`<p class="ovnote">${L('未有生物','Nothing living')}</p>`);
   el.querySelectorAll('[data-bi]').forEach(b=>b.onclick=()=>{showTab('bal');const t=$('#bud-'+b.dataset.bi);if(t){t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.remove('flash');void t.offsetWidth;t.classList.add('flash');}});
 }
@@ -166,15 +167,18 @@ function reportHtml(){
       <p style="margin:2px 0 0;color:var(--${R.afterDead.length?'bad':'good'})">${R.afterDead.length?L('仍然保唔住：','Still at risk: ')+esc(R.afterDead.join(L('、',', '))):L(R.suggest?'跟建議做，全部保得住。':'而家全部保得住。',R.suggest?'Following these suggestions saves them all.':'All of them are now safe.')}</p>`
     :`<p style="margin:6px 0 0;color:var(--good)">${L('模擬未來 5 日，現有生物都冇事。','Simulated 5 days: every current creature is safe.')}</p>`;
   const none=!(R.changes&&R.changes.length);
-  return`<div class="report"><b>${R.suggest?L('改善建議（冇改任何嘢）','Suggestions (nothing changed)'):L('一鍵平衡結果','Auto-balance result')}</b>
+  const n=(R.changes||[]).length,sumLine=`${R.suggest?L('改善建議','Suggestions'):L('一鍵平衡結果','Auto-balance result')} · ${n?L(`${n} 項`,`${n} item${n>1?'s':''}`):L('冇需要改','nothing to change')}${R.afterDead&&R.afterDead.length?L('，仍有生物有危險',', some still at risk'):R.beforeDead&&R.beforeDead.length?L('，已保住生物',', creatures saved'):''}`;
+  return`<details class="report" id="repBox" ${S.reportOpen!==false?'open':''}><summary><span>${sumLine}</span><button class="x" id="repX" aria-label="${L('收起結果','Dismiss result')}">×</button></summary><b>${R.suggest?L('改善建議（冇改任何嘢）','Suggestions (nothing changed)'):L('一鍵平衡結果','Auto-balance result')}</b>
     <p class="lede" style="margin:2px 0 0">${L('次序：先保住現有生物，再加水草同微生物，唔夠先調環境同水質。唔會移走任何生物。','Order: protect current creatures first, then add plants and microbes, then adjust the environment and water. No creature is removed.')}</p>
     ${life}
     ${none?`<p class="lede" style="margin-top:6px">${L('而家嘅設定已經係最平衡。','The current setup is already the most balanced.')}</p>`:''}
     ${sec(L('保命必需','Essentials'),R.pre)}${sec(L('水草同微生物','Plants & microbes'),R.plantCh)}${sec(L('環境同水質','Environment & water'),R.envCh)}
     ${R.afterDead&&R.afterDead.length?`<p class="lede" style="margin-top:6px">${L('有啲生物同呢個瓶嘅條件唔夾（例如溫度、水質），可以考慮搬去另一個瓶。','Some creatures do not suit this jar (temperature or water type, for example); consider moving them to another jar.')}</p>`:''}
-    ${R.suggest&&!none?`<p class="lede" style="margin-top:6px">${L('呢個係真實嘅瓶，所以只係列出建議。','This is a real tank, so these are only suggestions.')}</p><div class="ed-actions" style="margin-top:6px"><button class="btn primary" id="tryCopy">${L('複製去另一個瓶試','Try in another jar')}</button></div>`:''}</div>`;
+    ${R.suggest&&!none?`<p class="lede" style="margin-top:6px">${L('呢個係真實嘅瓶，所以只係列出建議。','This is a real tank, so these are only suggestions.')}</p><div class="ed-actions" style="margin-top:6px"><button class="btn primary" id="tryCopy">${L('複製去另一個瓶試','Try in another jar')}</button></div>`:''}</details>`;
 }
-function bindReport(){const b=$('#tryCopy');if(b)b.onclick=copyToTrial;}
+function bindReport(){const b=$('#tryCopy');if(b)b.onclick=copyToTrial;
+  const d=$('#repBox');if(d)d.ontoggle=()=>{S.reportOpen=d.open;};
+  const x=$('#repX');if(x)x.onclick=e=>{e.preventDefault();e.stopPropagation();S.report=null;renderBalance();};}
 function copyToTrial(){
   const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j);if(slot<0)slot=(S.cur+1)%3;
   const name=(S.jarName||jarNames()[S.cur])+L('（試）',' (trial)');

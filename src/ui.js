@@ -332,6 +332,8 @@ function budgets(){
 function renderBalance(){
   const aq=S.mode==='aqua',wL=wLOf(S);
   if(aq&&!wL){$('#pane-bal').innerHTML=`<div class="verdict"><div><b>${L('未注水','No water yet')}</b>${L('可以先鋪底沙、擺石頭，再喺「加入」注水。','Lay substrate and stones, then fill it from the Add tab.')}</div></div>`;return;}
+  const anyLife0=S.items.some(i=>i.alive&&['plant','animal'].includes(CAT[i.type].kind));
+  if(!anyLife0){$('#pane-bal').innerHTML=`<p class="lede compactnote">${L('未有生物，加入植物或者動物之後先有平衡分析。','Nothing living yet. Add plants or animals to see the balance.')}</p>`;return;}
   const items=budgets(),fc=forecast(72);
   const bads=items.filter(x=>x.cls==='bad').length+(fc.deaths.length?1:0),warns=items.filter(x=>x.cls==='warn').length;
   const anyLife=S.items.some(i=>i.alive&&['plant','animal'].includes(CAT[i.type].kind));
