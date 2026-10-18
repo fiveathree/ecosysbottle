@@ -357,6 +357,7 @@ function autoBalance(){
   // 改完都保唔住嘅動物（包括俾其他生物食嘅），記低 uid，俾用家一撳搬去另一個瓶
   // 加埋原本會俾食或者俾咬嘅：捕食靠運氣，試算一次冇發生唔代表安全
   const doomed=[...new Set([...best.deaths.filter(d=>CAT[d.type].kind==='animal'),...before.deaths.filter(d=>d.why==='eaten'||d.why==='attacked')].map(d=>d.uid))].filter(u=>S.items.some(i=>i.uid===u&&i.alive));
+  taskFlag('bal');
   S.reportOpen=true;S.report={suggest:real,pre,plantCh,envCh,beforeDead,afterDead,doomed,changes:[...pre,...plantCh,...envCh]};
   const all=S.report.changes;
   logEv((real?'一鍵平衡建議：':'一鍵平衡：')+(all.length?all.map(x=>x).join('、'):'冇需要改'),(real?'Auto-balance suggestions: ':'Auto-balance: ')+(all.length?all.join(', '):'nothing to change'),real?'muted':'good');

@@ -430,6 +430,26 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tour-card .tour-n{color:var(--muted);font-size:11.5px;font-family:var(--f-mono)}
 .tour-card .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
 @media (prefers-reduced-motion:reduce){.tour-hl{transition:none}}
+
+/* 標籤列：電腦版左右箭咀、拖緊時唔揀字 */
+.tagwrap{position:relative;display:flex;align-items:center;min-width:0}
+.tagwrap>.tagrow{flex:1}
+.ptagwrap{flex:none}
+.tagarr{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.15);padding:0;font-size:16px;line-height:1;cursor:pointer}
+.tagarr:hover{border-color:var(--accent);color:var(--accent)}
+.tagarr.l{left:-6px}.tagarr.r{right:-6px}
+.ptagwrap .tagarr{top:calc(50% - 5px)}
+.tagrow.dragging{cursor:grabbing;user-select:none}
+.tagrow.dragging button{pointer-events:none}
+.tour-card .tour-skip{margin-right:auto}
+.envmode{padding:8px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft)}
+.envmode b{font-size:13px}
+
+.jars button.locked{opacity:.55}
+.taskchip{max-width:100%;overflow:hidden;text-overflow:ellipsis;border-color:var(--accent)!important}
+.taskchip b{color:var(--accent)}
+.chal .steps{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.chal .steps li.ok{color:var(--good)}
 </style>
 <div class="app">
   <header class="top">
@@ -448,7 +468,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="main">
     <section class="stage" id="stage">
       <canvas id="c"></canvas>
-      <div class="hud"><div class="hud-l"><button class="pill click" id="status" aria-haspopup="dialog"><i></i><span></span></button><div class="pill wx" id="wxPill"></div><button class="tglbtn" id="dnBtn"></button></div>
+      <div class="hud"><div class="hud-l"><button class="pill click" id="status" aria-haspopup="dialog"><i></i><span></span></button><div class="pill wx" id="wxPill"></div><button class="tglbtn" id="dnBtn"></button><button class="pill click taskchip" id="taskChip" hidden></button></div>
         <div class="hud-r"><div class="hud-rr"><button class="clearbtn" id="clearBtn"></button></div><span class="hint" id="hint"></span></div></div>
       <div class="ov ovL" id="ovL" hidden><div class="ovhead"><h4 id="ovLT"></h4><button class="x" id="ovLX" aria-label="Close">×</button></div><div class="ovbody" id="pane-bal"></div></div><div class="ov ovR" id="ovR" hidden></div>
       <button class="edge edgeL" id="edgeL"></button><button class="edge edgeR" id="edgeR"></button>
@@ -1120,6 +1140,7 @@ function autoBalance(){
   // 改完都保唔住嘅動物（包括俾其他生物食嘅），記低 uid，俾用家一撳搬去另一個瓶
   // 加埋原本會俾食或者俾咬嘅：捕食靠運氣，試算一次冇發生唔代表安全
   const doomed=[...new Set([...best.deaths.filter(d=>CAT[d.type].kind==='animal'),...before.deaths.filter(d=>d.why==='eaten'||d.why==='attacked')].map(d=>d.uid))].filter(u=>S.items.some(i=>i.uid===u&&i.alive));
+  taskFlag('bal');
   S.reportOpen=true;S.report={suggest:real,pre,plantCh,envCh,beforeDead,afterDead,doomed,changes:[...pre,...plantCh,...envCh]};
   const all=S.report.changes;
   logEv((real?'一鍵平衡建議：':'一鍵平衡：')+(all.length?all.map(x=>x).join('、'):'冇需要改'),(real?'Auto-balance suggestions: ':'Auto-balance: ')+(all.length?all.join(', '):'nothing to change'),real?'muted':'good');
@@ -2040,7 +2061,7 @@ function renderChrome(){
   document.documentElement.lang=LANG==='en'?'en':'zh-Hant';
   $('#brandT').textContent=L('生態瓶實驗室','Eco Jar Lab');$('#brandS').textContent=L('ECO JAR LAB','生態瓶實驗室');
   $('#playBtn').textContent=S.running?L('暫停','Pause'):L('繼續','Play');
-  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('🔗 分享呢個瓶','🔗 Share this jar');$('#presetBtn').textContent=L('預設組合','Presets');
+  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):(lockOf('feature','build')?'🔒 ':'')+L('自己砌缸','Build');if(typeof renderTaskChip==='function')renderTaskChip();$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('🔗 分享呢個瓶','🔗 Share this jar');$('#presetBtn').textContent=L('預設組合','Presets');
   $('#langBtn').textContent=LANG==='en'?'🌐 中文':'🌐 English';$('#moreBtn').setAttribute('aria-label',L('更多','More'));$('#tourBtn').textContent=L('🧭 新手教學','🧭 Quick guide');$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank'],play:['玩法','Play']};
@@ -2050,17 +2071,18 @@ function renderChrome(){
 }
 const SPEEDS=[[1,['1 小時/秒','1 h/s']],[4,['4 小時/秒','4 h/s']],[24,['1 日/秒','1 day/s']]];
 function renderSpeed(){$('#speedSeg').innerHTML=SPEEDS.map(([v,l])=>`<button aria-pressed="${S.speed===v}" data-v="${v}">${N(l)}</button>`).join('');
-  $('#speedSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;renderSpeed();});}
+  $('#speedSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;if(S.speed>=24)taskFlag('fast');renderSpeed();});}
 
 const jarNames=()=>S.jars.map((j,i)=>i===S.cur?(S.jarName||L(`瓶 ${i+1}`,`Jar ${i+1}`)):(j&&j.name?j.name:L(`瓶 ${i+1}`,`Jar ${i+1}`)));
-function renderJarSeg(){$('#jarSeg').innerHTML=jarNames().map((n,i)=>{const real=i===S.cur?S.real:(S.jars[i]&&S.jars[i].real);return`<button aria-pressed="${i===S.cur}" data-j="${i}" title="${esc(n)}">${esc(n)}${real?`<span class="realtag">${L('真','REAL')}</span>`:''}</button>`;}).join('');
+function jarLock(i){if(!i||i===S.cur)return null;const j=S.jars[i];if(j&&(j.items||[]).length)return null;return lockOf('feature','jar'+(i+1));}
+function renderJarSeg(){$('#jarSeg').innerHTML=jarNames().map((n,i)=>{const real=i===S.cur?S.real:(S.jars[i]&&S.jars[i].real),lk=jarLock(i);return`<button aria-pressed="${i===S.cur}" data-j="${i}" title="${esc(lk?lockText(lk):n)}" ${lk?'class="locked"':''}>${lk?'🔒 ':''}${esc(n)}${real?`<span class="realtag">${L('真','REAL')}</span>`:''}</button>`;}).join('');
   $('#jarSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>switchJar(+b.dataset.j));}
 $('#playBtn').onclick=()=>{S.running=!S.running;$('#playBtn').classList.toggle('primary',S.running);renderChrome();};
-$('#feedBtn').onclick=()=>{const n=Math.max(1,S.feed),wL=wLOf(S);
+$('#feedBtn').onclick=()=>{taskFlag('feed');const n=Math.max(1,S.feed),wL=wLOf(S);
   if(S.mode==='aqua'){if(!wL){toast(L('未注水，餵唔到','No water to feed into'));return;}S.c.flake+=n;feedFx(n);}
   else{const hasW=wL>0&&S.items.some(i=>i.alive&&isWater(i)&&CAT[i.type].kind==='animal');if(hasW){S.c.flake+=n/2;S.c.feed+=n/2;feedFx(n/2);}else S.c.feed+=n;}
   toast(L(`餵咗 ${n} 份`,`Fed ${n} portion${n>1?'s':''}`));};
-$('#buildHdr').onclick=()=>{if(S.build)exitBuild();else enterBuild();renderChrome();};
+$('#buildHdr').onclick=()=>{if(!S.build){const u=lockOf('feature','build');if(u){toast(lockText(u));return;}}if(S.build)exitBuild();else enterBuild();renderChrome();};
 $('#balBtn').onclick=()=>{toast(L('計緊最平衡嘅設定…','Working out the most balanced setup…'));setTimeout(autoBalance,30);};
 $('#langBtn').onclick=()=>{LANG=LANG==='en'?'zh':'en';pref.set('ecojar.lang',LANG);$('#pane-ana').innerHTML='';renderAll();if(curTab==='ana')renderAnalyze();};
 let clearArm=0;
@@ -2081,11 +2103,25 @@ function paramChips(type){const c=CAT[type],p=c.params,g=c.g;
   return[];}
 let catTag='all',catQ='',tagScroll=0;
 const tagList=avail=>['all',...Object.keys(TAGS).filter(t=>t!=='all'&&avail.has(t))];
-function dragScroll(el){let sx=0,sl=0,down=false,moved=false;
-  el.onpointerdown=e=>{down=true;moved=false;sx=e.clientX;sl=el.scrollLeft;};
-  el.onpointermove=e=>{if(!down)return;const d=e.clientX-sx;if(Math.abs(d)>4){moved=true;if(e.pointerType==='mouse')el.scrollLeft=sl-d;}};
-  el.onpointerup=el.onpointerleave=el.onpointercancel=()=>{down=false;};
-  el.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);}
+/* 標籤列左右拖：滑鼠拖（捉住指標，拖出範圍都得）、滾輪橫向捲、電腦有 ‹ › 箭咀；手指照用原生捲動 */
+function dragScroll(el){let sx=0,sl=0,down=false,moved=false,pid=null;
+  el.onpointerdown=e=>{if(e.pointerType!=='mouse'||e.button!==0)return;down=true;moved=false;sx=e.clientX;sl=el.scrollLeft;pid=e.pointerId;};
+  el.onpointermove=e=>{if(!down)return;const d=e.clientX-sx;
+    if(!moved&&Math.abs(d)>3){moved=true;try{el.setPointerCapture(pid);}catch(err){}el.style.scrollBehavior='auto';el.classList.add('dragging');}
+    if(moved)el.scrollLeft=sl-d;};
+  const up=()=>{if(!down)return;down=false;el.classList.remove('dragging');el.style.scrollBehavior='';try{if(pid!=null&&el.hasPointerCapture(pid))el.releasePointerCapture(pid);}catch(err){}};
+  el.onpointerup=el.onpointercancel=up;el.onlostpointercapture=up;
+  el.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);
+  el.addEventListener('wheel',e=>{if(el.scrollWidth<=el.clientWidth+1)return;const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(!d)return;
+    e.preventDefault();el.style.scrollBehavior='auto';el.scrollLeft+=d;el.style.scrollBehavior='';},{passive:false});
+  tagArrows(el);}
+function tagArrows(el){if(!matchMedia('(hover:hover) and (pointer:fine)').matches||!el.parentNode||el.parentNode.classList.contains('tagwrap'))return;
+  const w=document.createElement('div');w.className='tagwrap'+(el.classList.contains('ptags')?' ptagwrap':'');el.parentNode.insertBefore(w,el);
+  const mk=(dir,t)=>{const b=document.createElement('button');b.type='button';b.className='tagarr '+(dir<0?'l':'r');b.textContent=dir<0?'‹':'›';b.setAttribute('aria-label',t);
+    b.onclick=()=>el.scrollBy({left:dir*Math.max(120,el.clientWidth*.7),behavior:'smooth'});return b;};
+  const l=mk(-1,L('向左','Scroll left')),r=mk(1,L('向右','Scroll right'));w.append(l,el,r);
+  const upd=()=>{const max=el.scrollWidth-el.clientWidth;l.hidden=el.scrollLeft<=2;r.hidden=max<=2||el.scrollLeft>=max-2;};
+  el.addEventListener('scroll',upd,{passive:true});requestAnimationFrame(upd);}
 function swipeFlip(el,flip){if(el._sw)return;el._sw=1;let sx=0,sy=0,t0=0;
   el.addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;t0=Date.now();},{passive:true});
   el.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.6&&Date.now()-t0<600)flip(dx<0?1:-1);},{passive:true});}
@@ -2412,7 +2448,7 @@ function renderEnv(){
   const sl=(id,l,v,min,max,step,u,h)=>`<div class="field param"><div class="ph"><label for="${id}">${l}</label><output id="o${id}">${v} ${u}</output></div><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${v}"><small>${h}</small></div>`;
   const hasW=aq?S.filled:S.level>0,adv=x=>`<div data-adv>${x}</div>`;
   $('#pane-env').innerHTML=`
-   <div class="envmode"><div class="seg" role="group" aria-label="${L('設定數量','How many settings')}"><button data-envm="0" aria-pressed="${!envAdv}">${L('簡易','Simple')}</button><button data-envm="1" aria-pressed="${envAdv}">${L('進階','Advanced')}</button></div><span class="lede">${envAdv?L('顯示晒全部設定','Showing every setting'):L('只顯示常用設定；形狀、材質、天氣、風扇、換水等等喺「進階」','Common settings only; shape, material, weather, fan, water changes and more are under Advanced')}</span></div>
+   <div class="envmode"><b>${L('顯示設定','Show settings')}</b><div class="seg" role="group" aria-label="${L('顯示設定','Show settings')}"><button data-envm="0" aria-pressed="${!envAdv}">${L('簡易','Simple')}</button><button data-envm="1" aria-pressed="${envAdv}">${L('進階','Advanced')}</button></div><span class="lede">${envAdv?L('顯示晒全部設定','Showing every setting'):L('只顯示常用設定；形狀、材質、天氣、風扇、換水等等喺「進階」','Common settings only; shape, material, weather, fan, water changes and more are under Advanced')}</span></div>
    ${paneTagBar('env',ENV_TAGS)}
    <div class="field" data-sec="jar"><label for="e-name"><b>${L('呢個瓶嘅名','Name of this jar')}</b></label><input type="text" id="e-name" class="txt" maxlength="16" value="${esc(S.jarName)}" placeholder="${esc(jarNames()[S.cur])}"></div>
    <section class="field" data-sec="place"><h3>${L('地區氣候','Region')}</h3>
@@ -2482,7 +2518,7 @@ function restoreSnap(d){
   buildJar({keepChem:true});resetChem(S);if(d.c)Object.assign(S.c,d.c);S.log=d.log||[];S.hist=d.hist||[];
 }
 const blankSnap=i=>({terra:null,name:'',region:'hk',real:false,mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:false,light:12,feed:0,pump:false,filter:false,heater:false,fan:false,wc:0,mist:0,heat:false,water:'fresh',filled:false,level:0,hillH:6,breed:true,wxMode:'auto',wx:'sunny',hour:6,day:1,items:[]});
-function switchJar(i){if(i===S.cur)return;S.jars[S.cur]=snapshot();S.cur=i;restoreSnap(S.jars[i]||blankSnap(i));renderAll();save();toast(L('轉咗去 ','Switched to ')+jarNames()[i]);}
+function switchJar(i){if(i===S.cur)return;{const lk=jarLock(i);if(lk){toast(lockText(lk));return;}}S.jars[S.cur]=snapshot();S.cur=i;restoreSnap(S.jars[i]||blankSnap(i));renderAll();save();toast(L('轉咗去 ','Switched to ')+jarNames()[i]);}
 const KEY='ecojar.v4';
 let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{const jars=S.jars.slice();jars[S.cur]=snapshot();S.jars=jars;localStorage.setItem(KEY,JSON.stringify({cur:S.cur,jars,ana:S.ana}));}catch(e){}},500);}
 function load(){
@@ -2860,7 +2896,7 @@ function bindReport(){const b=$('#tryCopy');if(b)b.onclick=copyToTrial;const mvb
 /* 一鍵平衡都保唔住嘅動物：連同造景、植物、微生物同設定，搬去一個空瓶分開養 */
 function moveDoomed(){
   const R=S.report;if(!R||S.real)return;const ids=new Set(R.doomed||[]),alive=S.items.filter(i=>i.alive),mv=alive.filter(i=>ids.has(i.uid));if(!mv.length)return;
-  const slot=[0,1,2].find(i=>i!==S.cur&&!(S.jars[i]&&(S.jars[i].items||[]).length)&&!(S.jars[i]&&S.jars[i].real));
+  const slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i)&&!(S.jars[i]&&(S.jars[i].items||[]).length)&&!(S.jars[i]&&S.jars[i].real));
   if(slot==null){toast(L('冇空瓶：先清空另一個瓶','No empty jar: empty another jar first'));return;}
   const snap=snapshot(),name=(S.jarName||jarNames()[S.cur])+L('（分出）',' (split)');
   snap.items=snap.items.filter((o,k)=>CAT[o.type].kind!=='animal'||ids.has(alive[k].uid));
@@ -2871,7 +2907,7 @@ function moveDoomed(){
   renderAll();save();toast(L(`搬咗 ${mv.length} 隻去「${name}」；去嗰個瓶再撳一鍵平衡`,`Moved ${mv.length} to "${name}"; open that jar and auto-balance it`));
 }
 function copyToTrial(){
-  const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j);if(slot<0)slot=(S.cur+1)%3;
+  const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j&&!jarLock(i));if(slot<0)slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i));if(slot==null){toast(L('未有其他瓶用得：完成新手任務解鎖瓶 2','No other jar yet: finish the starter missions to unlock Jar 2'));return;}
   const name=(S.jarName||jarNames()[S.cur])+L('（試）',' (trial)');
   S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false,chal:null,deathN:0}));S.report=null;
   renderAll();save();toast(L(`複製咗去「${name}」，而家套用建議`,`Copied to "${name}" and applying the suggestions`));setTimeout(autoBalance,60);
@@ -2907,7 +2943,7 @@ async function checkShareLink(){
   const life=Object.entries(cnt).map(([t,n])=>`${N(CAT[t].name)} ×${n}`).join(L('、',', '));
   const mk=d.mode==='aqua'?'aqua':(d.level>0?'palu':'rain'),modeN=N({aqua:['水族','Aquatic'],rain:['雨林','Rainforest'],palu:['水陸','Paludarium']}[mk]);
   const snapOf=i=>i===S.cur?snapshot():S.jars[i],names=jarNames();
-  const slots=[0,1,2].map(i=>{const j=snapOf(i),n=j?(j.items||[]).length:0;return{i,n,real:!!(j&&j.real)};});
+  const slots=[0,1,2].map(i=>{const j=snapOf(i),n=j?(j.items||[]).length:0;return{i,n,real:!!(j&&j.real)||!!jarLock(i)};});
   const def=(slots.find(s=>!s.n&&!s.real)||{}).i;
   const dl=openDlg(`<h4>${L('朋友分享咗個生態瓶','A friend shared an eco jar')}</h4>
     <p class="sum"><b>${esc(name)}</b> · ${modeN} · ${d.V} L<br><span class="lede">${life||L('未有生物','No living things yet')}</span></p>
@@ -2934,7 +2970,7 @@ const TOUR=[
   {sel:['#balBtn'],t:['一鍵平衡','Auto-balance'],d:['唔知點調？撳一鍵平衡，佢會試算未來幾日，加水草、調光照同餵食，盡量保住每一隻生物。','Not sure what to change? Auto-balance simulates the next few days and adjusts plants, light and food to keep everything alive.']},
   {sel:['#playBtn'],t:['時間','Time'],d:['暫停或者加快時間。1 日／秒最快，可以睇到生物生 BB。','Pause or speed up time. At 1 day per second you can watch animals have young.']},
   {sel:['[data-dock="play"]','.tabs [data-tab="play"]'],t:['挑戰同解鎖','Challenges and unlocks'],d:['完成挑戰、成就同收藏，會解鎖雨林、水陸、海水同更多生物。想分析自己真實嘅缸，就喺「環境」開「呢個係真實嘅瓶」，乜都用得。','Challenges, achievements and your collection unlock rainforest, paludarium, salt water and more species. To analyse your real tank, turn on "This is a real tank" in Setup and everything is available.']},
-  {t:['準備好喇！','You are ready!'],d:['試吓撳「一鍵平衡」，或者去「玩法」揀個挑戰。想再睇教學，可以喺右上角「⋯」揀「新手教學」。','Try Auto-balance, or pick a challenge in Play. To see this guide again, choose "Quick guide" from the ⋯ menu at the top.']},
+  {t:['準備好喇！','You are ready!'],d:['跟住畫面左上角嘅「📋 任務」，一步步砌你第一個瓶：完成任務 1 會解鎖「自己砌缸」，之後仲有瓶 2 同瓶 3。想再睇教學，可以喺右上角「⋯」揀「新手教學」。','Follow the 📋 Mission chip at the top left to build your first jar step by step. Mission 1 unlocks Build, and the next ones unlock Jar 2 and Jar 3. To see this guide again, choose "Quick guide" from the ⋯ menu.']},
 ];
 const tour={i:-1};
 function tourTarget(st){for(const s of st.sel||[]){const el=$(s);if(el&&el.offsetParent!==null&&el.getBoundingClientRect().width>0)return el;}return null;}
@@ -2944,7 +2980,7 @@ function renderTour(){
   const st=TOUR[tour.i];if(!st){endTour();return;}
   const box=$('#tourHl'),card=$('#tourCard'),el=tourTarget(st);
   card.innerHTML=`<p class="tour-n">${tour.i+1} / ${TOUR.length}</p><h4>${N(st.t)}</h4><p>${N(st.d)}</p>
-    <div class="acts">${tour.i?`<button class="btn" id="tourPrev">${L('上一步','Back')}</button>`:`<button class="btn" id="tourSkip">${L('跳過','Skip')}</button>`}<button class="btn primary" id="tourNext">${tour.i===TOUR.length-1?L('開始玩','Start playing'):tour.i?L('下一步','Next'):L('開始教學','Show me')}</button></div>`;
+    <div class="acts">${tour.i<TOUR.length-1?`<button class="linkbtn tour-skip" id="tourSkip">${L('跳過教學','Skip guide')}</button>`:''}${tour.i?`<button class="btn" id="tourPrev">${L('上一步','Back')}</button>`:''}<button class="btn primary" id="tourNext">${tour.i===TOUR.length-1?L('開始玩','Start playing'):tour.i?L('下一步','Next'):L('開始教學','Show me')}</button></div>`;
   const p=$('#tourPrev'),s=$('#tourSkip');if(p)p.onclick=()=>{tour.i--;renderTour();};if(s)s.onclick=endTour;$('#tourNext').onclick=()=>{tour.i++;renderTour();};
   if(!el){box.hidden=true;card.classList.add('center');card.style.left=card.style.top='';$('#tourNext').focus();return;}
   el.scrollIntoView({block:'center',behavior:'instant'});
@@ -2963,7 +2999,7 @@ $('#tourBtn').onclick=startTour;
    全部只係睇模擬結果，唔會改個瓶。 */
 const PLAY={ach:pref.json('ecojar.ach')||{},col:pref.json('ecojar.col')||{},unl:pref.json('ecojar.unl')||{},lastDay:null,tt:null,ttDay:30};
 const savePlay=()=>{pref.set('ecojar.ach',JSON.stringify(PLAY.ach));pref.set('ecojar.col',JSON.stringify(PLAY.col));pref.set('ecojar.unl',JSON.stringify(PLAY.unl));};
-const PLAY_TAGS=[['all',['全部','All']],['unlock',['解鎖','Unlocks']],['chal',['挑戰','Challenges']],['ach',['成就','Achievements']],['col',['收藏','Collection']],['travel',['時間旅行','Time travel']]];
+const PLAY_TAGS=[['all',['全部','All']],['task',['新手任務','Starter missions']],['unlock',['解鎖','Unlocks']],['chal',['挑戰','Challenges']],['ach',['成就','Achievements']],['col',['收藏','Collection']],['travel',['時間旅行','Time travel']]];
 paneTag.play='all';
 
 const aliveK=k=>S.items.filter(i=>i.alive&&CAT[i.type].kind===k);
@@ -3029,13 +3065,47 @@ const UNLOCKS=[
 const FEAT={salt:{n:['海水','Salt water'],i:'🌊',d:['水族缸可以轉做海水，養海馬、海月水母、花園鰻同寄居蟹。淡水生物放入海水會死。','Aquatic jars can switch to salt water for seahorses, moon jellies, garden eels and hermit crabs. Freshwater life dies in salt water.']},
   ff:{n:['時間旅行快轉','Time-travel fast-forward'],i:'⏩',d:['喺「玩法 › 時間旅行」預覽完未來，可以直接快轉個瓶去嗰一日。','After previewing the future in Play › Time travel, you can jump the jar straight to that day.']},
   rain:{n:['雨林模式','Rainforest mode'],i:'🌿',d:['冇水嘅陸缸：泥土、苔蘚、蕨類，養跳蟲、鼠婦，之後仲有箭毒蛙同守宮。要顧住濕度同霉菌。','A dry-land terrarium with soil, moss and ferns, home to springtails and isopods, and later dart frogs and geckos. Watch the humidity and mould.']},
+  build:{n:['自己砌缸','Build'],i:'🏗️',d:['用筆刷喺瓶底鋪沙、泥、碎石，堆高或者挖低，砌出自己嘅地形。頂部「自己砌缸」掣開始。','Brush sand, soil and gravel onto the floor and raise or dig the ground to shape your own landscape. Start from the Build button at the top.']},
+  jar2:{n:['瓶 2','Jar 2'],i:'🫙',d:['多一個瓶，可以同時養第二個生態；頂部撳「瓶 2」轉過去。','A second jar for another ecosystem; tap Jar 2 at the top to switch.']},
+  jar3:{n:['瓶 3','Jar 3'],i:'🫙',d:['第三個瓶。一鍵平衡保唔住嘅動物，都可以搬去空瓶分開養。','A third jar. Animals that auto-balance cannot save can move to an empty jar.']},
   palu:{n:['水陸模式','Paludarium mode'],i:'🐸',d:['雨林加水區：後面陸地、前面水，魚同兩棲動物一齊養。','A rainforest with a water area: land at the back, water at the front, fish and amphibians together.']}};
 const FEAT_N=Object.fromEntries(Object.entries(FEAT).map(([k,v])=>[k,v.n]));
 const FREE_PRESETS=['aqua.eco','aqua.tank','aqua.betta','aqua.zero'];
+/* ---- 新手任務：一個接一個做，完成會解鎖「自己砌缸」、瓶 2、瓶 3 ----
+   進度屬於玩家（pref ecojar.task）：{i:而家做緊第幾個, flags:{bal,fast,feed}, d0, dead0} */
+PLAY.task=Object.assign({i:0,flags:{}},pref.json('ecojar.task')||{});
+const saveTask=()=>pref.set('ecojar.task',JSON.stringify(PLAY.task));
+const hasIt=f=>S.items.some(i=>i.alive&&f(i));
+const TASKS=[
+  {n:['砌你第一個瓶','Build your first jar'],feat:'build',steps:[
+    [['鋪細沙或者碎石','Lay sand or gravel'],()=>hasIt(i=>['sand','gravel','soil'].includes(i.type))||!!S.terra],
+    [['擺一舊石頭、假山或者沉木','Place a stone, rock or driftwood'],()=>hasIt(i=>CAT[i.type].kind==='decor')],
+    [['注水','Fill it with water'],()=>S.mode==='aqua'?S.filled:S.level>0||true],
+    [['種一棵水草','Plant something'],()=>hasIt(i=>CAT[i.type].kind==='plant')],
+    [['加硝化菌（分解有毒嘅氨）','Add nitrifying bacteria (they break down ammonia)'],()=>hasIt(i=>i.type==='nitri'||i.type==='soilmic')]]},
+  {n:['養第一批生物','Your first animals'],feat:'jar2',steps:[
+    [['加 3 隻或以上動物，例如米蝦','Add 3 or more animals, such as cherry shrimp'],()=>aliveK('animal').length>=3],
+    [['平安過 1 日（冇動物死）','Get through one day with no deaths'],()=>{const T=PLAY.task;if(T.d0==null)return false;return (S.day*24+S.hour)-T.d0>=24&&(S.deathN||0)===T.dead0;}]]},
+  {n:['學識照顧個瓶','Learn to look after it'],feat:'jar3',steps:[
+    [['撳一次「即刻餵食」','Tap Feed now once'],()=>!!PLAY.task.flags.feed],
+    [['撳一次「一鍵平衡」','Use Auto-balance once'],()=>!!PLAY.task.flags.bal],
+    [['用「1 日/秒」加快時間','Speed time up to 1 day/s'],()=>!!PLAY.task.flags.fast]]},
+];
+const TASK_FEAT={build:0,jar2:1,jar3:2};
+function taskFlag(k){if(PLAY.task.flags[k])return;PLAY.task.flags[k]=1;saveTask();}
+function taskCheck(){const T=PLAY.task,t=TASKS[T.i];if(!t)return;
+  // 任務 2：加夠動物之後先開始計「平安一日」
+  if(T.i===1&&T.d0==null&&t.steps[0][1]()){T.d0=S.day*24+S.hour;T.dead0=S.deathN||0;saveTask();}
+  if(T.i===1&&T.d0!=null&&(S.deathN||0)>T.dead0){T.d0=null;saveTask();}
+  if(!t.steps.every(s=>s[1]()))return;
+  T.i++;T.d0=null;saveTask();logEv(`完成新手任務「${t.n[0]}」`,`Completed the starter mission "${t.n[1]}"`,'good');
+  celebrate([{t:t.n,features:[t.feat]}]);renderAll();if(curTab==='play')renderPlay();}
+const taskLock=k=>{const i=TASK_FEAT[k];if(i==null||PLAY.task.i>i)return null;return{t:[`完成新手任務 ${i+1}「${TASKS[i].n[0]}」`,`Complete starter mission ${i+1} "${TASKS[i].n[1]}"`]};};
 /* 隱藏開關：連撳標題 7 下 → 全部解鎖（方便測試） */
 PLAY.all=pref.get('ecojar.all')==='1';
 /* 回傳鎖住佢嘅解鎖項目（冇鎖就 null）；kind = type／region／feature／preset */
 function lockOf(kind,key){if(PLAY.all)return null;
+  if(kind==='feature'&&TASK_FEAT[key]!=null)return(S.real&&key==='build')?null:taskLock(key);
   if(S.real&&kind!=='preset'&&key!=='ff')return null; // 真實嘅瓶：為咗分析，乜都用得（但唔計進度）
   const f=kind+'s';
   if(kind==='preset'&&!FREE_PRESETS.includes(key)&&!UNLOCKS.some(u=>(u.presets||[]).includes(key)))return null;
@@ -3109,6 +3179,7 @@ function collectNow(){if(S.real)return;let n=0;for(const it of S.items){if(!it.a
 
 /* ---- 每秒檢查一次（main.js 叫） ---- */
 function playTick(){
+  taskCheck();
   const animals=aliveK('animal').length,dn=S.deathN||0;
   if(PLAY.lastDay!=null&&S.day!==PLAY.lastDay){collectNow();
     if(!S.real){if(S.day>=8&&!dn&&animals>=2)unlock('week');if(S.day>=31&&!dn&&animals>=1)unlock('month');}}
@@ -3166,6 +3237,7 @@ function renderPlay(){
   const pe=$('#pane-play');if(!pe)return;const nCol=Object.keys(PLAY.col).length,all=COL_TYPES(),done=id=>!!PLAY.ach['ch_'+id];
   const cur=S.chal&&CHAL.find(x=>x.id===S.chal.id);
   pe.innerHTML=`${paneTagBar('play',PLAY_TAGS)}
+   ${taskHtml()}
    <section data-sec="unlock"><h3>${L('解鎖','Unlocks')} · ${UNLOCKS.filter(u=>u.cond()).length}/${UNLOCKS.length}</h3><p class="lede">${L('完成挑戰、成就同收藏，就會開放更多生物、地區同玩法。','Complete challenges, achievements and collections to open up more species, regions and features.')}</p>
     <p class="lede">${L('想分析自己真實嘅缸？喺「環境同天氣」開「呢個係真實嘅瓶」，所有生物、模式同設定即刻用得（只做分析，唔計收藏、成就同挑戰）；或者用「分析水缸」分頁填資料。','Analysing your own real tank? Turn on "This is a real tank" in Setup and every species, mode and setting is available at once (analysis only; it does not count towards collection, achievements or challenges). Or fill in the Analyse a tank tab.')}</p>
     <div class="unls">${UNLOCKS.map(u=>{const ok=u.cond();return`<div class="unl${ok?' got':''}"><b>${ok?'🔓':'🔒'} ${N(u.t)}${!ok&&u.prog?` <span class="lede">${u.prog()}</span>`:''}</b><span>${rewardNames(u).join(L('、',', '))}</span></div>`;}).join('')}</div></section>
@@ -3185,6 +3257,16 @@ function renderPlay(){
   const q=$('#chQuit');if(q)q.onclick=()=>{const c=CHAL.find(x=>x.id===S.chal.id);S.chal=null;logEv(`放棄挑戰「${c.n[0]}」`,`Gave up the challenge "${c.n[1]}"`,'muted');save();renderPlay();};
   bindTravel();
 }
+function taskHtml(){const T=PLAY.task,t=TASKS[T.i];
+  return`<section data-sec="task"><h3>${L('新手任務','Starter missions')} · ${Math.min(T.i,TASKS.length)}/${TASKS.length}</h3>
+    ${TASKS.map((x,i)=>{const done=i<T.i,cur=i===T.i;return`<div class="chal${done?' done':cur?' on':''}"><div class="bh"><b>${done?'✓ ':cur?'▶ ':'🔒 '}${L(`任務 ${i+1}：`,`Mission ${i+1}: `)}${N(x.n)}</b><span class="lede">${L('解鎖','Unlocks')} ${N(FEAT[x.feat].n)}</span></div>
+      ${cur?`<ul class="steps">${x.steps.map(s=>{const ok=s[1]();return`<li class="${ok?'ok':''}">${ok?'☑':'☐'} ${N(s[0])}</li>`;}).join('')}</ul>`:''}</div>`;}).join('')}
+    ${t?'':`<p class="lede">${L('全部完成！而家可以自己砌缸，三個瓶都用得。','All done! Build and all three jars are yours.')}</p>`}</section>`;}
+/* 畫面上嘅任務提示（撳去「玩法 › 新手任務」） */
+function renderTaskChip(){const c=$('#taskChip');if(!c)return;const T=PLAY.task,t=TASKS[T.i];if(!t||PLAY.all){c.hidden=true;return;}
+  const next=t.steps.find(s=>!s[1]()),done=t.steps.filter(s=>s[1]()).length;c.hidden=false;
+  c.innerHTML=`📋 <b>${L(`任務 ${T.i+1}`,`Mission ${T.i+1}`)}</b> ${next?esc(N(next[0])):''} <span class="mono">${done}/${t.steps.length}</span>`;
+  c.onclick=()=>{paneTag.play='task';showTab('play');};}
 function bindTravel(){
   const box=$('#ttBox');if(!box)return;
   const run=()=>{toast(L('計緊未來 30 日…','Working out the next 30 days…'));setTimeout(()=>{PLAY.tt=travelPreview(30);PLAY.ttDay=30;box.innerHTML=travelHtml();bindTravel();},30);};
@@ -3196,8 +3278,8 @@ function bindTravel(){
 
 /* ================= 開始 ================= */
 if(!load()){
-  const p=PRESETS.aqua.eco;Object.assign(S,{mode:'aqua',V:p.V,shape:p.shape,sealed:p.sealed,light:p.light,feed:p.feed});
-  p.items.forEach(([t,n])=>{for(let i=0;i<n;i++){const it=makeItem(t);it.n=nextN(t);S.items.push(it);}});
+  // 新玩家：由一個未注水嘅空瓶開始，跟住「新手任務」一步步砌
+  const p=PRESETS.aqua.zero;Object.assign(S,{mode:'aqua',V:p.V,shape:p.shape,sealed:p.sealed,light:p.light,feed:p.feed,filled:false});
   buildJar({keepChem:true});resetChem(S);
 }
 renderAll();resize();fitOverlays();

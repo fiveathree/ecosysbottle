@@ -417,3 +417,23 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tour-card .tour-n{color:var(--muted);font-size:11.5px;font-family:var(--f-mono)}
 .tour-card .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
 @media (prefers-reduced-motion:reduce){.tour-hl{transition:none}}
+
+/* 標籤列：電腦版左右箭咀、拖緊時唔揀字 */
+.tagwrap{position:relative;display:flex;align-items:center;min-width:0}
+.tagwrap>.tagrow{flex:1}
+.ptagwrap{flex:none}
+.tagarr{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.15);padding:0;font-size:16px;line-height:1;cursor:pointer}
+.tagarr:hover{border-color:var(--accent);color:var(--accent)}
+.tagarr.l{left:-6px}.tagarr.r{right:-6px}
+.ptagwrap .tagarr{top:calc(50% - 5px)}
+.tagrow.dragging{cursor:grabbing;user-select:none}
+.tagrow.dragging button{pointer-events:none}
+.tour-card .tour-skip{margin-right:auto}
+.envmode{padding:8px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft)}
+.envmode b{font-size:13px}
+
+.jars button.locked{opacity:.55}
+.taskchip{max-width:100%;overflow:hidden;text-overflow:ellipsis;border-color:var(--accent)!important}
+.taskchip b{color:var(--accent)}
+.chal .steps{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.chal .steps li.ok{color:var(--good)}

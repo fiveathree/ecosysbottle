@@ -40,6 +40,13 @@ for(const [mode,key] of [['aqua','eco'],['aqua','tank'],['aqua','bad'],['rain','
   ok(!err&&S.report&&!S.report.afterDead.length||key==='bad'&&!err,`${mode}.${key}`+(err?` 出錯：${err.message}`:S.report.afterDead.length?` 仍然會死：${S.report.afterDead.join('、')}`:''));
 }
 
+console.log('\n2b. 新手任務');
+ok(T.PLAY.task.i===0&&!!T.lockOf('feature','build')&&!!T.lockOf('feature','jar2'),'新玩家：自己砌缸同瓶 2 鎖住');
+setup('aqua','eco');T.playTick();ok(T.PLAY.task.i===1&&!T.lockOf('feature','build'),'任務 1（砌第一個瓶）完成：自己砌缸解鎖');
+T.playTick();for(let h=0;h<26;h++)T.step(S);T.playTick();ok(T.PLAY.task.i===2&&!T.lockOf('feature','jar2'),'任務 2（平安過 1 日）完成：瓶 2 解鎖');
+T.taskFlag('feed');T.taskFlag('bal');T.taskFlag('fast');T.playTick();ok(T.PLAY.task.i===3&&!T.lockOf('feature','jar3'),'任務 3 完成：瓶 3 解鎖');
+for(const k in T.PLAY.col)delete T.PLAY.col[k];for(const k in T.PLAY.ach)delete T.PLAY.ach[k]; // 還原收藏同成就，等後面「新玩家」測試準確
+
 console.log('\n3. 雜亂嘅水陸缸：一鍵平衡 + 搬走保唔住嘅');
 S.jars=[null,null,null];S.cur=0;
 setup('rain','palu',[['daphnia',1],['crab',1],['minnow',1],['medaka',1],['newt',2],['snail',1],['gecko',1],['frog',2],['betta',1]]);

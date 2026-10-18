@@ -18,7 +18,7 @@ function boot(){
   if(w.HTMLDialogElement){w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};}
   w.CompressionStream=globalThis.CompressionStream;w.DecompressionStream=globalThis.DecompressionStream;
   w.Response=globalThis.Response;w.Blob=globalThis.Blob;w.TextEncoder=globalThis.TextEncoder;w.TextDecoder=globalThis.TextDecoder;
-  w.eval('(()=>{\n'+bundleJs()+'\nwindow.__T={S,CAT,PRESETS,step,trialState,runTrial,autoBalance,addItem,loadPreset,buildJar,resetChem,moveDoomed,packJar,unpackJar,snapshot,switchJar,PLAY,CHAL,startChal,playTick,travelPreview,fastForward,renderPlay,lockOf,presetLock,addFromCatalog,setUnlockAll,$};\n})();');
+  w.eval('(()=>{\n'+bundleJs()+'\nwindow.__T={S,CAT,PRESETS,step,trialState,runTrial,autoBalance,addItem,loadPreset,buildJar,resetChem,moveDoomed,packJar,unpackJar,snapshot,switchJar,PLAY,CHAL,startChal,playTick,travelPreview,fastForward,renderPlay,lockOf,presetLock,addFromCatalog,setUnlockAll,taskFlag,$};\n})();');
   return w.__T;
 }
 

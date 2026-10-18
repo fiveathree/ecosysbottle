@@ -255,7 +255,7 @@ function bindReport(){const b=$('#tryCopy');if(b)b.onclick=copyToTrial;const mvb
 /* 一鍵平衡都保唔住嘅動物：連同造景、植物、微生物同設定，搬去一個空瓶分開養 */
 function moveDoomed(){
   const R=S.report;if(!R||S.real)return;const ids=new Set(R.doomed||[]),alive=S.items.filter(i=>i.alive),mv=alive.filter(i=>ids.has(i.uid));if(!mv.length)return;
-  const slot=[0,1,2].find(i=>i!==S.cur&&!(S.jars[i]&&(S.jars[i].items||[]).length)&&!(S.jars[i]&&S.jars[i].real));
+  const slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i)&&!(S.jars[i]&&(S.jars[i].items||[]).length)&&!(S.jars[i]&&S.jars[i].real));
   if(slot==null){toast(L('冇空瓶：先清空另一個瓶','No empty jar: empty another jar first'));return;}
   const snap=snapshot(),name=(S.jarName||jarNames()[S.cur])+L('（分出）',' (split)');
   snap.items=snap.items.filter((o,k)=>CAT[o.type].kind!=='animal'||ids.has(alive[k].uid));
@@ -266,7 +266,7 @@ function moveDoomed(){
   renderAll();save();toast(L(`搬咗 ${mv.length} 隻去「${name}」；去嗰個瓶再撳一鍵平衡`,`Moved ${mv.length} to "${name}"; open that jar and auto-balance it`));
 }
 function copyToTrial(){
-  const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j);if(slot<0)slot=(S.cur+1)%3;
+  const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j&&!jarLock(i));if(slot<0)slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i));if(slot==null){toast(L('未有其他瓶用得：完成新手任務解鎖瓶 2','No other jar yet: finish the starter missions to unlock Jar 2'));return;}
   const name=(S.jarName||jarNames()[S.cur])+L('（試）',' (trial)');
   S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false,chal:null,deathN:0}));S.report=null;
   renderAll();save();toast(L(`複製咗去「${name}」，而家套用建議`,`Copied to "${name}" and applying the suggestions`));setTimeout(autoBalance,60);
@@ -302,7 +302,7 @@ async function checkShareLink(){
   const life=Object.entries(cnt).map(([t,n])=>`${N(CAT[t].name)} ×${n}`).join(L('、',', '));
   const mk=d.mode==='aqua'?'aqua':(d.level>0?'palu':'rain'),modeN=N({aqua:['水族','Aquatic'],rain:['雨林','Rainforest'],palu:['水陸','Paludarium']}[mk]);
   const snapOf=i=>i===S.cur?snapshot():S.jars[i],names=jarNames();
-  const slots=[0,1,2].map(i=>{const j=snapOf(i),n=j?(j.items||[]).length:0;return{i,n,real:!!(j&&j.real)};});
+  const slots=[0,1,2].map(i=>{const j=snapOf(i),n=j?(j.items||[]).length:0;return{i,n,real:!!(j&&j.real)||!!jarLock(i)};});
   const def=(slots.find(s=>!s.n&&!s.real)||{}).i;
   const dl=openDlg(`<h4>${L('朋友分享咗個生態瓶','A friend shared an eco jar')}</h4>
     <p class="sum"><b>${esc(name)}</b> · ${modeN} · ${d.V} L<br><span class="lede">${life||L('未有生物','No living things yet')}</span></p>
@@ -329,7 +329,7 @@ const TOUR=[
   {sel:['#balBtn'],t:['一鍵平衡','Auto-balance'],d:['唔知點調？撳一鍵平衡，佢會試算未來幾日，加水草、調光照同餵食，盡量保住每一隻生物。','Not sure what to change? Auto-balance simulates the next few days and adjusts plants, light and food to keep everything alive.']},
   {sel:['#playBtn'],t:['時間','Time'],d:['暫停或者加快時間。1 日／秒最快，可以睇到生物生 BB。','Pause or speed up time. At 1 day per second you can watch animals have young.']},
   {sel:['[data-dock="play"]','.tabs [data-tab="play"]'],t:['挑戰同解鎖','Challenges and unlocks'],d:['完成挑戰、成就同收藏，會解鎖雨林、水陸、海水同更多生物。想分析自己真實嘅缸，就喺「環境」開「呢個係真實嘅瓶」，乜都用得。','Challenges, achievements and your collection unlock rainforest, paludarium, salt water and more species. To analyse your real tank, turn on "This is a real tank" in Setup and everything is available.']},
-  {t:['準備好喇！','You are ready!'],d:['試吓撳「一鍵平衡」，或者去「玩法」揀個挑戰。想再睇教學，可以喺右上角「⋯」揀「新手教學」。','Try Auto-balance, or pick a challenge in Play. To see this guide again, choose "Quick guide" from the ⋯ menu at the top.']},
+  {t:['準備好喇！','You are ready!'],d:['跟住畫面左上角嘅「📋 任務」，一步步砌你第一個瓶：完成任務 1 會解鎖「自己砌缸」，之後仲有瓶 2 同瓶 3。想再睇教學，可以喺右上角「⋯」揀「新手教學」。','Follow the 📋 Mission chip at the top left to build your first jar step by step. Mission 1 unlocks Build, and the next ones unlock Jar 2 and Jar 3. To see this guide again, choose "Quick guide" from the ⋯ menu.']},
 ];
 const tour={i:-1};
 function tourTarget(st){for(const s of st.sel||[]){const el=$(s);if(el&&el.offsetParent!==null&&el.getBoundingClientRect().width>0)return el;}return null;}
@@ -339,7 +339,7 @@ function renderTour(){
   const st=TOUR[tour.i];if(!st){endTour();return;}
   const box=$('#tourHl'),card=$('#tourCard'),el=tourTarget(st);
   card.innerHTML=`<p class="tour-n">${tour.i+1} / ${TOUR.length}</p><h4>${N(st.t)}</h4><p>${N(st.d)}</p>
-    <div class="acts">${tour.i?`<button class="btn" id="tourPrev">${L('上一步','Back')}</button>`:`<button class="btn" id="tourSkip">${L('跳過','Skip')}</button>`}<button class="btn primary" id="tourNext">${tour.i===TOUR.length-1?L('開始玩','Start playing'):tour.i?L('下一步','Next'):L('開始教學','Show me')}</button></div>`;
+    <div class="acts">${tour.i<TOUR.length-1?`<button class="linkbtn tour-skip" id="tourSkip">${L('跳過教學','Skip guide')}</button>`:''}${tour.i?`<button class="btn" id="tourPrev">${L('上一步','Back')}</button>`:''}<button class="btn primary" id="tourNext">${tour.i===TOUR.length-1?L('開始玩','Start playing'):tour.i?L('下一步','Next'):L('開始教學','Show me')}</button></div>`;
   const p=$('#tourPrev'),s=$('#tourSkip');if(p)p.onclick=()=>{tour.i--;renderTour();};if(s)s.onclick=endTour;$('#tourNext').onclick=()=>{tour.i++;renderTour();};
   if(!el){box.hidden=true;card.classList.add('center');card.style.left=card.style.top='';$('#tourNext').focus();return;}
   el.scrollIntoView({block:'center',behavior:'instant'});

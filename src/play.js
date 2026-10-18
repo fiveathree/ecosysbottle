@@ -3,7 +3,7 @@
    全部只係睇模擬結果，唔會改個瓶。 */
 const PLAY={ach:pref.json('ecojar.ach')||{},col:pref.json('ecojar.col')||{},unl:pref.json('ecojar.unl')||{},lastDay:null,tt:null,ttDay:30};
 const savePlay=()=>{pref.set('ecojar.ach',JSON.stringify(PLAY.ach));pref.set('ecojar.col',JSON.stringify(PLAY.col));pref.set('ecojar.unl',JSON.stringify(PLAY.unl));};
-const PLAY_TAGS=[['all',['全部','All']],['unlock',['解鎖','Unlocks']],['chal',['挑戰','Challenges']],['ach',['成就','Achievements']],['col',['收藏','Collection']],['travel',['時間旅行','Time travel']]];
+const PLAY_TAGS=[['all',['全部','All']],['task',['新手任務','Starter missions']],['unlock',['解鎖','Unlocks']],['chal',['挑戰','Challenges']],['ach',['成就','Achievements']],['col',['收藏','Collection']],['travel',['時間旅行','Time travel']]];
 paneTag.play='all';
 
 const aliveK=k=>S.items.filter(i=>i.alive&&CAT[i.type].kind===k);
@@ -69,13 +69,47 @@ const UNLOCKS=[
 const FEAT={salt:{n:['海水','Salt water'],i:'🌊',d:['水族缸可以轉做海水，養海馬、海月水母、花園鰻同寄居蟹。淡水生物放入海水會死。','Aquatic jars can switch to salt water for seahorses, moon jellies, garden eels and hermit crabs. Freshwater life dies in salt water.']},
   ff:{n:['時間旅行快轉','Time-travel fast-forward'],i:'⏩',d:['喺「玩法 › 時間旅行」預覽完未來，可以直接快轉個瓶去嗰一日。','After previewing the future in Play › Time travel, you can jump the jar straight to that day.']},
   rain:{n:['雨林模式','Rainforest mode'],i:'🌿',d:['冇水嘅陸缸：泥土、苔蘚、蕨類，養跳蟲、鼠婦，之後仲有箭毒蛙同守宮。要顧住濕度同霉菌。','A dry-land terrarium with soil, moss and ferns, home to springtails and isopods, and later dart frogs and geckos. Watch the humidity and mould.']},
+  build:{n:['自己砌缸','Build'],i:'🏗️',d:['用筆刷喺瓶底鋪沙、泥、碎石，堆高或者挖低，砌出自己嘅地形。頂部「自己砌缸」掣開始。','Brush sand, soil and gravel onto the floor and raise or dig the ground to shape your own landscape. Start from the Build button at the top.']},
+  jar2:{n:['瓶 2','Jar 2'],i:'🫙',d:['多一個瓶，可以同時養第二個生態；頂部撳「瓶 2」轉過去。','A second jar for another ecosystem; tap Jar 2 at the top to switch.']},
+  jar3:{n:['瓶 3','Jar 3'],i:'🫙',d:['第三個瓶。一鍵平衡保唔住嘅動物，都可以搬去空瓶分開養。','A third jar. Animals that auto-balance cannot save can move to an empty jar.']},
   palu:{n:['水陸模式','Paludarium mode'],i:'🐸',d:['雨林加水區：後面陸地、前面水，魚同兩棲動物一齊養。','A rainforest with a water area: land at the back, water at the front, fish and amphibians together.']}};
 const FEAT_N=Object.fromEntries(Object.entries(FEAT).map(([k,v])=>[k,v.n]));
 const FREE_PRESETS=['aqua.eco','aqua.tank','aqua.betta','aqua.zero'];
+/* ---- 新手任務：一個接一個做，完成會解鎖「自己砌缸」、瓶 2、瓶 3 ----
+   進度屬於玩家（pref ecojar.task）：{i:而家做緊第幾個, flags:{bal,fast,feed}, d0, dead0} */
+PLAY.task=Object.assign({i:0,flags:{}},pref.json('ecojar.task')||{});
+const saveTask=()=>pref.set('ecojar.task',JSON.stringify(PLAY.task));
+const hasIt=f=>S.items.some(i=>i.alive&&f(i));
+const TASKS=[
+  {n:['砌你第一個瓶','Build your first jar'],feat:'build',steps:[
+    [['鋪細沙或者碎石','Lay sand or gravel'],()=>hasIt(i=>['sand','gravel','soil'].includes(i.type))||!!S.terra],
+    [['擺一舊石頭、假山或者沉木','Place a stone, rock or driftwood'],()=>hasIt(i=>CAT[i.type].kind==='decor')],
+    [['注水','Fill it with water'],()=>S.mode==='aqua'?S.filled:S.level>0||true],
+    [['種一棵水草','Plant something'],()=>hasIt(i=>CAT[i.type].kind==='plant')],
+    [['加硝化菌（分解有毒嘅氨）','Add nitrifying bacteria (they break down ammonia)'],()=>hasIt(i=>i.type==='nitri'||i.type==='soilmic')]]},
+  {n:['養第一批生物','Your first animals'],feat:'jar2',steps:[
+    [['加 3 隻或以上動物，例如米蝦','Add 3 or more animals, such as cherry shrimp'],()=>aliveK('animal').length>=3],
+    [['平安過 1 日（冇動物死）','Get through one day with no deaths'],()=>{const T=PLAY.task;if(T.d0==null)return false;return (S.day*24+S.hour)-T.d0>=24&&(S.deathN||0)===T.dead0;}]]},
+  {n:['學識照顧個瓶','Learn to look after it'],feat:'jar3',steps:[
+    [['撳一次「即刻餵食」','Tap Feed now once'],()=>!!PLAY.task.flags.feed],
+    [['撳一次「一鍵平衡」','Use Auto-balance once'],()=>!!PLAY.task.flags.bal],
+    [['用「1 日/秒」加快時間','Speed time up to 1 day/s'],()=>!!PLAY.task.flags.fast]]},
+];
+const TASK_FEAT={build:0,jar2:1,jar3:2};
+function taskFlag(k){if(PLAY.task.flags[k])return;PLAY.task.flags[k]=1;saveTask();}
+function taskCheck(){const T=PLAY.task,t=TASKS[T.i];if(!t)return;
+  // 任務 2：加夠動物之後先開始計「平安一日」
+  if(T.i===1&&T.d0==null&&t.steps[0][1]()){T.d0=S.day*24+S.hour;T.dead0=S.deathN||0;saveTask();}
+  if(T.i===1&&T.d0!=null&&(S.deathN||0)>T.dead0){T.d0=null;saveTask();}
+  if(!t.steps.every(s=>s[1]()))return;
+  T.i++;T.d0=null;saveTask();logEv(`完成新手任務「${t.n[0]}」`,`Completed the starter mission "${t.n[1]}"`,'good');
+  celebrate([{t:t.n,features:[t.feat]}]);renderAll();if(curTab==='play')renderPlay();}
+const taskLock=k=>{const i=TASK_FEAT[k];if(i==null||PLAY.task.i>i)return null;return{t:[`完成新手任務 ${i+1}「${TASKS[i].n[0]}」`,`Complete starter mission ${i+1} "${TASKS[i].n[1]}"`]};};
 /* 隱藏開關：連撳標題 7 下 → 全部解鎖（方便測試） */
 PLAY.all=pref.get('ecojar.all')==='1';
 /* 回傳鎖住佢嘅解鎖項目（冇鎖就 null）；kind = type／region／feature／preset */
 function lockOf(kind,key){if(PLAY.all)return null;
+  if(kind==='feature'&&TASK_FEAT[key]!=null)return(S.real&&key==='build')?null:taskLock(key);
   if(S.real&&kind!=='preset'&&key!=='ff')return null; // 真實嘅瓶：為咗分析，乜都用得（但唔計進度）
   const f=kind+'s';
   if(kind==='preset'&&!FREE_PRESETS.includes(key)&&!UNLOCKS.some(u=>(u.presets||[]).includes(key)))return null;
@@ -149,6 +183,7 @@ function collectNow(){if(S.real)return;let n=0;for(const it of S.items){if(!it.a
 
 /* ---- 每秒檢查一次（main.js 叫） ---- */
 function playTick(){
+  taskCheck();
   const animals=aliveK('animal').length,dn=S.deathN||0;
   if(PLAY.lastDay!=null&&S.day!==PLAY.lastDay){collectNow();
     if(!S.real){if(S.day>=8&&!dn&&animals>=2)unlock('week');if(S.day>=31&&!dn&&animals>=1)unlock('month');}}
@@ -206,6 +241,7 @@ function renderPlay(){
   const pe=$('#pane-play');if(!pe)return;const nCol=Object.keys(PLAY.col).length,all=COL_TYPES(),done=id=>!!PLAY.ach['ch_'+id];
   const cur=S.chal&&CHAL.find(x=>x.id===S.chal.id);
   pe.innerHTML=`${paneTagBar('play',PLAY_TAGS)}
+   ${taskHtml()}
    <section data-sec="unlock"><h3>${L('解鎖','Unlocks')} · ${UNLOCKS.filter(u=>u.cond()).length}/${UNLOCKS.length}</h3><p class="lede">${L('完成挑戰、成就同收藏，就會開放更多生物、地區同玩法。','Complete challenges, achievements and collections to open up more species, regions and features.')}</p>
     <p class="lede">${L('想分析自己真實嘅缸？喺「環境同天氣」開「呢個係真實嘅瓶」，所有生物、模式同設定即刻用得（只做分析，唔計收藏、成就同挑戰）；或者用「分析水缸」分頁填資料。','Analysing your own real tank? Turn on "This is a real tank" in Setup and every species, mode and setting is available at once (analysis only; it does not count towards collection, achievements or challenges). Or fill in the Analyse a tank tab.')}</p>
     <div class="unls">${UNLOCKS.map(u=>{const ok=u.cond();return`<div class="unl${ok?' got':''}"><b>${ok?'🔓':'🔒'} ${N(u.t)}${!ok&&u.prog?` <span class="lede">${u.prog()}</span>`:''}</b><span>${rewardNames(u).join(L('、',', '))}</span></div>`;}).join('')}</div></section>
@@ -225,6 +261,16 @@ function renderPlay(){
   const q=$('#chQuit');if(q)q.onclick=()=>{const c=CHAL.find(x=>x.id===S.chal.id);S.chal=null;logEv(`放棄挑戰「${c.n[0]}」`,`Gave up the challenge "${c.n[1]}"`,'muted');save();renderPlay();};
   bindTravel();
 }
+function taskHtml(){const T=PLAY.task,t=TASKS[T.i];
+  return`<section data-sec="task"><h3>${L('新手任務','Starter missions')} · ${Math.min(T.i,TASKS.length)}/${TASKS.length}</h3>
+    ${TASKS.map((x,i)=>{const done=i<T.i,cur=i===T.i;return`<div class="chal${done?' done':cur?' on':''}"><div class="bh"><b>${done?'✓ ':cur?'▶ ':'🔒 '}${L(`任務 ${i+1}：`,`Mission ${i+1}: `)}${N(x.n)}</b><span class="lede">${L('解鎖','Unlocks')} ${N(FEAT[x.feat].n)}</span></div>
+      ${cur?`<ul class="steps">${x.steps.map(s=>{const ok=s[1]();return`<li class="${ok?'ok':''}">${ok?'☑':'☐'} ${N(s[0])}</li>`;}).join('')}</ul>`:''}</div>`;}).join('')}
+    ${t?'':`<p class="lede">${L('全部完成！而家可以自己砌缸，三個瓶都用得。','All done! Build and all three jars are yours.')}</p>`}</section>`;}
+/* 畫面上嘅任務提示（撳去「玩法 › 新手任務」） */
+function renderTaskChip(){const c=$('#taskChip');if(!c)return;const T=PLAY.task,t=TASKS[T.i];if(!t||PLAY.all){c.hidden=true;return;}
+  const next=t.steps.find(s=>!s[1]()),done=t.steps.filter(s=>s[1]()).length;c.hidden=false;
+  c.innerHTML=`📋 <b>${L(`任務 ${T.i+1}`,`Mission ${T.i+1}`)}</b> ${next?esc(N(next[0])):''} <span class="mono">${done}/${t.steps.length}</span>`;
+  c.onclick=()=>{paneTag.play='task';showTab('play');};}
 function bindTravel(){
   const box=$('#ttBox');if(!box)return;
   const run=()=>{toast(L('計緊未來 30 日…','Working out the next 30 days…'));setTimeout(()=>{PLAY.tt=travelPreview(30);PLAY.ttDay=30;box.innerHTML=travelHtml();bindTravel();},30);};

@@ -57,7 +57,7 @@ function renderChrome(){
   document.documentElement.lang=LANG==='en'?'en':'zh-Hant';
   $('#brandT').textContent=L('生態瓶實驗室','Eco Jar Lab');$('#brandS').textContent=L('ECO JAR LAB','生態瓶實驗室');
   $('#playBtn').textContent=S.running?L('暫停','Pause'):L('繼續','Play');
-  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('🔗 分享呢個瓶','🔗 Share this jar');$('#presetBtn').textContent=L('預設組合','Presets');
+  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):(lockOf('feature','build')?'🔒 ':'')+L('自己砌缸','Build');if(typeof renderTaskChip==='function')renderTaskChip();$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('🔗 分享呢個瓶','🔗 Share this jar');$('#presetBtn').textContent=L('預設組合','Presets');
   $('#langBtn').textContent=LANG==='en'?'🌐 中文':'🌐 English';$('#moreBtn').setAttribute('aria-label',L('更多','More'));$('#tourBtn').textContent=L('🧭 新手教學','🧭 Quick guide');$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank'],play:['玩法','Play']};
@@ -67,17 +67,18 @@ function renderChrome(){
 }
 const SPEEDS=[[1,['1 小時/秒','1 h/s']],[4,['4 小時/秒','4 h/s']],[24,['1 日/秒','1 day/s']]];
 function renderSpeed(){$('#speedSeg').innerHTML=SPEEDS.map(([v,l])=>`<button aria-pressed="${S.speed===v}" data-v="${v}">${N(l)}</button>`).join('');
-  $('#speedSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;renderSpeed();});}
+  $('#speedSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;if(S.speed>=24)taskFlag('fast');renderSpeed();});}
 
 const jarNames=()=>S.jars.map((j,i)=>i===S.cur?(S.jarName||L(`瓶 ${i+1}`,`Jar ${i+1}`)):(j&&j.name?j.name:L(`瓶 ${i+1}`,`Jar ${i+1}`)));
-function renderJarSeg(){$('#jarSeg').innerHTML=jarNames().map((n,i)=>{const real=i===S.cur?S.real:(S.jars[i]&&S.jars[i].real);return`<button aria-pressed="${i===S.cur}" data-j="${i}" title="${esc(n)}">${esc(n)}${real?`<span class="realtag">${L('真','REAL')}</span>`:''}</button>`;}).join('');
+function jarLock(i){if(!i||i===S.cur)return null;const j=S.jars[i];if(j&&(j.items||[]).length)return null;return lockOf('feature','jar'+(i+1));}
+function renderJarSeg(){$('#jarSeg').innerHTML=jarNames().map((n,i)=>{const real=i===S.cur?S.real:(S.jars[i]&&S.jars[i].real),lk=jarLock(i);return`<button aria-pressed="${i===S.cur}" data-j="${i}" title="${esc(lk?lockText(lk):n)}" ${lk?'class="locked"':''}>${lk?'🔒 ':''}${esc(n)}${real?`<span class="realtag">${L('真','REAL')}</span>`:''}</button>`;}).join('');
   $('#jarSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>switchJar(+b.dataset.j));}
 $('#playBtn').onclick=()=>{S.running=!S.running;$('#playBtn').classList.toggle('primary',S.running);renderChrome();};
-$('#feedBtn').onclick=()=>{const n=Math.max(1,S.feed),wL=wLOf(S);
+$('#feedBtn').onclick=()=>{taskFlag('feed');const n=Math.max(1,S.feed),wL=wLOf(S);
   if(S.mode==='aqua'){if(!wL){toast(L('未注水，餵唔到','No water to feed into'));return;}S.c.flake+=n;feedFx(n);}
   else{const hasW=wL>0&&S.items.some(i=>i.alive&&isWater(i)&&CAT[i.type].kind==='animal');if(hasW){S.c.flake+=n/2;S.c.feed+=n/2;feedFx(n/2);}else S.c.feed+=n;}
   toast(L(`餵咗 ${n} 份`,`Fed ${n} portion${n>1?'s':''}`));};
-$('#buildHdr').onclick=()=>{if(S.build)exitBuild();else enterBuild();renderChrome();};
+$('#buildHdr').onclick=()=>{if(!S.build){const u=lockOf('feature','build');if(u){toast(lockText(u));return;}}if(S.build)exitBuild();else enterBuild();renderChrome();};
 $('#balBtn').onclick=()=>{toast(L('計緊最平衡嘅設定…','Working out the most balanced setup…'));setTimeout(autoBalance,30);};
 $('#langBtn').onclick=()=>{LANG=LANG==='en'?'zh':'en';pref.set('ecojar.lang',LANG);$('#pane-ana').innerHTML='';renderAll();if(curTab==='ana')renderAnalyze();};
 let clearArm=0;
@@ -98,11 +99,25 @@ function paramChips(type){const c=CAT[type],p=c.params,g=c.g;
   return[];}
 let catTag='all',catQ='',tagScroll=0;
 const tagList=avail=>['all',...Object.keys(TAGS).filter(t=>t!=='all'&&avail.has(t))];
-function dragScroll(el){let sx=0,sl=0,down=false,moved=false;
-  el.onpointerdown=e=>{down=true;moved=false;sx=e.clientX;sl=el.scrollLeft;};
-  el.onpointermove=e=>{if(!down)return;const d=e.clientX-sx;if(Math.abs(d)>4){moved=true;if(e.pointerType==='mouse')el.scrollLeft=sl-d;}};
-  el.onpointerup=el.onpointerleave=el.onpointercancel=()=>{down=false;};
-  el.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);}
+/* 標籤列左右拖：滑鼠拖（捉住指標，拖出範圍都得）、滾輪橫向捲、電腦有 ‹ › 箭咀；手指照用原生捲動 */
+function dragScroll(el){let sx=0,sl=0,down=false,moved=false,pid=null;
+  el.onpointerdown=e=>{if(e.pointerType!=='mouse'||e.button!==0)return;down=true;moved=false;sx=e.clientX;sl=el.scrollLeft;pid=e.pointerId;};
+  el.onpointermove=e=>{if(!down)return;const d=e.clientX-sx;
+    if(!moved&&Math.abs(d)>3){moved=true;try{el.setPointerCapture(pid);}catch(err){}el.style.scrollBehavior='auto';el.classList.add('dragging');}
+    if(moved)el.scrollLeft=sl-d;};
+  const up=()=>{if(!down)return;down=false;el.classList.remove('dragging');el.style.scrollBehavior='';try{if(pid!=null&&el.hasPointerCapture(pid))el.releasePointerCapture(pid);}catch(err){}};
+  el.onpointerup=el.onpointercancel=up;el.onlostpointercapture=up;
+  el.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);
+  el.addEventListener('wheel',e=>{if(el.scrollWidth<=el.clientWidth+1)return;const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(!d)return;
+    e.preventDefault();el.style.scrollBehavior='auto';el.scrollLeft+=d;el.style.scrollBehavior='';},{passive:false});
+  tagArrows(el);}
+function tagArrows(el){if(!matchMedia('(hover:hover) and (pointer:fine)').matches||!el.parentNode||el.parentNode.classList.contains('tagwrap'))return;
+  const w=document.createElement('div');w.className='tagwrap'+(el.classList.contains('ptags')?' ptagwrap':'');el.parentNode.insertBefore(w,el);
+  const mk=(dir,t)=>{const b=document.createElement('button');b.type='button';b.className='tagarr '+(dir<0?'l':'r');b.textContent=dir<0?'‹':'›';b.setAttribute('aria-label',t);
+    b.onclick=()=>el.scrollBy({left:dir*Math.max(120,el.clientWidth*.7),behavior:'smooth'});return b;};
+  const l=mk(-1,L('向左','Scroll left')),r=mk(1,L('向右','Scroll right'));w.append(l,el,r);
+  const upd=()=>{const max=el.scrollWidth-el.clientWidth;l.hidden=el.scrollLeft<=2;r.hidden=max<=2||el.scrollLeft>=max-2;};
+  el.addEventListener('scroll',upd,{passive:true});requestAnimationFrame(upd);}
 function swipeFlip(el,flip){if(el._sw)return;el._sw=1;let sx=0,sy=0,t0=0;
   el.addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;t0=Date.now();},{passive:true});
   el.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.6&&Date.now()-t0<600)flip(dx<0?1:-1);},{passive:true});}
@@ -429,7 +444,7 @@ function renderEnv(){
   const sl=(id,l,v,min,max,step,u,h)=>`<div class="field param"><div class="ph"><label for="${id}">${l}</label><output id="o${id}">${v} ${u}</output></div><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${v}"><small>${h}</small></div>`;
   const hasW=aq?S.filled:S.level>0,adv=x=>`<div data-adv>${x}</div>`;
   $('#pane-env').innerHTML=`
-   <div class="envmode"><div class="seg" role="group" aria-label="${L('設定數量','How many settings')}"><button data-envm="0" aria-pressed="${!envAdv}">${L('簡易','Simple')}</button><button data-envm="1" aria-pressed="${envAdv}">${L('進階','Advanced')}</button></div><span class="lede">${envAdv?L('顯示晒全部設定','Showing every setting'):L('只顯示常用設定；形狀、材質、天氣、風扇、換水等等喺「進階」','Common settings only; shape, material, weather, fan, water changes and more are under Advanced')}</span></div>
+   <div class="envmode"><b>${L('顯示設定','Show settings')}</b><div class="seg" role="group" aria-label="${L('顯示設定','Show settings')}"><button data-envm="0" aria-pressed="${!envAdv}">${L('簡易','Simple')}</button><button data-envm="1" aria-pressed="${envAdv}">${L('進階','Advanced')}</button></div><span class="lede">${envAdv?L('顯示晒全部設定','Showing every setting'):L('只顯示常用設定；形狀、材質、天氣、風扇、換水等等喺「進階」','Common settings only; shape, material, weather, fan, water changes and more are under Advanced')}</span></div>
    ${paneTagBar('env',ENV_TAGS)}
    <div class="field" data-sec="jar"><label for="e-name"><b>${L('呢個瓶嘅名','Name of this jar')}</b></label><input type="text" id="e-name" class="txt" maxlength="16" value="${esc(S.jarName)}" placeholder="${esc(jarNames()[S.cur])}"></div>
    <section class="field" data-sec="place"><h3>${L('地區氣候','Region')}</h3>
@@ -499,7 +514,7 @@ function restoreSnap(d){
   buildJar({keepChem:true});resetChem(S);if(d.c)Object.assign(S.c,d.c);S.log=d.log||[];S.hist=d.hist||[];
 }
 const blankSnap=i=>({terra:null,name:'',region:'hk',real:false,mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:false,light:12,feed:0,pump:false,filter:false,heater:false,fan:false,wc:0,mist:0,heat:false,water:'fresh',filled:false,level:0,hillH:6,breed:true,wxMode:'auto',wx:'sunny',hour:6,day:1,items:[]});
-function switchJar(i){if(i===S.cur)return;S.jars[S.cur]=snapshot();S.cur=i;restoreSnap(S.jars[i]||blankSnap(i));renderAll();save();toast(L('轉咗去 ','Switched to ')+jarNames()[i]);}
+function switchJar(i){if(i===S.cur)return;{const lk=jarLock(i);if(lk){toast(lockText(lk));return;}}S.jars[S.cur]=snapshot();S.cur=i;restoreSnap(S.jars[i]||blankSnap(i));renderAll();save();toast(L('轉咗去 ','Switched to ')+jarNames()[i]);}
 const KEY='ecojar.v4';
 let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{const jars=S.jars.slice();jars[S.cur]=snapshot();S.jars=jars;localStorage.setItem(KEY,JSON.stringify({cur:S.cur,jars,ana:S.ana}));}catch(e){}},500);}
 function load(){

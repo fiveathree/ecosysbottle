@@ -1,7 +1,7 @@
 /* ================= 開始 ================= */
 if(!load()){
-  const p=PRESETS.aqua.eco;Object.assign(S,{mode:'aqua',V:p.V,shape:p.shape,sealed:p.sealed,light:p.light,feed:p.feed});
-  p.items.forEach(([t,n])=>{for(let i=0;i<n;i++){const it=makeItem(t);it.n=nextN(t);S.items.push(it);}});
+  // 新玩家：由一個未注水嘅空瓶開始，跟住「新手任務」一步步砌
+  const p=PRESETS.aqua.zero;Object.assign(S,{mode:'aqua',V:p.V,shape:p.shape,sealed:p.sealed,light:p.light,feed:p.feed,filled:false});
   buildJar({keepChem:true});resetChem(S);
 }
 renderAll();resize();fitOverlays();
