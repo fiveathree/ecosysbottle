@@ -6,6 +6,7 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
 <title>生態瓶實驗室</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='21' y='3' width='22' height='9' rx='2' fill='%23a77a4c'/%3E%3Cpath d='M23 12h18v6c8 4 13 11 13 20 0 13-10 22-22 22S10 51 10 38c0-9 5-16 13-20z' fill='%23e6f3f6' stroke='%230f716b' stroke-width='3'/%3E%3Cpath d='M12.6 34h38.8c.4 1.3.6 2.6.6 4 0 12-9 19-20 19s-20-7-20-19c0-1.4.2-2.7.6-4z' fill='%236cc3c9'/%3E%3Cpath d='M29 55c-2-7 0-13 4-17M35 55c3-4 3-9 1-14' stroke='%233f7d22' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='42' cy='26' r='2.5' fill='%23fff' stroke='%230f716b' stroke-width='1.5'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -151,6 +152,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .switch{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .switch input{width:20px;height:20px;accent-color:var(--accent)}
 .presets{display:grid;gap:8px}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;margin-top:6px}
+.opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:12px}
+.opt:hover{border-color:var(--accent)}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.opt svg{width:32px;height:40px;fill:color-mix(in srgb,var(--o2) 18%,transparent);stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.opt .sw{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:block;margin:4px 0}
+.opt em{font-style:normal;font-size:10.5px;color:var(--muted);font-weight:400;font-family:var(--f-mono)}
 .preset{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:10px 12px}
 .preset:hover{border-color:var(--accent)}
 .preset b{display:block}
@@ -239,9 +247,25 @@ const DEFS={
     {k:'o2PerN',l:'分解耗氧',u:'mg 氧 / mg 氨',min:0,max:6,step:0.1,h:'每分解 1 mg 氨要用幾多氧氣'}]
 };
 const POOLNAME={flake:'飼料',algae:'藻類',detritus:'殘渣'};
+/* 瓶形狀：prof = [半徑比例, 高度比例]，由底到頂 */
+const SHAPES={
+  jar:{n:'梅森罐',R:1,H:2.25,w:.8,prof:[[.95,0],[1,.04],[1,.8],[.9,.87],[.82,.92],[.82,1]]},
+  cyl:{n:'圓柱瓶',R:.95,H:2.4,w:.82,prof:[[1,0],[1,.5],[1,1]]},
+  bowl:{n:'金魚缸',R:1.25,H:2.1,w:.72,prof:[[.6,0],[.85,.08],[.98,.25],[1,.42],[.95,.6],[.8,.78],[.62,.92],[.66,1]]},
+  flask:{n:'燒瓶',R:1.2,H:2.7,w:.6,prof:[[.88,0],[.98,.06],[1,.2],[.94,.4],[.72,.55],[.4,.67],[.32,.74],[.32,.97],[.36,1]]},
+  box:{n:'方缸',R:1,H:1.9,w:.85,box:true,prof:[[1,0],[1,1]]}
+};
+/* 瓶材質：tr = 透光率，影響水草同藻類光合作用 */
+const MATS={
+  glass:{n:'透明玻璃',c:0xdcefff,op:.14,sh:120,tr:1,d:'最常見，透光最好'},
+  acrylic:{n:'亞克力',c:0xeaf6ff,op:.09,sh:45,tr:.92,d:'輕身唔易爛，但會刮花、慢慢變黃'},
+  green:{n:'綠玻璃',c:0x5f9a6a,op:.28,sh:110,tr:.8,d:'濾走部份光，藻類生長慢啲'},
+  amber:{n:'茶色玻璃',c:0xb0702a,op:.32,sh:110,tr:.62,d:'擋光多，水草產氧會明顯減少'},
+  frosted:{n:'磨砂玻璃',c:0xf2f5f5,op:.48,sh:5,tr:.75,d:'光線柔和，但睇唔清入面'}
+};
 
 /* ---------- 狀態 ---------- */
-const S={V:4,sealed:true,light:12,feed:0,feedHour:9,hour:6,day:1,O2:0,CO2:0,NH3:0,NO3:0,algae:3,flake:0,detritus:0,
+const S={V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,feedHour:9,hour:6,day:1,O2:0,CO2:0,NH3:0,NO3:0,algae:3,flake:0,detritus:0,
   items:[],hist:[],log:[],running:true,speed:4,uid:1,sel:null};
 const isLight=h=>{const on=7,off=7+S.light;return S.light>=24||(h>=on&&h<off)||(off>24&&h<off-24);};
 const alive=k=>S.items.filter(i=>i.alive&&CAT[i.type].kind===k);
@@ -280,7 +304,7 @@ function step(){
     const p=it.params,h=it.health;
     useO2(p.resp*Math.max(.3,h));
     if(light){
-      const prod=p.o2Prod*h*co2f, kept=it.type==='duckweed'?0.5:1;
+      const prod=p.o2Prod*h*co2f*MATS[S.mat].tr, kept=it.type==='duckweed'?0.5:1;
       S.O2+=prod*kept;S.CO2=Math.max(0,S.CO2-prod*1.375);o2p+=prod*kept;it.lastProd=prod*kept;
       let need=p.uptake*h;const a=Math.min(S.NH3,need);S.NH3-=a;need-=a;const b=Math.min(S.NO3,need);S.NO3-=b;need-=b;
       it.nShort=need>p.uptake*h*0.7?it.nShort+1:Math.max(0,it.nShort-2);
@@ -319,7 +343,7 @@ function step(){
   }
   // 藻類
   if(light){
-    const no3c=S.NO3/V;let g=(0.04*S.algae+0.01)*(no3c/(no3c+1.5))*Math.max(0,1-S.algae/60)*co2f;
+    const no3c=S.NO3/V;let g=(0.04*S.algae+0.01)*(no3c/(no3c+1.5))*Math.max(0,1-S.algae/60)*co2f*MATS[S.mat].tr;
     g=Math.max(0,Math.min(g,S.NO3/0.01));S.algae+=g;S.NO3-=g*0.01;S.O2+=g*0.6;S.CO2=Math.max(0,S.CO2-g*0.8);o2p+=g*0.6;grown=g;
   }
   useO2(0.003*S.algae);
@@ -329,7 +353,7 @@ function step(){
   let d=S.flake*0.04;S.flake-=d;S.detritus+=d;
   d=S.detritus*0.02;S.detritus-=d;S.NH3+=d*0.1;useO2(d*0.3);
   // 氣體交換
-  const k=S.sealed?0.002:0.06;S.O2+=(8*V-S.O2)*k;S.CO2+=(0.6*V-S.CO2)*k;
+  const k=S.sealed?0.002:0.06*J.open;S.O2+=(8*V-S.O2)*k;S.CO2+=(0.6*V-S.CO2)*k;
   S.O2=clamp(S.O2,0,14*V);for(const key of ['CO2','NH3','NO3','algae','flake','detritus'])S[key]=Math.max(0,S[key]);
   S.hist.push({o2:S.O2/V,nh3:S.NH3/V,no3:S.NO3/V,co2:S.CO2/V,algae:S.algae,light,o2p,o2u,grown});
   if(S.hist.length>240)S.hist.shift();
@@ -345,7 +369,7 @@ function step(){
 function analyze(){
   const V=S.V,L=Math.min(24,S.light);
   let o2In=0,o2Out=0,wIn=0,cap=0,upt=0,need=0,o2N=3.4,hourlyResp=0;
-  alive('plant').forEach(it=>{const p=it.params,h=it.health;o2In+=p.o2Prod*h*L*(it.type==='duckweed'?.5:1);const r=p.resp*Math.max(.3,h);o2Out+=r*24;hourlyResp+=r;upt+=p.uptake*h*L;});
+  alive('plant').forEach(it=>{const p=it.params,h=it.health;o2In+=p.o2Prod*h*L*MATS[S.mat].tr*(it.type==='duckweed'?.5:1);const r=p.resp*Math.max(.3,h);o2Out+=r*24;hourlyResp+=r;upt+=p.uptake*h*L;});
   alive('animal').forEach(it=>{const p=it.params;o2Out+=p.resp*24;hourlyResp+=p.resp;wIn+=p.wasteAmt*24/p.wasteEvery;need+=p.food;});
   alive('microbe').forEach(it=>{cap+=it.params.cap*24*it.health;o2N=it.params.o2PerN;});
   const flakeEaters=alive('animal').reduce((s,it)=>s+(CAT[it.type].diet.flake?it.params.food:0),0);
@@ -368,7 +392,13 @@ const camera=new THREE.PerspectiveCamera(38,1,0.05,100);
 const hemi=new THREE.HemisphereLight(0xdff3ff,0x3b2f22,0.6);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xfff4dc,0.9);sun.position.set(2,6,3);scene.add(sun);
 const fill=new THREE.DirectionalLight(0x8fb7ff,0.25);fill.position.set(-3,2,-2);scene.add(fill);
-const J={R:1,H:2.4,sTop:0.18,wTop:2};
+const J={R:1,H:2.4,sTop:0.18,wTop:2,box:false,pts:[],open:1,minR:1};
+function rAt(y){if(J.box)return J.R;const t=clamp(y/J.H,0,1),P=J.pts;
+  for(let i=1;i<P.length;i++){if(P[i].y>=t){const a=P[i-1],b=P[i],f=(t-a.y)/((b.y-a.y)||1);return(a.x+(b.x-a.x)*f)*J.R;}}return P[P.length-1].x*J.R;}
+function randIn(y,f){if(J.box)return[rnd(-1,1)*J.R*f,rnd(-1,1)*J.R*f];const a=rnd(0,6.28),r=Math.sqrt(Math.random())*rAt(y)*f;return[Math.cos(a)*r,Math.sin(a)*r];}
+function edgeFrac(p){return J.box?Math.max(Math.abs(p.x),Math.abs(p.z))/J.R:Math.hypot(p.x,p.z)/Math.max(.01,rAt(p.y));}
+function clampIn(p,f){if(J.box){const m=J.R*f;p.x=clamp(p.x,-m,m);p.z=clamp(p.z,-m,m);return;}const m=rAt(p.y)*f,r=Math.hypot(p.x,p.z);if(r>m){p.x*=m/r;p.z*=m/r;}}
+function shapeSamples(sh){const pts=sh.prof.map(([r,y])=>new THREE.Vector2(r,y));return pts.length>2?new THREE.SplineCurve(pts).getPoints(60):pts;}
 const jarG=new THREE.Group();scene.add(jarG);
 const world=new THREE.Group();scene.add(world);
 let waterMat,surfMat,lid,lampMat;
@@ -376,30 +406,62 @@ const mat=(c,o)=>new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}));
 
 function buildJar(){
   while(jarG.children.length){disposeObj(jarG.children[0]);}
-  const k=Math.cbrt(S.V/4);J.R=1*k;J.H=2.3*k;J.sTop=0.16*k;J.wTop=J.H*0.82;
-  const {R,H}=J;
-  const glass=new THREE.MeshPhongMaterial({color:0xdcefff,transparent:true,opacity:.14,shininess:120,specular:0xffffff,side:THREE.DoubleSide,depthWrite:false});
-  jarG.add(new THREE.Mesh(new THREE.CylinderGeometry(R,R,H,64,1,true).translate(0,H/2,0),glass));
-  const hl=new THREE.Mesh(new THREE.CylinderGeometry(R*1.003,R*1.003,H*0.9,24,1,true,0.4,0.22).translate(0,H*0.48,0),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.09,side:THREE.DoubleSide,depthWrite:false}));
-  jarG.add(hl);
-  const rim=new THREE.Mesh(new THREE.TorusGeometry(R,0.025*k,8,64),glass.clone());rim.material.opacity=.35;rim.rotation.x=Math.PI/2;rim.position.y=H;jarG.add(rim);
-  const sand=new THREE.Mesh(new THREE.CylinderGeometry(R*.985,R*.985,J.sTop,48),mat(0xcab68c));sand.position.y=J.sTop/2;jarG.add(sand);
+  const sh=SHAPES[S.shape],M=MATS[S.mat],k=Math.cbrt(S.V/4);
+  J.box=!!sh.box;J.R=sh.R*k;J.H=sh.H*k;J.sTop=0.16*k;J.wTop=J.H*sh.w;J.pts=shapeSamples(sh);
+  const {R,H}=J,seg=72;
+  const maxR=J.box?R:Math.max(...J.pts.map(p=>p.x))*R;
+  J.open=J.box?1:Math.pow(rAt(H)/maxR,2);
+  J.minR=J.box?R:Math.min(...[0,.2,.4,.6,.8,1].map(f=>rAt(J.sTop+f*(J.wTop-J.sTop))));
+  const glass=new THREE.MeshPhongMaterial({color:M.c,transparent:true,opacity:M.op,shininess:M.sh,specular:M.sh>20?0xffffff:0x222222,side:THREE.DoubleSide,depthWrite:false});
+  const hlMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:M.sh>20?.09:.02,side:THREE.DoubleSide,depthWrite:false});
+  const lathe=(pts,s0,s1,scale,phi0,phiL)=>{const out=[];const at=y=>rAt(y)/R;
+    out.push(new THREE.Vector2(at(s0)*scale*R,s0));pts.forEach(p=>{const y=p.y*H;if(y>s0&&y<s1)out.push(new THREE.Vector2(p.x*scale*R,y));});out.push(new THREE.Vector2(at(s1)*scale*R,s1));
+    return new THREE.LatheGeometry(out,phiL?16:seg,phi0||0,phiL||Math.PI*2);};
+  const hidden=new THREE.MeshBasicMaterial({visible:false});
+  if(J.box){
+    const g=new THREE.BoxGeometry(2*R,H,2*R).translate(0,H/2,0);
+    jarG.add(new THREE.Mesh(g,[glass,glass,hidden,glass,glass,glass]));
+    const edges=new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0x2c3a3c,transparent:true,opacity:.55}));jarG.add(edges);
+    const hl=new THREE.Mesh(new THREE.PlaneGeometry(R*.12,H*.85),hlMat);hl.position.set(R*.55,H*.5,R+.004);jarG.add(hl);
+  } else {
+    jarG.add(new THREE.Mesh(lathe(J.pts,0,H,1),glass));
+    jarG.add(new THREE.Mesh(lathe(J.pts,H*.04,H*.96,1.004,.4,.24),hlMat));
+    const bot=new THREE.Mesh(new THREE.CircleGeometry(rAt(0),seg),glass);bot.rotation.x=-Math.PI/2;jarG.add(bot);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(rAt(H),0.025*k,8,seg),glass.clone());rim.material.opacity=Math.min(.6,M.op*2.5);rim.rotation.x=Math.PI/2;rim.position.y=H;jarG.add(rim);
+  }
+  // 沙
+  const sandM=mat(0xcab68c);
+  if(J.box){const s=new THREE.Mesh(new THREE.BoxGeometry(2*R*.985,J.sTop,2*R*.985),sandM);s.position.y=J.sTop/2;jarG.add(s);}
+  else{const pts=[new THREE.Vector2(0,0),new THREE.Vector2(rAt(0)*.985,0),new THREE.Vector2(rAt(J.sTop)*.985,J.sTop),new THREE.Vector2(0,J.sTop)];
+    jarG.add(new THREE.Mesh(new THREE.LatheGeometry(pts,48),sandM));}
   const pm=[mat(0x6b665e),mat(0x8f8578),mat(0x4f4a44)];
-  for(let i=0;i<14;i++){const a=Math.random()*6.28,r=Math.sqrt(Math.random())*R*.85,s=rnd(.04,.09)*k;
-    const p=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),pm[i%3]);p.scale.y=.55;p.position.set(Math.cos(a)*r,J.sTop+s*.3,Math.sin(a)*r);p.rotation.y=a;jarG.add(p);}
-  waterMat=new THREE.MeshPhongMaterial({color:0x9fd6e0,transparent:true,opacity:.18,shininess:60,depthWrite:false});
-  const water=new THREE.Mesh(new THREE.CylinderGeometry(R*.985,R*.985,J.wTop-J.sTop,64,1,true).translate(0,(J.wTop+J.sTop)/2,0),waterMat);
-  water.material.side=THREE.DoubleSide;jarG.add(water);
+  for(let i=0;i<14;i++){const s=rnd(.04,.09)*k,[x,z]=randIn(J.sTop,.82);
+    const p=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),pm[i%3]);p.scale.y=.55;p.position.set(x,J.sTop+s*.3,z);p.rotation.y=i;jarG.add(p);}
+  // 水
+  waterMat=new THREE.MeshPhongMaterial({color:0x9fd6e0,transparent:true,opacity:.18,shininess:60,depthWrite:false,side:THREE.DoubleSide});
   surfMat=new THREE.MeshPhongMaterial({color:0xbfe6ee,transparent:true,opacity:.32,shininess:140,specular:0xffffff,side:THREE.DoubleSide,depthWrite:false});
-  const surf=new THREE.Mesh(new THREE.CircleGeometry(R*.985,64),surfMat);surf.rotation.x=-Math.PI/2;surf.position.y=J.wTop;jarG.add(surf);
+  if(J.box){
+    const w=new THREE.Mesh(new THREE.BoxGeometry(2*R*.985,J.wTop-J.sTop,2*R*.985).translate(0,(J.wTop+J.sTop)/2,0),[waterMat,waterMat,hidden,hidden,waterMat,waterMat]);jarG.add(w);
+    const s=new THREE.Mesh(new THREE.PlaneGeometry(2*R*.985,2*R*.985),surfMat);s.rotation.x=-Math.PI/2;s.position.y=J.wTop;jarG.add(s);
+  } else {
+    jarG.add(new THREE.Mesh(lathe(J.pts,J.sTop,J.wTop,.985),waterMat));
+    const s=new THREE.Mesh(new THREE.CircleGeometry(rAt(J.wTop)*.985,seg),surfMat);s.rotation.x=-Math.PI/2;s.position.y=J.wTop;jarG.add(s);
+  }
+  // 蓋
   lid=new THREE.Group();
-  const cork=new THREE.Mesh(new THREE.CylinderGeometry(R*.97,R*.93,0.22*k,48),mat(0xa77a4c));cork.position.y=H+0.06*k;lid.add(cork);
+  if(J.box){const l=new THREE.Mesh(new THREE.BoxGeometry(2*R+.04,.03,2*R+.04),glass.clone());l.material.opacity=Math.min(.6,M.op*2);l.position.y=H+.02;lid.add(l);}
+  else{const rt=rAt(H);const cork=new THREE.Mesh(new THREE.CylinderGeometry(rt*.97,rt*.9,Math.max(.12,rt*.25),40),mat(0xa77a4c));cork.position.y=H+.03;lid.add(cork);}
   jarG.add(lid);lid.visible=S.sealed;
   lampMat=new THREE.MeshBasicMaterial({color:0xfff3c4});
-  const lamp=new THREE.Mesh(new THREE.CylinderGeometry(R*.5,R*.5,0.04,32),lampMat);lamp.position.y=H+0.9*k;jarG.add(lamp);
-  const cord=new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,3,4),mat(0x333333));cord.position.y=H+0.9*k+1.5;jarG.add(cord);
-  S.items.forEach(placeItem);
-  cam.target.set(0,H*0.45,0);cam.dist=Math.max(cam.dist||0,0)||H*2.6;cam.dist=clamp(cam.dist,H*1.2,H*5);
+  const ly=H+0.9*k;
+  const lamp=new THREE.Mesh(new THREE.CylinderGeometry(maxR*.5,maxR*.5,0.04,32),lampMat);lamp.position.y=ly;jarG.add(lamp);
+  const cord=new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,3,4),mat(0x333333));cord.position.y=ly+1.5;jarG.add(cord);
+  // 重建生物（形狀變咗要重新擺）
+  S.items.forEach(it=>{if(it.g)disposeObj(it.g);if(!it.alive){it.gone=true;it.g=null;return;}buildItem(it);});
+  S.items=S.items.filter(i=>!i.gone);
+  if(S.sel&&!S.items.includes(S.sel))S.sel=null;
+  dirtyList=true;
+  cam.target.set(0,H*0.45,0);cam.dist=Math.max(H,maxR*2)*2.5;
   buildMicrobeLayer();
 }
 function disposeObj(o){if(!o)return;o.parent&&o.parent.remove(o);o.traverse(c=>{c.geometry&&c.geometry.dispose();if(c.material)(Array.isArray(c.material)?c.material:[c.material]).forEach(m=>m.dispose());});}
@@ -407,7 +469,7 @@ function disposeObj(o){if(!o)return;o.parent&&o.parent.remove(o);o.traverse(c=>{
 /* 生物模型 */
 function plantHornwort(){
   const g=new THREE.Group(),h=clamp(rnd(.65,1)*(J.wTop-J.sTop)*.8,.4,3);
-  const bx=rnd(-.2,.2),bz=rnd(-.2,.2),pts=[];
+  const bb=Math.min(.2,J.minR*.15),bx=rnd(-bb,bb),bz=rnd(-bb,bb),pts=[];
   for(let i=0;i<=4;i++){const t=i/4;pts.push(new THREE.Vector3(bx*t*t,t*h,bz*t*t));}
   const curve=new THREE.CatmullRomCurve3(pts),m=mat(CAT.hornwort.color);
   g.add(new THREE.Mesh(new THREE.TubeGeometry(curve,16,0.01,5,false),m));
@@ -472,7 +534,7 @@ let microbeLayer=null;
 function buildMicrobeLayer(){
   if(microbeLayer)disposeObj(microbeLayer);
   const n=160,pos=new Float32Array(n*3);
-  for(let i=0;i<n;i++){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*J.R*.92;pos[i*3]=Math.cos(a)*r;pos[i*3+1]=J.sTop+rnd(0,.05);pos[i*3+2]=Math.sin(a)*r;}
+  for(let i=0;i<n;i++){const [x,z]=randIn(J.sTop,.92);pos[i*3]=x;pos[i*3+1]=J.sTop+rnd(0,.05);pos[i*3+2]=z;}
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
   microbeLayer=new THREE.Points(geo,new THREE.PointsMaterial({color:0xf2e2a0,size:.022,transparent:true,opacity:0,depthWrite:false}));
   world.add(microbeLayer);
@@ -483,18 +545,23 @@ function buildItem(it){
   else if(t==='guppy')g=fishModel(0xe8a04a,[0x3a6fd8,0xd8463a,0x8a3ad8][it.n%3],.055,false);
   else if(t==='minnow')g=fishModel(0xc9d3c2,0xd3473a,.05,true);
   else if(t==='shrimp')g=shrimpModel();else if(t==='snail')g=snailModel();
-  else {g=new THREE.Group();const s=new THREE.Mesh(new THREE.CylinderGeometry(J.R*.5,J.R*.5,.02,24),new THREE.MeshBasicMaterial({visible:false}));g.add(s);}
+  else {g=new THREE.Group();const s=new THREE.Mesh(new THREE.CylinderGeometry(rAt(J.sTop)*.5,rAt(J.sTop)*.5,.02,24),new THREE.MeshBasicMaterial({visible:false}));g.add(s);}
   g.userData.uid=it.uid;it.g=g;world.add(g);
   it.m={p:new THREE.Vector3(),v:new THREE.Vector3(),tgt:new THREE.Vector3(),tt:0,spd:.05,hd:rnd(0,6.28),ph:rnd(0,6)};
   placeItem(it);
 }
 function placeItem(it){
-  const k=CAT[it.type].kind,R=J.R;
+  const k=CAT[it.type].kind;
   if(k==='plant'){
-    const r=it.type==='duckweed'?.6:.82;
-    it.g.position.set(it.rx*R*r,it.type==='duckweed'?J.wTop:J.sTop,it.rz*R*r);
+    let y=J.sTop,f=Math.min(J.minR,rAt(J.sTop))*.72;
+    if(it.type==='moss')f=rAt(J.sTop)*.75;
+    if(it.type==='duckweed'){y=J.wTop;f=rAt(J.wTop)*.55;}
+    if(J.box)f=J.R*(it.type==='duckweed'?.6:.78);
+    it.g.position.set(it.rx*f,y,it.rz*f);
   } else if(k==='animal'){
-    const m=it.m;m.p.set(it.rx*R*.7,CAT[it.type].move==='swim'?rnd(J.sTop+.2,J.wTop-.15):J.sTop+.02,it.rz*R*.7);
+    const m=it.m,swim=CAT[it.type].move==='swim';
+    m.p.set(it.rx,swim?rnd(J.sTop+.2,J.wTop-.15):J.sTop+.02,it.rz);
+    const f=(J.box?J.R:rAt(m.p.y))*.7;m.p.x*=f;m.p.z*=f;
     m.tgt.copy(m.p);it.g.position.copy(m.p);
   } else it.g.position.set(0,J.sTop,0);
 }
@@ -505,7 +572,7 @@ const bubMat=new THREE.MeshPhongMaterial({color:0xffffff,transparent:true,opacit
 const poopMat=mat(0x5a4630),flakeMat=mat(0xe07a2e);
 const bubbles=[],poops=[],flakes=[];
 function spawn(list,matl,s,max){let o=list.find(b=>!b.visible);if(!o){if(list.length>=max)return null;o=new THREE.Mesh(fxGeo,matl);world.add(o);list.push(o);}o.visible=true;o.scale.setScalar(s);o.userData.age=0;return o;}
-function feedFx(n){const c=Math.min(30,Math.round(n*8));for(let i=0;i<c;i++){const f=spawn(flakes,flakeMat,.012,40);if(!f)break;const a=rnd(0,6.28),r=rnd(0,J.R*.5);f.position.set(Math.cos(a)*r,J.wTop-.01,Math.sin(a)*r);f.scale.set(.014,.004,.012);f.userData.vy=rnd(.02,.05);}}
+function feedFx(n){const c=Math.min(30,Math.round(n*8));for(let i=0;i<c;i++){const f=spawn(flakes,flakeMat,.012,40);if(!f)break;const [x,z]=randIn(J.wTop,.5);f.position.set(x,J.wTop-.01,z);f.scale.set(.014,.004,.012);f.userData.vy=rnd(.02,.05);}}
 function selRing(){const r=new THREE.Mesh(new THREE.TorusGeometry(1,.06,8,40),new THREE.MeshBasicMaterial({color:0x46b8ac,transparent:true,opacity:.9,depthTest:false}));r.rotation.x=Math.PI/2;r.renderOrder=10;r.visible=false;world.add(r);return r;}
 const ring=selRing();
 
@@ -574,28 +641,28 @@ function animate(dt,hf){
       continue;
     }
     if(k!=='animal')continue;
-    const mv=CAT[it.type].move,p=it.params,u=g.userData;const Rw=J.R*.88;
+    const mv=CAT[it.type].move,p=it.params,u=g.userData;
     if(mv==='swim'){
       m.tt-=dt;const gasp=oc<p.o2Min+.6;
-      if(m.tt<=0||m.p.distanceTo(m.tgt)<.08){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*Rw*.85;m.tgt.set(Math.cos(a)*r,rnd(J.sTop+.15,J.wTop-.12),Math.sin(a)*r);m.tt=rnd(2.5,6);}
-      if(gasp)m.tgt.y=J.wTop-.07;
+      if(m.tt<=0||m.p.distanceTo(m.tgt)<.08){const y=rnd(J.sTop+.15,J.wTop-.12),[x,z]=randIn(y,.72);m.tgt.set(x,y,z);m.tt=rnd(2.5,6);}
+      if(gasp){m.tgt.y=J.wTop-.07;clampIn(m.tgt,.7);}
       const spd=(it.stress?.14:.24)*(.5+.5*it.health);
       const des=m.tgt.clone().sub(m.p);const dl=des.length();if(dl>1e-4)des.multiplyScalar(spd/dl);
       m.v.lerp(des,Math.min(1,dt*1.6));
       u.tail.rotation.y=Math.sin(tAll*(8+m.v.length()*30)+m.ph)*.45;
     } else if(mv==='hop'){
       m.tt-=dt;
-      if(m.tt<=0){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*Rw*.85;m.tgt.set(Math.cos(a)*r,J.sTop+rnd(.02,.45),Math.sin(a)*r);m.tt=rnd(1.5,5);m.spd=rnd(.18,.32);}
+      if(m.tt<=0){const y=J.sTop+rnd(.02,Math.min(.45,J.wTop-J.sTop-.1)),[x,z]=randIn(y,.75);m.tgt.set(x,y,z);m.tt=rnd(1.5,5);m.spd=rnd(.18,.32);}
       m.spd=Math.max(.015,m.spd*(1-dt*1.4));
       const des=m.tgt.clone().sub(m.p);const dl=des.length();if(dl>.02)des.multiplyScalar(m.spd/dl);else des.set(0,-.02,0);
       m.v.lerp(des,Math.min(1,dt*3));
     } else {
-      m.hd+=rnd(-1,1)*dt*.8;const r=Math.hypot(m.p.x,m.p.z);if(r>Rw*.9)m.hd=Math.atan2(-m.p.z,-m.p.x)+rnd(-.3,.3);
+      m.hd+=rnd(-1,1)*dt*.8;if(edgeFrac(m.p)>.8)m.hd=Math.atan2(-m.p.z,-m.p.x)+rnd(-.3,.3);
       const s=.02*(.4+.6*it.health);m.v.set(Math.cos(m.hd)*s,0,Math.sin(m.hd)*s);
     }
     m.p.addScaledVector(m.v,dt*vis);
-    const r=Math.hypot(m.p.x,m.p.z);if(r>Rw){m.p.x*=Rw/r;m.p.z*=Rw/r;}
     m.p.y=clamp(m.p.y,J.sTop+.02,J.wTop-.04);if(mv==='crawl')m.p.y=J.sTop+.005;
+    clampIn(m.p,.86);
     g.position.copy(m.p);
     if(m.v.lengthSq()>1e-7){g.rotation.y=Math.atan2(-m.v.z,m.v.x);const hz=Math.hypot(m.v.x,m.v.z);g.rotation.z=mv==='crawl'?0:clamp(Math.atan2(m.v.y,hz),-.5,.5);}
   }
@@ -609,7 +676,7 @@ function animate(dt,hf){
   // 選取光圈
   if(S.sel&&S.sel.alive&&S.sel.g){const it=S.sel,k=CAT[it.type].kind;ring.visible=true;
     if(k==='animal'){ring.position.copy(it.g.position);ring.scale.setScalar(.1);}
-    else if(k==='microbe'){ring.position.set(0,J.sTop+.02,0);ring.scale.setScalar(J.R*.7);}
+    else if(k==='microbe'){ring.position.set(0,J.sTop+.02,0);ring.scale.setScalar(rAt(J.sTop)*.7);}
     else{ring.position.set(it.g.position.x,it.g.position.y+.02,it.g.position.z);ring.scale.setScalar(it.type==='duckweed'?.26:.16);}
     ring.material.opacity=.55+.35*Math.sin(tAll*4);} else ring.visible=false;
   if(!ptrs.size){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
@@ -774,16 +841,27 @@ function drawChart(){
 }
 
 const PRESETS={
-  eco:{n:'密封生態瓶',d:'4L 密封，金魚藻 + 莫絲 + 米蝦 + 石田螺 + 硝化菌，唔使餵。',V:4,sealed:true,light:12,feed:0,items:[['hornwort',2],['moss',1],['vallis',1],['shrimp',5],['snail',2],['bacteria',1]]},
-  tank:{n:'開口小魚缸',d:'10L 開口，孔雀魚 4 條，每日餵 3 份。',V:10,sealed:false,light:10,feed:3,items:[['hornwort',2],['vallis',2],['duckweed',1],['guppy',4],['snail',1],['bacteria',1]]},
-  bad:{n:'失衡示範',d:'3L 密封，5 條孔雀魚只得一撮莫絲，冇硝化菌。睇吓會發生咩事。',V:3,sealed:true,light:12,feed:2,items:[['moss',1],['guppy',5]]}
+  eco:{n:'密封生態瓶',d:'4L 密封，金魚藻 + 莫絲 + 米蝦 + 石田螺 + 硝化菌，唔使餵。',V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,items:[['hornwort',2],['moss',1],['vallis',1],['shrimp',5],['snail',2],['bacteria',1]]},
+  tank:{n:'開口小魚缸',d:'10L 方缸開口，孔雀魚 4 條，每日餵 3 份。',V:10,shape:'box',mat:'glass',sealed:false,light:10,feed:3,items:[['hornwort',2],['vallis',2],['duckweed',1],['guppy',4],['snail',1],['bacteria',1]]},
+  bad:{n:'失衡示範',d:'3L 密封金魚缸，5 條孔雀魚只得一撮莫絲，冇硝化菌。睇吓會發生咩事。',V:3,shape:'bowl',mat:'glass',sealed:true,light:12,feed:2,items:[['moss',1],['guppy',5]]}
 };
 function loadPreset(key){const p=PRESETS[key];S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;
-  Object.assign(S,{V:p.V,sealed:p.sealed,light:p.light,feed:p.feed});resetChem();buildJar();
+  Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat,sealed:p.sealed,light:p.light,feed:p.feed});resetChem();buildJar();
   p.items.forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);});
   renderAll();save();toast('已載入：'+p.n);}
+function shapeIcon(k){const sh=SHAPES[k];
+  if(sh.box)return`<svg viewBox="0 0 40 50" aria-hidden="true"><rect x="5" y="${46-sh.H/2.7*40}" width="30" height="${sh.H/2.7*40}" rx="1"/></svg>`;
+  const pts=shapeSamples(sh).map(p=>[p.x*sh.R*14,46-p.y*sh.H/2.7*40]);
+  const d='M'+pts.map(([x,y])=>`${(20+x).toFixed(1)} ${y.toFixed(1)}`).join('L')+'L'+[...pts].reverse().map(([x,y])=>`${(20-x).toFixed(1)} ${y.toFixed(1)}`).join('L')+'Z';
+  return`<svg viewBox="0 0 40 50" aria-hidden="true"><path d="${d}"/></svg>`;}
+function matHex(k){return'#'+MATS[k].c.toString(16).padStart(6,'0');}
 function renderEnv(){
   $('#pane-env').innerHTML=`
+   <section class="field"><h3>瓶形狀</h3><div class="opts">${Object.entries(SHAPES).map(([k,sh])=>`<button class="opt" data-shape="${k}" aria-pressed="${S.shape===k}">${shapeIcon(k)}<span>${sh.n}</span></button>`).join('')}</div>
+     <small class="lede">開口越窄，打開蓋時換氣越慢。而家開口換氣效率：${Math.round(J.open*100)}%</small></section>
+   <section class="field"><h3>瓶材質</h3><div class="opts">${Object.entries(MATS).map(([k,m])=>`<button class="opt" data-mat="${k}" aria-pressed="${S.mat===k}"><i class="sw" style="background:${matHex(k)};opacity:${Math.min(1,m.op*2.5+.3)}"></i><span>${m.n}</span><em>透光 ${Math.round(m.tr*100)}%</em></button>`).join('')}</div>
+     <small class="lede">${MATS[S.mat].n}：${MATS[S.mat].d}。透光率會直接乘落水草同藻類嘅光合作用。</small></section>
+
    <div class="field param"><div class="ph"><label for="e-V">瓶容量</label><output id="eo-V">${S.V} L</output></div><input type="range" id="e-V" min="1" max="20" step="1" value="${S.V}"><small>水量越多，氧氣同毒素變化越慢，越易穩定。</small></div>
    <div class="field param"><div class="ph"><label for="e-L">每日光照</label><output id="eo-L">${S.light} 小時</output></div><input type="range" id="e-L" min="0" max="24" step="1" value="${S.light}"><small>朝早 7 點開燈。光照長產氧多，但藻類都會長得快。</small></div>
    <div class="field param"><div class="ph"><label for="e-F">每日餵食</label><output id="eo-F">${S.feed} 份</output></div><input type="range" id="e-F" min="0" max="6" step="0.5" value="${S.feed}"><small>每朝 9 點自動落飼料。食唔晒會腐爛變氨。</small></div>
@@ -794,6 +872,8 @@ function renderEnv(){
   bind('e-V','eo-V',v=>{const r=v/S.V;['O2','CO2','NH3','NO3'].forEach(k=>S[k]*=r);S.V=v;buildJar();},' L');
   bind('e-L','eo-L',v=>S.light=v,' 小時');bind('e-F','eo-F',v=>S.feed=v,' 份');
   $('#e-S').onchange=e=>{S.sealed=e.target.checked;save();};
+  $('#pane-env').querySelectorAll('[data-shape]').forEach(b=>b.onclick=()=>{S.shape=b.dataset.shape;buildJar();renderEnv();renderJarList();renderEditor();save();toast('換咗做'+SHAPES[S.shape].n);});
+  $('#pane-env').querySelectorAll('[data-mat]').forEach(b=>b.onclick=()=>{S.mat=b.dataset.mat;buildJar();renderEnv();save();toast('換咗做'+MATS[S.mat].n);});
   $('#pane-env').querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>loadPreset(b.dataset.p));
   $('#e-restart').onclick=()=>{resetChem();S.items=S.items.filter(i=>{if(!i.alive){disposeObj(i.g);return false;}return true;});S.items.forEach(i=>{i.health=1;i.satiety=1;});renderAll();toast('時間重新開始');};
   $('#e-clear').onclick=()=>{S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;resetChem();renderAll();save();toast('已清空');};
@@ -801,13 +881,13 @@ function renderEnv(){
 function renderAll(){renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(curTab==='bal')renderBalance();}
 
 /* 儲存（只存設定） */
-let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem('ecojar.v1',JSON.stringify({V:S.V,sealed:S.sealed,light:S.light,feed:S.feed,items:S.items.filter(i=>i.alive).map(i=>[i.type,i.params])}));}catch(e){}},400);}
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem('ecojar.v1',JSON.stringify({V:S.V,shape:S.shape,mat:S.mat,sealed:S.sealed,light:S.light,feed:S.feed,items:S.items.filter(i=>i.alive).map(i=>[i.type,i.params])}));}catch(e){}},400);}
 function load(){try{const d=JSON.parse(localStorage.getItem('ecojar.v1')||'null');if(!d||!d.items)return false;
-  Object.assign(S,{V:d.V,sealed:d.sealed,light:d.light,feed:d.feed});resetChem();buildJar();d.items.forEach(([t,p])=>CAT[t]&&addItem(t,p,true));return true;}catch(e){return false;}}
+  Object.assign(S,{V:d.V,shape:SHAPES[d.shape]?d.shape:'jar',mat:MATS[d.mat]?d.mat:'glass',sealed:d.sealed,light:d.light,feed:d.feed});resetChem();buildJar();d.items.forEach(([t,p])=>CAT[t]&&addItem(t,p,true));return true;}catch(e){return false;}}
 
 /* 開始 */
 renderSpeed();
-if(!load()){const p=PRESETS.eco;Object.assign(S,{V:p.V,sealed:p.sealed,light:p.light,feed:p.feed});resetChem();buildJar();p.items.forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);});}
+if(!load()){const p=PRESETS.eco;Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat,sealed:p.sealed,light:p.light,feed:p.feed});resetChem();buildJar();p.items.forEach(([t,n])=>{for(let i=0;i<n;i++)addItem(t,null,true);});}
 renderAll();resize();
 let last=performance.now(),acc=0,lastUI=0,lastBal=0;
 function frame(t){
