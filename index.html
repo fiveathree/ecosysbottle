@@ -1362,12 +1362,13 @@ function crabModel(color,shell){
 }
 function eelModel(){
   const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const m=mat(0xe8e2d2),k=mat(0x1a1a1a);
-  const pts=[[0,0,0],[.006,.06,0],[-.004,.12,0],[.008,.18,0],[.02,.21,0]].map(p=>new THREE.Vector3(p[0],p[1],p[2]));
-  inner.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),20,.008,6,false),m));
-  for(let i=0;i<9;i++){const sp=new THREE.Mesh(new THREE.SphereGeometry(.004,5,4),k);const t=i/9;sp.position.set(Math.sin(t*6)*.005+.008*(i%2?1:-1),.02+t*.17,.004*(i%2?1:-1));inner.add(sp);}
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.011,8,6),m);head.position.set(.022,.212,0);head.scale.set(1.5,1,1);inner.add(head);
-  [1,-1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.004,6,6),k);e.position.set(.03,.216,s*.007);inner.add(e);});
-  const hole=new THREE.Mesh(new THREE.CircleGeometry(.018,12),mat(0x8a7a5a));hole.rotation.x=-Math.PI/2;hole.position.y=.002;g.add(hole);
+  // 比以前高少少、粗少少，唔好溶入沙度睇唔到
+  const pts=[[0,0,0],[.008,.075,0],[-.005,.15,0],[.01,.225,0],[.025,.262,0]].map(p=>new THREE.Vector3(p[0],p[1],p[2]));
+  inner.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),24,.011,7,false),m));
+  for(let i=0;i<11;i++){const sp=new THREE.Mesh(new THREE.SphereGeometry(.005,5,4),k);const t=i/11;sp.position.set(Math.sin(t*6)*.006+.01*(i%2?1:-1),.025+t*.21,.006*(i%2?1:-1));inner.add(sp);}
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.014,8,6),m);head.position.set(.028,.265,0);head.scale.set(1.5,1,1);inner.add(head);
+  [1,-1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.005,6,6),k);e.position.set(.037,.27,s*.009);inner.add(e);});
+  const hole=new THREE.Mesh(new THREE.CircleGeometry(.024,12),mat(0x6e5f42));hole.rotation.x=-Math.PI/2;hole.position.y=.002;g.add(hole);
   g.userData={inner};return g;
 }
 function swarmPoints(n,color,size,rad){
@@ -1479,6 +1480,14 @@ function buildItem(it){
   it.m={p:new THREE.Vector3(),v:new THREE.Vector3(),tgt:new THREE.Vector3(),prev:new THREE.Vector3(),tt:0,spd:.05,hd:rnd(0,6.28),ph:rnd(0,6),hop:0,h0:new THREE.Vector3()};
   placeItem(it);
 }
+/* 花園鰻要鑽沙：揀空曠嘅沙地，避開石頭假山、離開玻璃邊，唔好同其他花園鰻擠埋一齊 */
+function eelSpot(it){
+  const hard=S.items.filter(i=>i.alive&&i.g&&CAT[i.type].kind==='decor').map(i=>new THREE.Box3().setFromObject(i.g).expandByScalar(.06));
+  const mates=S.items.filter(i=>i!==it&&i.type==='gardeneel'&&i.m&&i.g).map(i=>i.m.p);let best=null,bs=-1;
+  for(let n=0;n<40;n++){const [x,z]=randIn(J.sTop,.62),y=groundY(x,z)+.05;if(J.waterTop!=null&&!inWater(x,z,.15))continue;
+    if(hard.some(b=>b.containsPoint(new THREE.Vector3(x,y,z))))continue;
+    const d=mates.reduce((a,p)=>Math.min(a,Math.hypot(p.x-x,p.z-z)),9);if(d>.25)return[x,z];if(d>bs){bs=d;best=[x,z];}}
+  return best||randIn(J.sTop,.5);}
 function plantF(it){if(it.type==='duckweed')return J.box?J.R*.6:rAt(J.waterTop||J.sTop)*.55;if(J.box)return J.R*.78;if(['moss','cmoss','marimo'].includes(it.type))return rAt(J.sTop)*.75;return Math.min(J.minR,rAt(J.sTop))*.72;}
 function placeItem(it){
   const C=CAT[it.type],k=C.kind,g=it.g;if(!g)return;
@@ -1502,7 +1511,7 @@ function placeItem(it){
     else if(hab==='land'){[x,z]=landPoint();}
     else{const p=Math.random()<.5&&J.waterTop!=null?waterPoint(.05):landPoint();[x,z]=p||[0,0];}
     const gy=groundY(x,z),swim=['swim','swarm','jelly','seahorse','aqturtle'].includes(mv);
-    if(mv==='eel'){m.p.set(x,gy,z);g.position.copy(m.p);g.rotation.y=rnd(0,6.28);m.prev.copy(m.p);m.tgt.copy(m.p);return;}
+    if(mv==='eel'){[x,z]=eelSpot(it);const gy=groundY(x,z);m.p.set(x,gy,z);g.position.copy(m.p);g.rotation.y=rnd(0,6.28);m.prev.copy(m.p);m.tgt.copy(m.p);return;}
     let y=gy+.01;if(swim&&J.waterTop!=null)y=rnd(gy+.1,Math.max(gy+.1,J.waterTop-.08));
     m.p.set(x,y,z);m.prev.copy(m.p);m.tgt.copy(m.p);g.position.copy(m.p);
     if(it.agents)it.agents.forEach(a=>{const [ax,az]=landPoint();a.p.set(x*.5+ax*.5,0,z*.5+az*.5);a.p.y=groundY(a.p.x,a.p.z)+.006;a.mesh.position.copy(a.p);});
