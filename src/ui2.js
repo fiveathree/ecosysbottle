@@ -132,7 +132,7 @@ const METER_FIX={wo2:v=>['pump','open','balance'],wnh3:v=>['wc','feedLess','nitr
   ao2:v=>['open'],co2:v=>['open'],waste:v=>['isopod','feedLess'],mould:v=>['spring','open'],
   hum:v=>{const r=rangeOf('hum');return r&&v<r[0]?['mistMore','seal']:['open','mistLess'];},T:v=>{const r=rangeOf('t');return r&&v<r[0]?['heat']:['cool'];}};
 const STRESS_FIX={noO2:['pump','open'],nh3:['wc','feedLess','nitri'],cold:['heat'],hot:['cool'],hungry:['feedNow','feedMore'],dry:['mistMore','seal'],wet:['open','mistLess'],
-  co2:['open'],mould:['spring','open'],flow:['flowOff'],noSand:['sand'],noMud:['soil'],noRock:['stone'],noSoil:['soil'],lowLight:['lightMore'],hiN:['wc'],lowN:['feedMore']};
+  co2:['open'],mould:['spring','open'],flow:['flowOff'],noSand:['sand'],attacked:[],noMud:['soil'],noRock:['stone'],noSoil:['soil'],lowLight:['lightMore'],hiN:['wc'],lowN:['feedMore']};
 function liveIssues(){
   const out=[],aq=S.mode==='aqua',wL=wLOf(S);
   if(aq&&!wL)out.push({cls:'warn',t:L('未注水','No water'),d:L('水中生物冇水會死。','Water life dies without water.'),fixes:['fill']});

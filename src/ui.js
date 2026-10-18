@@ -72,12 +72,12 @@ function paramChips(type){const c=CAT[type],p=c.params,g=c.g;
   if(g==='sub')return[L(`厚 ${p.depth} cm`,`${p.depth} cm thick`)];
   if(g==='decor')return[c.rock?L('細菌附著 +20%','+20% bacteria surface'):L('純裝飾','decorative')];
   return[];}
-let catTag='all',catQ='';
+let catTag='all',catQ='',tagScroll=0;
 const tagList=avail=>['all',...Object.keys(TAGS).filter(t=>t!=='all'&&avail.has(t))];
 function dragScroll(el){let sx=0,sl=0,down=false,moved=false;
-  el.onpointerdown=e=>{if(e.pointerType!=='mouse')return;down=true;moved=false;sx=e.clientX;sl=el.scrollLeft;};
-  el.onpointermove=e=>{if(!down)return;const d=e.clientX-sx;if(Math.abs(d)>4)moved=true;el.scrollLeft=sl-d;};
-  el.onpointerup=el.onpointerleave=()=>{down=false;};
+  el.onpointerdown=e=>{down=true;moved=false;sx=e.clientX;sl=el.scrollLeft;};
+  el.onpointermove=e=>{if(!down)return;const d=e.clientX-sx;if(Math.abs(d)>4){moved=true;if(e.pointerType==='mouse')el.scrollLeft=sl-d;}};
+  el.onpointerup=el.onpointerleave=el.onpointercancel=()=>{down=false;};
   el.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);}
 function swipeFlip(el,flip){if(el._sw)return;el._sw=1;let sx=0,sy=0,t0=0;
   el.addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;t0=Date.now();},{passive:true});
@@ -91,13 +91,10 @@ function renderCatalog(){
   const pa=$('#pane-add');
   if(!$('#catBar')){pa.innerHTML=`<div class="catbar" id="catBar"></div><div id="catList" class="catlist"></div>`;}
   $('#catBar').innerHTML=`<input type="search" id="catQ" class="txt" placeholder="${L('搜尋名稱，例如 蝦、fern','Search, e.g. shrimp, 蝦')}" value="${esc(catQ)}">
-    <div class="tagwrap"><button class="tagarr" id="tagPrev" aria-label="${L('上一個標籤','Previous tag')}">‹</button><div class="tagrow" id="tagRow" role="group" aria-label="${L('篩選','Filter')}">${tagList(avail).map(t=>`<button data-tag="${t}" aria-pressed="${catTag===t}">${N(TAGS[t])}</button>`).join('')}</div><button class="tagarr" id="tagNext" aria-label="${L('下一個標籤','Next tag')}">›</button></div>`;
-  const tl=tagList(avail),flip=d=>{const i=tl.indexOf(catTag);catTag=tl[(i+d+tl.length)%tl.length];renderCatalog();};
-  $('#tagPrev').onclick=()=>flip(-1);$('#tagNext').onclick=()=>flip(1);
-  const row=$('#tagRow'),on=row.querySelector('[aria-pressed="true"]');if(on)row.scrollLeft=on.offsetLeft-row.clientWidth/2+on.offsetWidth/2;
-  dragScroll(row);swipeFlip($('#catList'),flip);
+    <div class="tagrow" id="tagRow" role="group" aria-label="${L('篩選，可以左右拖','Filters, drag sideways')}">${tagList(avail).map(t=>`<button data-tag="${t}" aria-pressed="${catTag===t}">${N(TAGS[t])}</button>`).join('')}</div>`;
+  const row=$('#tagRow');row.scrollLeft=tagScroll;row.onscroll=()=>{tagScroll=row.scrollLeft;};dragScroll(row);
   const q=$('#catQ');q.oninput=()=>{catQ=q.value;renderCatList();};
-  $('#catBar').querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{catTag=b.dataset.tag;renderCatalog();$('#catList').scrollIntoView({block:'nearest'});});
+  $('#catBar').querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{catTag=b.dataset.tag;renderCatalog();$('#pane-add').scrollTop=0;});
   renderCatList();
 }
 function renderCatList(){
@@ -125,8 +122,8 @@ function renderCatList(){
       const n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id],full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
       const chips=paramChips(id);if(lim!=null)chips.push(L(`最多 ${lim}`,`max ${lim}`));
       if(!aq&&c.hab==='water'&&c.kind!=='microbe'&&!(S.level>0))chips.push(L('要先加水位','raise the water first'));
-      if(c.burrow)chips.push(L('要有細沙','needs fine sand'));if(c.root==='mud')chips.push(L('要有泥土','needs mud'));if(c.shade)chips.push(L('遮光減藻','shades out algae'));
-      return`<div class="card"><div class="nm"><span class="dot" style="background:${c.color}"></span>${N(c.name)}<em>${c.sci}</em></div>
+      if(c.burrow)chips.push(L('要有細沙','needs fine sand'));if(c.root==='mud')chips.push(L('要有泥土','needs mud'));if(c.attacks)chips.push(L('會攻擊其他生物','attacks others'));if(c.preys)chips.push(L('會食細生物','eats small animals'));if(c.shade)chips.push(L('遮光減藻','shades out algae'));
+      return`<div class="card" data-card="${id}"><div class="nm"><span class="dot" style="background:${c.color}"></span>${N(c.name)}<em>${c.sci}</em></div>
       <p>${N(c.desc)}</p><div class="ctr"><button class="minus" data-rm="${id}" aria-label="${L('減少','Remove')} ${esc(N(c.name))}" ${n?'':'disabled'}>−</button><output>${n}</output><button data-add="${id}" aria-label="${L('加入','Add')} ${esc(N(c.name))}" ${full?'disabled':''}>+</button></div>
       <div class="chips">${chips.map(x=>`<span class="chip">${x}</span>`).join('')}</div></div>`;}).join('')}</section>`;}).join('');
   const cl=$('#catList');cl.innerHTML=html||`<div class="empty">${L('冇符合嘅項目。','Nothing matches.')}</div>`;
@@ -165,7 +162,13 @@ function statusOf(it){
   if(k==='animal')return[it.satiety<.4?L('有啲肚餓','A bit hungry'):L('精神','Healthy'),''];
   return[L('運作中','Working'),''];
 }
-function refreshLists(){renderJarList();renderCatalog();}
+function refreshLists(){renderJarList();updateCatCounts();}
+function updateCatCounts(){
+  const subN=S.items.filter(i=>i.alive&&CAT[i.type].kind==='sub').length;
+  document.querySelectorAll('#catList [data-card]').forEach(card=>{const id=card.dataset.card,c=CAT[id],n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id];
+    const full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
+    card.querySelector('output').textContent=n;card.querySelector('[data-rm]').disabled=!n;card.querySelector('[data-add]').disabled=full;});
+}
 function renderJarList(){
   const el=$('#pane-jar');renderChrome();
   if(!$('#jarlist'))el.innerHTML=`<div id="jarlist"></div>`;
@@ -197,7 +200,7 @@ function renderEditor(){
   if(k==='plant')vit.push([L('而家產氧','O₂ now'),'v-prod'],[L('每日淨產氧','Net O₂ per day'),'v-day']);
   const notes=[];
   if(c.root==='sand')notes.push(L('要種喺底沙。','Needs substrate to root.'));if(c.root==='rock')notes.push(L('要依附石頭或沉木。','Needs rock or wood to attach to.'));if(c.root==='mud')notes.push(L('要種喺泥土（喺「加入 › 造景」鋪泥土）。','Needs soil to root in (add it under Hardscape).'));
-  if(c.hab==='amph')notes.push(L('要有水區同陸地。','Needs water and land.'));if(c.preys)notes.push(L('會食：','Eats: ')+c.preys.map(x=>N(CAT[x].name)).join(L('、',', '))+L('。','.'));
+  if(c.hab==='amph')notes.push(L('要有水區同陸地。','Needs water and land.'));if(c.preys)notes.push(L('會食：','Eats: ')+c.preys.map(x=>N(CAT[x].name)).join(L('、',', '))+L('。','.'));if(c.attacks)notes.push(L('會攻擊：','Attacks: ')+Object.keys(c.attacks).map(x=>N(CAT[x].name)).join(L('、',', '))+L('。','.'));
   if(c.flow)notes.push(L('開氧氣泵或者過濾會受傷。','Hurt by a pump or filter current.'));
   if(k==='animal')notes.unshift(L('食物：','Food: ')+Object.keys(c.diet).map(p=>N(POOLNAME[p])).join(L('、',', '))+L('（按喜好排序）。',' (in order of preference).'));
   ed.innerHTML=`<div class="editor"><div class="ed-head"><span class="dot" style="background:${c.color}"></span><h2 id="edTitle">${esc(label(it))}</h2><button class="x" id="edClose" aria-label="${L('關閉','Close')}">×</button></div>
@@ -535,6 +538,7 @@ function analyzeTank(A){
   else{const wrong=types.filter(t=>CAT[t].w&&CAT[t].w!=='both'&&CAT[t].w!==(salt?'salt':'fresh')||CAT[t].hab==='land'||CAT[t].hab==='amph');
     if(wrong.length)add('bad',L('生物同水質唔夾','Wrong water for some species'),wrong.map(t=>N(CAT[t].name)).join(L('、',', '))+L(salt?'唔適合海水。':'唔適合呢個缸。',salt?' cannot live in salt water.':' do not belong in this tank.'),[L('移去啱嘅環境','Move them to a suitable setup')],SRC.rule);}
   animals.forEach(t=>{const C=CAT[t];if(C.preys){const v=types.filter(x=>C.preys.includes(x));if(v.length)add('bad',L(`${C.name[0]}會食其他生物`,`${C.name[1]} will eat tankmates`),L(`${C.name[0]}會捉${v.map(x=>CAT[x].name[0]).join('、')}嚟食。`,`${C.name[1]} hunts ${v.map(x=>CAT[x].name[1].toLowerCase()).join(', ')}.`),[L('分開飼養','Keep them apart'),L('或者接受會有損失','Or accept some losses')],SRC.rule);}});
+  animals.forEach(t=>{const C=CAT[t];if(C.attacks){const v=types.filter(x=>C.attacks[x]&&!(x==='betta'&&t==='betta'));if(v.length)add('warn',L(`${C.name[0]}會攻擊其他生物`,`${C.name[1]} attacks tankmates`),L(`${C.name[0]}會咬傷${v.map(x=>CAT[x].name[0]).join('、')}。`,`${C.name[1]} injures ${v.map(x=>CAT[x].name[1].toLowerCase()).join(', ')}.`),[L('分開飼養，或者加多啲水草同躲藏位','Separate them, or add plants and hiding spots')],SRC.rule);}});
   if((A.counts.betta||0)>1)add('bad',L('多過一條鬥魚','More than one betta'),L('鬥魚放埋一齊會打到死。','Bettas kept together fight, often to the death.'),[L('每條鬥魚獨立一缸','One betta per tank')],SRC.rule);
   if(A.counts.betta&&A.counts.guppy)add('warn',L('鬥魚同孔雀魚','Betta with guppies'),L('鬥魚會咬孔雀魚條長尾。','Bettas nip guppies\' long tails.'),[L('留意孔雀魚條尾','Watch the guppies\' tails'),L('準備隔離板','Have a divider ready')],SRC.rule);
   const jel=types.filter(t=>CAT[t].flow);if(jel.length&&(A.pump||A.filter))add('warn',L('水母怕水流','Jellyfish and current'),jel.map(t=>N(CAT[t].name)).join(L('、',', '))+L('會俾氧氣泵或者過濾扯爛。',' can be torn by a pump or filter.'),[L('用柔和水流','Use gentle flow'),L('過濾入水口加海綿套','Cover the filter intake with sponge')],SRC.rule);

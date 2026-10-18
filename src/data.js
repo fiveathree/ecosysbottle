@@ -63,7 +63,7 @@ const GROUPS={
 const STR={noO2:['缺氧','Low oxygen'],nh3:['氨中毒','Ammonia poisoning'],cold:['太凍','Too cold'],hot:['太熱','Too hot'],hungry:['飢餓','Hungry'],dry:['太乾','Too dry'],wet:['太濕','Too humid'],
   co2:['二氧化碳過高','CO₂ too high'],mould:['霉菌','Mould'],noWater:['冇水','No water'],needFresh:['要淡水','Needs fresh water'],needSalt:['要海水','Needs salt water'],flow:['水流太強','Current too strong'],
   noSand:['冇底沙生根','No substrate to root'],noRock:['冇石或沉木依附','Nothing to attach to'],noSoil:['冇泥土','No soil'],noMud:['冇泥生根','No mud to root in'],lowN:['缺養分','Low nutrients'],lowLight:['光照不足','Not enough light'],
-  hiN:['氨太高','Ammonia too high'],weak:['衰弱','Weakness'],eaten:['俾其他生物食咗','Eaten'],soilDry:['泥土太乾','Soil too dry']};
+  hiN:['氨太高','Ammonia too high'],attacked:['俾其他生物攻擊','Attacked'],weak:['衰弱','Weakness'],eaten:['俾其他生物食咗','Eaten'],soilDry:['泥土太乾','Soil too dry']};
 const SS=code=>code?N(STR[code]||[code,code]):'';
 
 /* ================= 物種同造景 =================
@@ -230,3 +230,9 @@ function tagsOf(id){const c=CAT[id],t=[];
   if(c.kind==='animal'&&c.params.breedDays>0)t.push('breed');
   if(c.preys)t.push('predator');if(c.hab==='amph')t.push('amph');if(c.w==='salt')t.push('salt');
   return t;}
+
+/* 攻擊（唔食，但會咬傷）同捕食 */
+const ATTACKS={betta:{guppy:.03,betta:.05,medaka:.015},crab:{guppy:.02,medaka:.02,minnow:.02,newt:.02},guppy:{jelly:.02},medaka:{jelly:.02},minnow:{jelly:.02},pleco:{},hermit:{nerite:.015},slider:{newt:.04}};
+const PREYS={turtle:['shrimp','amano','snail','nerite','daphnia','guppy','medaka'],newt:['daphnia','shrimp']};
+Object.entries(ATTACKS).forEach(([k,v])=>{if(Object.keys(v).length)CAT[k].attacks=v;});
+Object.entries(PREYS).forEach(([k,v])=>{CAT[k].preys=[...new Set([...(CAT[k].preys||[]),...v])];});

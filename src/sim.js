@@ -46,8 +46,8 @@ function die(it,why,st,by){
   const k=CAT[it.type].kind,c=st.c,wL=wLOf(st);
   if(why!=='eaten'){if(isWater(it)&&wL>0)c.detritus+=k==='plant'?5:k==='animal'?3:0;else if(st.mode==='rain')c.waste+=k==='plant'?3:k==='animal'?2:0;}
   if(st.trial){st.deaths.push({type:it.type,why});return;}
-  const zh=`${label(it)}${it.name?'（'+CAT[it.type].name[0]+'）':''} ${k==='microbe'?'失效':'死亡'}（${why==='eaten'&&by?'俾'+by+'食咗':STR[why]?STR[why][0]:why}）`;
-  const en=`${it.name||CAT[it.type].name[1]+' #'+it.n}${it.name?' ('+CAT[it.type].name[1]+')':''} ${k==='microbe'?'stopped working':'died'} (${why==='eaten'&&by?'eaten by '+by:STR[why]?STR[why][1]:why})`;
+  const zh=`${label(it)}${it.name?'（'+CAT[it.type].name[0]+'）':''} ${k==='microbe'?'失效':'死亡'}（${why==='eaten'&&by?'俾'+by+'食咗':why==='attacked'&&by?'俾'+by+'咬死':STR[why]?STR[why][0]:why}）`;
+  const en=`${it.name||CAT[it.type].name[1]+' #'+it.n}${it.name?' ('+CAT[it.type].name[1]+')':''} ${k==='microbe'?'stopped working':'died'} (${why==='eaten'&&by?'eaten by '+by:why==='attacked'&&by?'killed by '+by:STR[why]?STR[why][1]:why})`;
   logEv(zh,en,'bad');
   if(S.sel===it)renderEditor();
   dirtyList=true;
@@ -136,6 +136,7 @@ function stepWater(st,c,wL,light,lm,q,E,w){
     if(C.flow&&(st.pump||st.filter)){dh=Math.min(dh,0)-.012;it.stress=it.stress||'flow';}
     if(C.burrow&&!E.subTypes.sand){dh=Math.min(dh,0)-.01;it.stress=it.stress||'noSand';}
     if(it.satiety<=0){dh=Math.min(dh,0)-.006;it.stress=it.stress||'hungry';}
+    if(it.atkT>0){it.atkT--;dh=Math.min(dh,0);it.stress=it.stress||'attacked';}
     hurt(it,dh,st);
   }
   for(const it of mic){
@@ -197,6 +198,7 @@ function stepLand(st,c,wL,light,lm,q,E,w){
       if(C.hab==='amph'){if(wL<=0){dh=Math.min(dh,0)-.01;it.stress=it.stress||'noWater';}
         else if(c.NH3/wL>p.nh3Tol){dh=Math.min(dh,0)-.01*(c.NH3/wL/p.nh3Tol);it.stress=it.stress||'nh3';}}
       if(it.satiety<=0){dh=Math.min(dh,0)-.006;it.stress=it.stress||'hungry';}
+      if(it.atkT>0){it.atkT--;dh=Math.min(dh,0);it.stress=it.stress||'attacked';}
       hurt(it,dh,st);
     } else if(k==='microbe'){
       const d=Math.min(c.waste,p.rate*it.health*E.surf);c.waste-=d;c.soilN+=d;useO2(d*p.o2Per);
@@ -225,6 +227,13 @@ function eat(it,c){
   it.satiety=clamp(it.satiety+(got/per-1)/36,0,1);
 }
 function predation(st){
+  for(const it of aliveIn(st,'animal')){const C=CAT[it.type];if(!C.attacks)continue;
+    for(const [t,dmg] of Object.entries(C.attacks)){if(Math.random()>.15)continue;
+      const tg=st.items.filter(i=>i.alive&&i.type===t&&i!==it);if(!tg.length)continue;
+      const v=tg[Math.floor(Math.random()*tg.length)];v.health=clamp(v.health-dmg,0,1);v.atkT=6;
+      if(!st.trial){it.chase=v;it.chaseT=4;v.fleeT=4;if(Math.random()<.1){const lz=x=>x.name||`${CAT[x.type].name[0]} #${x.n}`,le=x=>x.name||`${CAT[x.type].name[1]} #${x.n}`;logEv(`${lz(it)} 攻擊咗 ${lz(v)}`,`${le(it)} attacked ${le(v)}`,'warn');}}
+      if(v.health<=0)die(v,'attacked',st,st.trial?'':label(it));}
+  }
   for(const it of aliveIn(st,'animal')){const C=CAT[it.type];if(!C.preys||it.satiety>.6||Math.random()>.03)continue;
     const prey=st.items.filter(i=>i.alive&&C.preys.includes(i.type));if(!prey.length)continue;
     const v=prey[Math.floor(Math.random()*prey.length)];die(v,'eaten',st,st.trial?'':label(it));it.satiety=Math.min(1,it.satiety+.5);}

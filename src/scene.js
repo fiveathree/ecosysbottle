@@ -485,6 +485,7 @@ function lightLevel(hf){const on=7,off=7+S.light;if(S.light>=24)return 1;if(S.li
   const ramp=x=>clamp(x/.6,0,1);let v=Math.min(ramp(hf-on+.3),ramp(off-hf+.3));if(off>24)v=Math.max(v,ramp(off-24-hf+.3));return clamp(v,0,1);}
 function face(g,v,pitchMax){if(v.lengthSq()>1e-8){g.rotation.y=Math.atan2(-v.z,v.x);const hz=Math.hypot(v.x,v.z);g.rotation.z=clamp(Math.atan2(v.y,hz),-pitchMax,pitchMax);}}
 function steer(m,spd,dt,rate){const d=m.tgt.clone().sub(m.p),l=d.length();if(l>1e-4)d.multiplyScalar(spd/l);m.v.lerp(d,Math.min(1,dt*rate));}
+function hasLand(){if(J.waterTop==null)return false;for(let i=0;i<12;i++){const [x,z]=randIn(J.sTop,.8);if(!inWater(x,z,-.01))return true;}return false;}
 function swimTarget(m,lo,hi){const p=waterPoint(.06);if(!p){m.tgt.copy(m.p);return;}const gy=groundY(p[0],p[1]),a=gy+(lo??.08),b=Math.max(a,J.waterTop-(hi??.06));m.tgt.set(p[0],rnd(a,b),p[1]);}
 const SWIMMERS=['swim','swarm','jelly','seahorse','aqturtle'],BOTTOM=['crawl','pleco','crab'];
 function animate(dt,hf){
@@ -539,6 +540,9 @@ function animate(dt,hf){
     const mv=C.move,p=it.params,u=g.userData,hb=.5+.5*it.health,hab=C.hab;
     if(it.age!=null)g.scale.setScalar(.45+.55*clamp(it.age/4,0,1));
     m.prev.copy(m.p);
+    // 攻擊：追住目標；俾人攻擊：走快啲
+    if(it.chaseT>0){it.chaseT-=dt;if(it.chase&&it.chase.alive&&it.chase.m){m.tgt.copy(it.chase.m.p);m.tt=Math.max(m.tt,.5);m.hd=Math.atan2(it.chase.m.p.z-m.p.z,it.chase.m.p.x-m.p.x);}else it.chaseT=0;}
+    let boost=1;if(it.fleeT>0){it.fleeT-=dt;boost*=1.7;}if(it.chaseT>0)boost*=1.6;
     // 水中生物冇水：攤喺地上
     if(hab==='water'&&wt==null){m.p.y=groundY(m.p.x,m.p.z)+.02;g.position.copy(m.p);if(u.inner)u.inner.rotation.x=Math.PI/2;continue;}
     if(mv==='eel'){
@@ -552,6 +556,13 @@ function animate(dt,hf){
       if(oc<p.o2Min+.6){m.tgt.y=wt-.07;}
       steer(m,(it.stress?.14:.24)*hb,dt,1.6);
       u.tail.rotation.y=Math.sin(tAll*(8+m.v.length()*30)+m.ph)*.45;
+    } else if(mv==='aqturtle'&&(m.onLand||(lv>.5&&Math.random()<dt*.08&&hasLand()))){
+      // 有陸地時：日頭會爬上岸曬背，夜晚落返水
+      if(!m.onLand){const q=landPoint();m.tgt.set(q[0],groundY(q[0],q[1])+.006,q[1]);m.onLand=true;m.tt=rnd(8,16);}
+      m.tt-=dt;if(m.tt<=0||lv<.3){m.onLand=false;swimTarget(m);m.tt=rnd(4,8);}
+      const sw=inWater(m.p.x,m.p.z,.02);steer(m,(sw?.1:.05)*hb,dt,1.2);m.v.y=0;
+      m.p.addScaledVector(m.v,dt*vis);clampIn(m.p,.86);m.p.y=sw?Math.min(m.p.y,wt-.015):groundY(m.p.x,m.p.z)+.006;
+      g.position.copy(m.p);face(g,m.v,0);continue;
     } else if(mv==='aqturtle'){
       m.tt-=dt;if(m.tt<=0||m.p.distanceTo(m.tgt)<.08){swimTarget(m);if(Math.random()<.4)m.tgt.y=wt-.05;m.tt=rnd(4,8);}
       steer(m,.1*hb,dt,1);
@@ -588,9 +599,12 @@ function animate(dt,hf){
     } else if(mv==='amph'){
       m.tt-=dt;
       if(m.tt<=0||m.p.distanceTo(m.tgt)<.05){
-        if(wt!=null&&Math.random()<.5){const q=waterPoint(.04);if(q)m.tgt.set(q[0],wt-.015,q[1]);}
-        else{const q=landPoint();m.tgt.set(q[0],groundY(q[0],q[1])+.006,q[1]);}
-        m.tt=rnd(5,12);}
+        // 自己決定：開燈想上岸休息；夜晚、太熱、太乾或者肚餓就落水
+        const c=S.c,hot=c.T>p.tMax-1,dry=c.hum<p.humMin+5,hungry=it.satiety<.5;
+        const wantWater=wt!=null&&(lv<.4||hot||dry||hungry||Math.random()<.25);
+        if(wantWater){const q=waterPoint(.04);if(q)m.tgt.set(q[0],wt-.015,q[1]);m.mood='water';}
+        else{const q=landPoint();m.tgt.set(q[0],groundY(q[0],q[1])+.006,q[1]);m.mood='land';}
+        m.tt=rnd(8,18);}
       const sw=inWater(m.p.x,m.p.z,.02);steer(m,(sw?.07:.045)*hb,dt,1.2);m.v.y=0;
     } else if(mv==='climb'){
       m.tt-=dt;
@@ -606,7 +620,7 @@ function animate(dt,hf){
         if(!inWater(m.tgt.x,m.tgt.z,0))m.hop=1;m.tt=rnd(1.5,5);}
       continue;
     }
-    m.p.addScaledVector(m.v,dt*vis);
+    m.p.addScaledVector(m.v,dt*vis*boost);
     // 按棲息地限制位置
     if(SWIMMERS.includes(mv)||mv==='hop'){
       clampIn(m.p,.86);const gy=groundY(m.p.x,m.p.z);m.p.y=clamp(m.p.y,gy+.02,wt-.03);

@@ -383,7 +383,7 @@ const GROUPS={
 const STR={noO2:['缺氧','Low oxygen'],nh3:['氨中毒','Ammonia poisoning'],cold:['太凍','Too cold'],hot:['太熱','Too hot'],hungry:['飢餓','Hungry'],dry:['太乾','Too dry'],wet:['太濕','Too humid'],
   co2:['二氧化碳過高','CO₂ too high'],mould:['霉菌','Mould'],noWater:['冇水','No water'],needFresh:['要淡水','Needs fresh water'],needSalt:['要海水','Needs salt water'],flow:['水流太強','Current too strong'],
   noSand:['冇底沙生根','No substrate to root'],noRock:['冇石或沉木依附','Nothing to attach to'],noSoil:['冇泥土','No soil'],noMud:['冇泥生根','No mud to root in'],lowN:['缺養分','Low nutrients'],lowLight:['光照不足','Not enough light'],
-  hiN:['氨太高','Ammonia too high'],weak:['衰弱','Weakness'],eaten:['俾其他生物食咗','Eaten'],soilDry:['泥土太乾','Soil too dry']};
+  hiN:['氨太高','Ammonia too high'],attacked:['俾其他生物攻擊','Attacked'],weak:['衰弱','Weakness'],eaten:['俾其他生物食咗','Eaten'],soilDry:['泥土太乾','Soil too dry']};
 const SS=code=>code?N(STR[code]||[code,code]):'';
 
 /* ================= 物種同造景 =================
@@ -551,6 +551,12 @@ function tagsOf(id){const c=CAT[id],t=[];
   if(c.preys)t.push('predator');if(c.hab==='amph')t.push('amph');if(c.w==='salt')t.push('salt');
   return t;}
 
+/* 攻擊（唔食，但會咬傷）同捕食 */
+const ATTACKS={betta:{guppy:.03,betta:.05,medaka:.015},crab:{guppy:.02,medaka:.02,minnow:.02,newt:.02},guppy:{jelly:.02},medaka:{jelly:.02},minnow:{jelly:.02},pleco:{},hermit:{nerite:.015},slider:{newt:.04}};
+const PREYS={turtle:['shrimp','amano','snail','nerite','daphnia','guppy','medaka'],newt:['daphnia','shrimp']};
+Object.entries(ATTACKS).forEach(([k,v])=>{if(Object.keys(v).length)CAT[k].attacks=v;});
+Object.entries(PREYS).forEach(([k,v])=>{CAT[k].preys=[...new Set([...(CAT[k].preys||[]),...v])];});
+
 /* ================= 狀態 ================= */
 const S={mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,feedHour:9,pump:false,filter:false,heater:false,wc:0,mist:0,heat:false,
   water:'fresh',filled:true,level:0,hillH:6,breed:true,wL:0,wFrac:0,region:'hk',real:false,
@@ -599,8 +605,8 @@ function die(it,why,st,by){
   const k=CAT[it.type].kind,c=st.c,wL=wLOf(st);
   if(why!=='eaten'){if(isWater(it)&&wL>0)c.detritus+=k==='plant'?5:k==='animal'?3:0;else if(st.mode==='rain')c.waste+=k==='plant'?3:k==='animal'?2:0;}
   if(st.trial){st.deaths.push({type:it.type,why});return;}
-  const zh=`${label(it)}${it.name?'（'+CAT[it.type].name[0]+'）':''} ${k==='microbe'?'失效':'死亡'}（${why==='eaten'&&by?'俾'+by+'食咗':STR[why]?STR[why][0]:why}）`;
-  const en=`${it.name||CAT[it.type].name[1]+' #'+it.n}${it.name?' ('+CAT[it.type].name[1]+')':''} ${k==='microbe'?'stopped working':'died'} (${why==='eaten'&&by?'eaten by '+by:STR[why]?STR[why][1]:why})`;
+  const zh=`${label(it)}${it.name?'（'+CAT[it.type].name[0]+'）':''} ${k==='microbe'?'失效':'死亡'}（${why==='eaten'&&by?'俾'+by+'食咗':why==='attacked'&&by?'俾'+by+'咬死':STR[why]?STR[why][0]:why}）`;
+  const en=`${it.name||CAT[it.type].name[1]+' #'+it.n}${it.name?' ('+CAT[it.type].name[1]+')':''} ${k==='microbe'?'stopped working':'died'} (${why==='eaten'&&by?'eaten by '+by:why==='attacked'&&by?'killed by '+by:STR[why]?STR[why][1]:why})`;
   logEv(zh,en,'bad');
   if(S.sel===it)renderEditor();
   dirtyList=true;
@@ -689,6 +695,7 @@ function stepWater(st,c,wL,light,lm,q,E,w){
     if(C.flow&&(st.pump||st.filter)){dh=Math.min(dh,0)-.012;it.stress=it.stress||'flow';}
     if(C.burrow&&!E.subTypes.sand){dh=Math.min(dh,0)-.01;it.stress=it.stress||'noSand';}
     if(it.satiety<=0){dh=Math.min(dh,0)-.006;it.stress=it.stress||'hungry';}
+    if(it.atkT>0){it.atkT--;dh=Math.min(dh,0);it.stress=it.stress||'attacked';}
     hurt(it,dh,st);
   }
   for(const it of mic){
@@ -750,6 +757,7 @@ function stepLand(st,c,wL,light,lm,q,E,w){
       if(C.hab==='amph'){if(wL<=0){dh=Math.min(dh,0)-.01;it.stress=it.stress||'noWater';}
         else if(c.NH3/wL>p.nh3Tol){dh=Math.min(dh,0)-.01*(c.NH3/wL/p.nh3Tol);it.stress=it.stress||'nh3';}}
       if(it.satiety<=0){dh=Math.min(dh,0)-.006;it.stress=it.stress||'hungry';}
+      if(it.atkT>0){it.atkT--;dh=Math.min(dh,0);it.stress=it.stress||'attacked';}
       hurt(it,dh,st);
     } else if(k==='microbe'){
       const d=Math.min(c.waste,p.rate*it.health*E.surf);c.waste-=d;c.soilN+=d;useO2(d*p.o2Per);
@@ -778,6 +786,13 @@ function eat(it,c){
   it.satiety=clamp(it.satiety+(got/per-1)/36,0,1);
 }
 function predation(st){
+  for(const it of aliveIn(st,'animal')){const C=CAT[it.type];if(!C.attacks)continue;
+    for(const [t,dmg] of Object.entries(C.attacks)){if(Math.random()>.15)continue;
+      const tg=st.items.filter(i=>i.alive&&i.type===t&&i!==it);if(!tg.length)continue;
+      const v=tg[Math.floor(Math.random()*tg.length)];v.health=clamp(v.health-dmg,0,1);v.atkT=6;
+      if(!st.trial){it.chase=v;it.chaseT=4;v.fleeT=4;if(Math.random()<.1){const lz=x=>x.name||`${CAT[x.type].name[0]} #${x.n}`,le=x=>x.name||`${CAT[x.type].name[1]} #${x.n}`;logEv(`${lz(it)} 攻擊咗 ${lz(v)}`,`${le(it)} attacked ${le(v)}`,'warn');}}
+      if(v.health<=0)die(v,'attacked',st,st.trial?'':label(it));}
+  }
   for(const it of aliveIn(st,'animal')){const C=CAT[it.type];if(!C.preys||it.satiety>.6||Math.random()>.03)continue;
     const prey=st.items.filter(i=>i.alive&&C.preys.includes(i.type));if(!prey.length)continue;
     const v=prey[Math.floor(Math.random()*prey.length)];die(v,'eaten',st,st.trial?'':label(it));it.satiety=Math.min(1,it.satiety+.5);}
@@ -1393,6 +1408,7 @@ function lightLevel(hf){const on=7,off=7+S.light;if(S.light>=24)return 1;if(S.li
   const ramp=x=>clamp(x/.6,0,1);let v=Math.min(ramp(hf-on+.3),ramp(off-hf+.3));if(off>24)v=Math.max(v,ramp(off-24-hf+.3));return clamp(v,0,1);}
 function face(g,v,pitchMax){if(v.lengthSq()>1e-8){g.rotation.y=Math.atan2(-v.z,v.x);const hz=Math.hypot(v.x,v.z);g.rotation.z=clamp(Math.atan2(v.y,hz),-pitchMax,pitchMax);}}
 function steer(m,spd,dt,rate){const d=m.tgt.clone().sub(m.p),l=d.length();if(l>1e-4)d.multiplyScalar(spd/l);m.v.lerp(d,Math.min(1,dt*rate));}
+function hasLand(){if(J.waterTop==null)return false;for(let i=0;i<12;i++){const [x,z]=randIn(J.sTop,.8);if(!inWater(x,z,-.01))return true;}return false;}
 function swimTarget(m,lo,hi){const p=waterPoint(.06);if(!p){m.tgt.copy(m.p);return;}const gy=groundY(p[0],p[1]),a=gy+(lo??.08),b=Math.max(a,J.waterTop-(hi??.06));m.tgt.set(p[0],rnd(a,b),p[1]);}
 const SWIMMERS=['swim','swarm','jelly','seahorse','aqturtle'],BOTTOM=['crawl','pleco','crab'];
 function animate(dt,hf){
@@ -1447,6 +1463,9 @@ function animate(dt,hf){
     const mv=C.move,p=it.params,u=g.userData,hb=.5+.5*it.health,hab=C.hab;
     if(it.age!=null)g.scale.setScalar(.45+.55*clamp(it.age/4,0,1));
     m.prev.copy(m.p);
+    // 攻擊：追住目標；俾人攻擊：走快啲
+    if(it.chaseT>0){it.chaseT-=dt;if(it.chase&&it.chase.alive&&it.chase.m){m.tgt.copy(it.chase.m.p);m.tt=Math.max(m.tt,.5);m.hd=Math.atan2(it.chase.m.p.z-m.p.z,it.chase.m.p.x-m.p.x);}else it.chaseT=0;}
+    let boost=1;if(it.fleeT>0){it.fleeT-=dt;boost*=1.7;}if(it.chaseT>0)boost*=1.6;
     // 水中生物冇水：攤喺地上
     if(hab==='water'&&wt==null){m.p.y=groundY(m.p.x,m.p.z)+.02;g.position.copy(m.p);if(u.inner)u.inner.rotation.x=Math.PI/2;continue;}
     if(mv==='eel'){
@@ -1460,6 +1479,13 @@ function animate(dt,hf){
       if(oc<p.o2Min+.6){m.tgt.y=wt-.07;}
       steer(m,(it.stress?.14:.24)*hb,dt,1.6);
       u.tail.rotation.y=Math.sin(tAll*(8+m.v.length()*30)+m.ph)*.45;
+    } else if(mv==='aqturtle'&&(m.onLand||(lv>.5&&Math.random()<dt*.08&&hasLand()))){
+      // 有陸地時：日頭會爬上岸曬背，夜晚落返水
+      if(!m.onLand){const q=landPoint();m.tgt.set(q[0],groundY(q[0],q[1])+.006,q[1]);m.onLand=true;m.tt=rnd(8,16);}
+      m.tt-=dt;if(m.tt<=0||lv<.3){m.onLand=false;swimTarget(m);m.tt=rnd(4,8);}
+      const sw=inWater(m.p.x,m.p.z,.02);steer(m,(sw?.1:.05)*hb,dt,1.2);m.v.y=0;
+      m.p.addScaledVector(m.v,dt*vis);clampIn(m.p,.86);m.p.y=sw?Math.min(m.p.y,wt-.015):groundY(m.p.x,m.p.z)+.006;
+      g.position.copy(m.p);face(g,m.v,0);continue;
     } else if(mv==='aqturtle'){
       m.tt-=dt;if(m.tt<=0||m.p.distanceTo(m.tgt)<.08){swimTarget(m);if(Math.random()<.4)m.tgt.y=wt-.05;m.tt=rnd(4,8);}
       steer(m,.1*hb,dt,1);
@@ -1496,9 +1522,12 @@ function animate(dt,hf){
     } else if(mv==='amph'){
       m.tt-=dt;
       if(m.tt<=0||m.p.distanceTo(m.tgt)<.05){
-        if(wt!=null&&Math.random()<.5){const q=waterPoint(.04);if(q)m.tgt.set(q[0],wt-.015,q[1]);}
-        else{const q=landPoint();m.tgt.set(q[0],groundY(q[0],q[1])+.006,q[1]);}
-        m.tt=rnd(5,12);}
+        // 自己決定：開燈想上岸休息；夜晚、太熱、太乾或者肚餓就落水
+        const c=S.c,hot=c.T>p.tMax-1,dry=c.hum<p.humMin+5,hungry=it.satiety<.5;
+        const wantWater=wt!=null&&(lv<.4||hot||dry||hungry||Math.random()<.25);
+        if(wantWater){const q=waterPoint(.04);if(q)m.tgt.set(q[0],wt-.015,q[1]);m.mood='water';}
+        else{const q=landPoint();m.tgt.set(q[0],groundY(q[0],q[1])+.006,q[1]);m.mood='land';}
+        m.tt=rnd(8,18);}
       const sw=inWater(m.p.x,m.p.z,.02);steer(m,(sw?.07:.045)*hb,dt,1.2);m.v.y=0;
     } else if(mv==='climb'){
       m.tt-=dt;
@@ -1514,7 +1543,7 @@ function animate(dt,hf){
         if(!inWater(m.tgt.x,m.tgt.z,0))m.hop=1;m.tt=rnd(1.5,5);}
       continue;
     }
-    m.p.addScaledVector(m.v,dt*vis);
+    m.p.addScaledVector(m.v,dt*vis*boost);
     // 按棲息地限制位置
     if(SWIMMERS.includes(mv)||mv==='hop'){
       clampIn(m.p,.86);const gy=groundY(m.p.x,m.p.z);m.p.y=clamp(m.p.y,gy+.02,wt-.03);
@@ -1720,12 +1749,12 @@ function paramChips(type){const c=CAT[type],p=c.params,g=c.g;
   if(g==='sub')return[L(`厚 ${p.depth} cm`,`${p.depth} cm thick`)];
   if(g==='decor')return[c.rock?L('細菌附著 +20%','+20% bacteria surface'):L('純裝飾','decorative')];
   return[];}
-let catTag='all',catQ='';
+let catTag='all',catQ='',tagScroll=0;
 const tagList=avail=>['all',...Object.keys(TAGS).filter(t=>t!=='all'&&avail.has(t))];
 function dragScroll(el){let sx=0,sl=0,down=false,moved=false;
-  el.onpointerdown=e=>{if(e.pointerType!=='mouse')return;down=true;moved=false;sx=e.clientX;sl=el.scrollLeft;};
-  el.onpointermove=e=>{if(!down)return;const d=e.clientX-sx;if(Math.abs(d)>4)moved=true;el.scrollLeft=sl-d;};
-  el.onpointerup=el.onpointerleave=()=>{down=false;};
+  el.onpointerdown=e=>{down=true;moved=false;sx=e.clientX;sl=el.scrollLeft;};
+  el.onpointermove=e=>{if(!down)return;const d=e.clientX-sx;if(Math.abs(d)>4){moved=true;if(e.pointerType==='mouse')el.scrollLeft=sl-d;}};
+  el.onpointerup=el.onpointerleave=el.onpointercancel=()=>{down=false;};
   el.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);}
 function swipeFlip(el,flip){if(el._sw)return;el._sw=1;let sx=0,sy=0,t0=0;
   el.addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;t0=Date.now();},{passive:true});
@@ -1739,13 +1768,10 @@ function renderCatalog(){
   const pa=$('#pane-add');
   if(!$('#catBar')){pa.innerHTML=`<div class="catbar" id="catBar"></div><div id="catList" class="catlist"></div>`;}
   $('#catBar').innerHTML=`<input type="search" id="catQ" class="txt" placeholder="${L('搜尋名稱，例如 蝦、fern','Search, e.g. shrimp, 蝦')}" value="${esc(catQ)}">
-    <div class="tagwrap"><button class="tagarr" id="tagPrev" aria-label="${L('上一個標籤','Previous tag')}">‹</button><div class="tagrow" id="tagRow" role="group" aria-label="${L('篩選','Filter')}">${tagList(avail).map(t=>`<button data-tag="${t}" aria-pressed="${catTag===t}">${N(TAGS[t])}</button>`).join('')}</div><button class="tagarr" id="tagNext" aria-label="${L('下一個標籤','Next tag')}">›</button></div>`;
-  const tl=tagList(avail),flip=d=>{const i=tl.indexOf(catTag);catTag=tl[(i+d+tl.length)%tl.length];renderCatalog();};
-  $('#tagPrev').onclick=()=>flip(-1);$('#tagNext').onclick=()=>flip(1);
-  const row=$('#tagRow'),on=row.querySelector('[aria-pressed="true"]');if(on)row.scrollLeft=on.offsetLeft-row.clientWidth/2+on.offsetWidth/2;
-  dragScroll(row);swipeFlip($('#catList'),flip);
+    <div class="tagrow" id="tagRow" role="group" aria-label="${L('篩選，可以左右拖','Filters, drag sideways')}">${tagList(avail).map(t=>`<button data-tag="${t}" aria-pressed="${catTag===t}">${N(TAGS[t])}</button>`).join('')}</div>`;
+  const row=$('#tagRow');row.scrollLeft=tagScroll;row.onscroll=()=>{tagScroll=row.scrollLeft;};dragScroll(row);
   const q=$('#catQ');q.oninput=()=>{catQ=q.value;renderCatList();};
-  $('#catBar').querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{catTag=b.dataset.tag;renderCatalog();$('#catList').scrollIntoView({block:'nearest'});});
+  $('#catBar').querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{catTag=b.dataset.tag;renderCatalog();$('#pane-add').scrollTop=0;});
   renderCatList();
 }
 function renderCatList(){
@@ -1773,8 +1799,8 @@ function renderCatList(){
       const n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id],full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
       const chips=paramChips(id);if(lim!=null)chips.push(L(`最多 ${lim}`,`max ${lim}`));
       if(!aq&&c.hab==='water'&&c.kind!=='microbe'&&!(S.level>0))chips.push(L('要先加水位','raise the water first'));
-      if(c.burrow)chips.push(L('要有細沙','needs fine sand'));if(c.root==='mud')chips.push(L('要有泥土','needs mud'));if(c.shade)chips.push(L('遮光減藻','shades out algae'));
-      return`<div class="card"><div class="nm"><span class="dot" style="background:${c.color}"></span>${N(c.name)}<em>${c.sci}</em></div>
+      if(c.burrow)chips.push(L('要有細沙','needs fine sand'));if(c.root==='mud')chips.push(L('要有泥土','needs mud'));if(c.attacks)chips.push(L('會攻擊其他生物','attacks others'));if(c.preys)chips.push(L('會食細生物','eats small animals'));if(c.shade)chips.push(L('遮光減藻','shades out algae'));
+      return`<div class="card" data-card="${id}"><div class="nm"><span class="dot" style="background:${c.color}"></span>${N(c.name)}<em>${c.sci}</em></div>
       <p>${N(c.desc)}</p><div class="ctr"><button class="minus" data-rm="${id}" aria-label="${L('減少','Remove')} ${esc(N(c.name))}" ${n?'':'disabled'}>−</button><output>${n}</output><button data-add="${id}" aria-label="${L('加入','Add')} ${esc(N(c.name))}" ${full?'disabled':''}>+</button></div>
       <div class="chips">${chips.map(x=>`<span class="chip">${x}</span>`).join('')}</div></div>`;}).join('')}</section>`;}).join('');
   const cl=$('#catList');cl.innerHTML=html||`<div class="empty">${L('冇符合嘅項目。','Nothing matches.')}</div>`;
@@ -1813,7 +1839,13 @@ function statusOf(it){
   if(k==='animal')return[it.satiety<.4?L('有啲肚餓','A bit hungry'):L('精神','Healthy'),''];
   return[L('運作中','Working'),''];
 }
-function refreshLists(){renderJarList();renderCatalog();}
+function refreshLists(){renderJarList();updateCatCounts();}
+function updateCatCounts(){
+  const subN=S.items.filter(i=>i.alive&&CAT[i.type].kind==='sub').length;
+  document.querySelectorAll('#catList [data-card]').forEach(card=>{const id=card.dataset.card,c=CAT[id],n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id];
+    const full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
+    card.querySelector('output').textContent=n;card.querySelector('[data-rm]').disabled=!n;card.querySelector('[data-add]').disabled=full;});
+}
 function renderJarList(){
   const el=$('#pane-jar');renderChrome();
   if(!$('#jarlist'))el.innerHTML=`<div id="jarlist"></div>`;
@@ -1845,7 +1877,7 @@ function renderEditor(){
   if(k==='plant')vit.push([L('而家產氧','O₂ now'),'v-prod'],[L('每日淨產氧','Net O₂ per day'),'v-day']);
   const notes=[];
   if(c.root==='sand')notes.push(L('要種喺底沙。','Needs substrate to root.'));if(c.root==='rock')notes.push(L('要依附石頭或沉木。','Needs rock or wood to attach to.'));if(c.root==='mud')notes.push(L('要種喺泥土（喺「加入 › 造景」鋪泥土）。','Needs soil to root in (add it under Hardscape).'));
-  if(c.hab==='amph')notes.push(L('要有水區同陸地。','Needs water and land.'));if(c.preys)notes.push(L('會食：','Eats: ')+c.preys.map(x=>N(CAT[x].name)).join(L('、',', '))+L('。','.'));
+  if(c.hab==='amph')notes.push(L('要有水區同陸地。','Needs water and land.'));if(c.preys)notes.push(L('會食：','Eats: ')+c.preys.map(x=>N(CAT[x].name)).join(L('、',', '))+L('。','.'));if(c.attacks)notes.push(L('會攻擊：','Attacks: ')+Object.keys(c.attacks).map(x=>N(CAT[x].name)).join(L('、',', '))+L('。','.'));
   if(c.flow)notes.push(L('開氧氣泵或者過濾會受傷。','Hurt by a pump or filter current.'));
   if(k==='animal')notes.unshift(L('食物：','Food: ')+Object.keys(c.diet).map(p=>N(POOLNAME[p])).join(L('、',', '))+L('（按喜好排序）。',' (in order of preference).'));
   ed.innerHTML=`<div class="editor"><div class="ed-head"><span class="dot" style="background:${c.color}"></span><h2 id="edTitle">${esc(label(it))}</h2><button class="x" id="edClose" aria-label="${L('關閉','Close')}">×</button></div>
@@ -2183,6 +2215,7 @@ function analyzeTank(A){
   else{const wrong=types.filter(t=>CAT[t].w&&CAT[t].w!=='both'&&CAT[t].w!==(salt?'salt':'fresh')||CAT[t].hab==='land'||CAT[t].hab==='amph');
     if(wrong.length)add('bad',L('生物同水質唔夾','Wrong water for some species'),wrong.map(t=>N(CAT[t].name)).join(L('、',', '))+L(salt?'唔適合海水。':'唔適合呢個缸。',salt?' cannot live in salt water.':' do not belong in this tank.'),[L('移去啱嘅環境','Move them to a suitable setup')],SRC.rule);}
   animals.forEach(t=>{const C=CAT[t];if(C.preys){const v=types.filter(x=>C.preys.includes(x));if(v.length)add('bad',L(`${C.name[0]}會食其他生物`,`${C.name[1]} will eat tankmates`),L(`${C.name[0]}會捉${v.map(x=>CAT[x].name[0]).join('、')}嚟食。`,`${C.name[1]} hunts ${v.map(x=>CAT[x].name[1].toLowerCase()).join(', ')}.`),[L('分開飼養','Keep them apart'),L('或者接受會有損失','Or accept some losses')],SRC.rule);}});
+  animals.forEach(t=>{const C=CAT[t];if(C.attacks){const v=types.filter(x=>C.attacks[x]&&!(x==='betta'&&t==='betta'));if(v.length)add('warn',L(`${C.name[0]}會攻擊其他生物`,`${C.name[1]} attacks tankmates`),L(`${C.name[0]}會咬傷${v.map(x=>CAT[x].name[0]).join('、')}。`,`${C.name[1]} injures ${v.map(x=>CAT[x].name[1].toLowerCase()).join(', ')}.`),[L('分開飼養，或者加多啲水草同躲藏位','Separate them, or add plants and hiding spots')],SRC.rule);}});
   if((A.counts.betta||0)>1)add('bad',L('多過一條鬥魚','More than one betta'),L('鬥魚放埋一齊會打到死。','Bettas kept together fight, often to the death.'),[L('每條鬥魚獨立一缸','One betta per tank')],SRC.rule);
   if(A.counts.betta&&A.counts.guppy)add('warn',L('鬥魚同孔雀魚','Betta with guppies'),L('鬥魚會咬孔雀魚條長尾。','Bettas nip guppies\' long tails.'),[L('留意孔雀魚條尾','Watch the guppies\' tails'),L('準備隔離板','Have a divider ready')],SRC.rule);
   const jel=types.filter(t=>CAT[t].flow);if(jel.length&&(A.pump||A.filter))add('warn',L('水母怕水流','Jellyfish and current'),jel.map(t=>N(CAT[t].name)).join(L('、',', '))+L('會俾氧氣泵或者過濾扯爛。',' can be torn by a pump or filter.'),[L('用柔和水流','Use gentle flow'),L('過濾入水口加海綿套','Cover the filter intake with sponge')],SRC.rule);
@@ -2362,7 +2395,7 @@ const METER_FIX={wo2:v=>['pump','open','balance'],wnh3:v=>['wc','feedLess','nitr
   ao2:v=>['open'],co2:v=>['open'],waste:v=>['isopod','feedLess'],mould:v=>['spring','open'],
   hum:v=>{const r=rangeOf('hum');return r&&v<r[0]?['mistMore','seal']:['open','mistLess'];},T:v=>{const r=rangeOf('t');return r&&v<r[0]?['heat']:['cool'];}};
 const STRESS_FIX={noO2:['pump','open'],nh3:['wc','feedLess','nitri'],cold:['heat'],hot:['cool'],hungry:['feedNow','feedMore'],dry:['mistMore','seal'],wet:['open','mistLess'],
-  co2:['open'],mould:['spring','open'],flow:['flowOff'],noSand:['sand'],noMud:['soil'],noRock:['stone'],noSoil:['soil'],lowLight:['lightMore'],hiN:['wc'],lowN:['feedMore']};
+  co2:['open'],mould:['spring','open'],flow:['flowOff'],noSand:['sand'],attacked:[],noMud:['soil'],noRock:['stone'],noSoil:['soil'],lowLight:['lightMore'],hiN:['wc'],lowN:['feedMore']};
 function liveIssues(){
   const out=[],aq=S.mode==='aqua',wL=wLOf(S);
   if(aq&&!wL)out.push({cls:'warn',t:L('未注水','No water'),d:L('水中生物冇水會死。','Water life dies without water.'),fixes:['fill']});
@@ -2439,7 +2472,7 @@ function frame(t){
   animate(dt,S.hour+(S.running?acc:0));
   renderer.render(scene,camera);
   if(t-lastUI>250){lastUI=t;renderMeters();fitOverlays();
-    if(dirtyList&&!editing()){renderJarList();renderCatalog();if(S.sel&&!S.items.includes(S.sel)){S.sel=null;}renderOvR();}else updateJarLive();
+    if(dirtyList&&!editing()){renderJarList();updateCatCounts();if(S.sel&&!S.items.includes(S.sel)){S.sel=null;}renderOvR();}else updateJarLive();
     if(popIt)updatePop();
     if(curTab==='bal'&&t-lastBal>2500&&!document.activeElement?.closest?.('#pane-bal')){lastBal=t;renderBalance();}}
   if(t-lastOv>1000){lastOv=t;renderOvL();if(!dirtyList)renderOvR();if(issueOpen)renderIssuePop();}

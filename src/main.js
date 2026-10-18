@@ -13,7 +13,7 @@ function frame(t){
   animate(dt,S.hour+(S.running?acc:0));
   renderer.render(scene,camera);
   if(t-lastUI>250){lastUI=t;renderMeters();fitOverlays();
-    if(dirtyList&&!editing()){renderJarList();renderCatalog();if(S.sel&&!S.items.includes(S.sel)){S.sel=null;}renderOvR();}else updateJarLive();
+    if(dirtyList&&!editing()){renderJarList();updateCatCounts();if(S.sel&&!S.items.includes(S.sel)){S.sel=null;}renderOvR();}else updateJarLive();
     if(popIt)updatePop();
     if(curTab==='bal'&&t-lastBal>2500&&!document.activeElement?.closest?.('#pane-bal')){lastBal=t;renderBalance();}}
   if(t-lastOv>1000){lastOv=t;renderOvL();if(!dirtyList)renderOvR();if(issueOpen)renderIssuePop();}
