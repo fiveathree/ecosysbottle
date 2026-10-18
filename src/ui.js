@@ -18,6 +18,7 @@ function removeOne(type){
 }
 function addFromCatalog(t){
   const c=CAT[t],n=S.items.filter(i=>i.type===t&&i.alive).length;
+  if(c.kind==='sub'&&S.terra){terraEnsure(t);renderCatalog();save();toast(L(`已經喺空位鋪咗${c.name[0]}；想揀位置就用「自己砌缸」`,`Laid ${c.name[1].toLowerCase()} on bare floor; use Build to choose where`));return;}
   if(LIMIT[t]!=null&&n>=LIMIT[t]){toast(L(`${c.name[0]}最多 ${LIMIT[t]} 個`,`Up to ${LIMIT[t]} ${c.name[1].toLowerCase()}`));return;}
   if(c.kind==='sub'&&S.items.filter(i=>i.alive&&CAT[i.type].kind==='sub').length>=3){toast(L('底材最多 3 層','Up to 3 substrate layers'));return;}
   let par=null;
@@ -72,6 +73,15 @@ function paramChips(type){const c=CAT[type],p=c.params,g=c.g;
   if(g==='decor')return[c.rock?L('細菌附著 +20%','+20% bacteria surface'):L('純裝飾','decorative')];
   return[];}
 let catTag='all',catQ='';
+const tagList=avail=>['all',...Object.keys(TAGS).filter(t=>t!=='all'&&avail.has(t))];
+function dragScroll(el){let sx=0,sl=0,down=false,moved=false;
+  el.onpointerdown=e=>{if(e.pointerType!=='mouse')return;down=true;moved=false;sx=e.clientX;sl=el.scrollLeft;};
+  el.onpointermove=e=>{if(!down)return;const d=e.clientX-sx;if(Math.abs(d)>4)moved=true;el.scrollLeft=sl-d;};
+  el.onpointerup=el.onpointerleave=()=>{down=false;};
+  el.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);}
+function swipeFlip(el,flip){if(el._sw)return;el._sw=1;let sx=0,sy=0,t0=0;
+  el.addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;t0=Date.now();},{passive:true});
+  el.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.6&&Date.now()-t0<600)flip(dx<0?1:-1);},{passive:true});}
 function renderCatalog(){
   const m=S.mode,aq=m==='aqua';
   const okMode=c=>(c.m===m||c.m==='both')&&(aq?(c.hab!=='land'&&c.hab!=='amph'&&(!c.w||c.w==='both'||c.w===S.water)):c.w!=='salt');
@@ -81,7 +91,11 @@ function renderCatalog(){
   const pa=$('#pane-add');
   if(!$('#catBar')){pa.innerHTML=`<div class="catbar" id="catBar"></div><div id="catList" class="catlist"></div>`;}
   $('#catBar').innerHTML=`<input type="search" id="catQ" class="txt" placeholder="${L('搜尋名稱，例如 蝦、fern','Search, e.g. shrimp, 蝦')}" value="${esc(catQ)}">
-    <div class="tagrow" role="group" aria-label="${L('篩選','Filter')}">${['all',...Object.keys(TAGS).filter(t=>t!=='all'&&avail.has(t))].map(t=>`<button data-tag="${t}" aria-pressed="${catTag===t}">${N(TAGS[t])}</button>`).join('')}</div>`;
+    <div class="tagwrap"><button class="tagarr" id="tagPrev" aria-label="${L('上一個標籤','Previous tag')}">‹</button><div class="tagrow" id="tagRow" role="group" aria-label="${L('篩選','Filter')}">${tagList(avail).map(t=>`<button data-tag="${t}" aria-pressed="${catTag===t}">${N(TAGS[t])}</button>`).join('')}</div><button class="tagarr" id="tagNext" aria-label="${L('下一個標籤','Next tag')}">›</button></div>`;
+  const tl=tagList(avail),flip=d=>{const i=tl.indexOf(catTag);catTag=tl[(i+d+tl.length)%tl.length];renderCatalog();};
+  $('#tagPrev').onclick=()=>flip(-1);$('#tagNext').onclick=()=>flip(1);
+  const row=$('#tagRow'),on=row.querySelector('[aria-pressed="true"]');if(on)row.scrollLeft=on.offsetLeft-row.clientWidth/2+on.offsetWidth/2;
+  dragScroll(row);swipeFlip($('#catList'),flip);
   const q=$('#catQ');q.oninput=()=>{catQ=q.value;renderCatList();};
   $('#catBar').querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{catTag=b.dataset.tag;renderCatalog();$('#catList').scrollIntoView({block:'nearest'});});
   renderCatList();
@@ -97,6 +111,9 @@ function renderCatList(){
   const grp=c=>['sub','decor'].includes(c.kind)?'scape':c.kind==='microbe'?'microbe':c.kind==='plant'?(c.hab==='water'?'wplant':'lplant'):(c.hab==='water'?'wanimal':'lanimal');
   const subN=S.items.filter(i=>i.alive&&CAT[i.type].kind==='sub').length;
   const showWater=(catTag==='all'||catTag==='scape')&&!qq;
+  const buildCard=!showWater?'':`<div class="card build"><div class="nm"><span class="dot" style="background:#b08a5a"></span>${L('自己砌缸','Build your own')}<em>${S.terra?L('已經自訂地形','custom terrain'):L('沙、泥、水嘅位置','place sand, soil and water')}</em></div>
+      <p>${L('用筆刷喺瓶底鋪細沙、碎石、泥土，堆高或者挖低。地勢低過水位嘅地方就會係水。','Brush sand, gravel or soil onto the floor and raise or dig the ground. Anything below the water level becomes water.')}</p>
+      <div class="ctr"><button class="wide" id="buildBtn">${S.terra?L('繼續砌','Edit'):L('開始砌','Start')}</button>${S.terra?`<button class="minus wide" id="terraReset">${L('還原','Reset')}</button>`:''}</div></div>`;
   const waterCard=!showWater?'':aq?`<div class="card"><div class="nm"><span class="dot" style="background:#7fc4d6"></span>${L('水','Water')}<em>${S.water==='salt'?L('海水','salt'):L('淡水','fresh')}</em></div>
       <p>${S.filled?L('已經注滿水。抽乾會令水中生物死亡。','Filled. Draining it kills everything living in the water.'):L('個瓶未有水。鋪好底沙同石頭之後先注水；新水未有細菌。','No water yet. Add substrate and stones first; fresh water has no bacteria.')}</p>
       <div class="ctr"><button class="${S.filled?'minus':''} wide" id="waterBtn">${S.filled?L('抽乾','Drain'):L('注水','Fill')}</button></div></div>`
@@ -104,7 +121,7 @@ function renderCatList(){
       <p>${S.level>0?L(`水位 ${S.level} cm。前面低處係水區，後面土坡係陸地。`,`${S.level} cm deep. The low front is water; the slope at the back is land.`):L('而家係純陸缸。加水位就會變成水陸共生缸，可以養魚。','Land only for now. Raise the water level to make a paludarium with fish.')}</p>
       <div class="ctr"><button class="minus" id="lvDown" ${S.level>0?'':'disabled'} aria-label="${L('降低水位','Lower water')}">−</button><output>${S.level}</output><button id="lvUp" ${S.level<14?'':'disabled'} aria-label="${L('提高水位','Raise water')}">+</button></div></div>`;
   const html=groups.map(([gk,t])=>{const list=Object.keys(CAT).filter(id=>match(id)&&grp(CAT[id])===gk);if(!list.length&&!(gk==='scape'&&waterCard))return'';
-    return`<section class="cards"><h3>${N(t)}</h3>${gk==='scape'?waterCard:''}${list.map(id=>{const c=CAT[id];
+    return`<section class="cards"><h3>${N(t)}</h3>${gk==='scape'?buildCard+waterCard:''}${list.map(id=>{const c=CAT[id];
       const n=S.items.filter(i=>i.type===id).length,lim=LIMIT[id],full=(lim!=null&&S.items.filter(i=>i.type===id&&i.alive).length>=lim)||(c.kind==='sub'&&subN>=3);
       const chips=paramChips(id);if(lim!=null)chips.push(L(`最多 ${lim}`,`max ${lim}`));
       if(!aq&&c.hab==='water'&&c.kind!=='microbe'&&!(S.level>0))chips.push(L('要先加水位','raise the water first'));
@@ -117,6 +134,7 @@ function renderCatList(){
   cl.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>removeOne(b.dataset.rm));
   const wb=$('#waterBtn');if(wb)wb.onclick=()=>fillWater(!S.filled);
   const lu=$('#lvUp'),ld=$('#lvDown');if(lu){lu.onclick=()=>setLevel(Math.min(14,S.level+1));ld.onclick=()=>setLevel(Math.max(0,S.level-1));}
+  const bb=$('#buildBtn');if(bb)bb.onclick=enterBuild;const tr=$('#terraReset');if(tr)tr.onclick=resetTerra;
 }
 function fillWater(on){
   S.filled=on;const c=S.c;['O2','CO2','NH3','NO3','algae','flake','detritus'].forEach(k=>c[k]=0);
@@ -129,6 +147,7 @@ function setLevel(v){if(v===S.level)return;const before=S.level;S.level=v;buildJ
   renderAll();save();}
 function emptyJar(){
   S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
+  S.terra=null;
   Object.assign(S,{filled:false,level:0,feed:0,pump:false,filter:false,heater:false,mist:0,heat:false,wc:0,hour:6,day:1});
   buildJar({keepCam:true});resetChem(S);S.log=[];logEv('清空咗個瓶','Emptied the jar','muted');
   renderAll();save();toast(S.mode==='aqua'?L('已清空，連水都冇','Emptied: no water, nothing inside'):L('已清空，連泥都冇','Emptied: no soil, nothing inside'));
@@ -362,6 +381,7 @@ function drawChart(){
 /* ================= 環境 ================= */
 function loadPreset(key){
   const p=PRESETS[S.mode][key];S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;S.report=null;
+  S.terra=null;S.build=false;
   Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat||'glass',sealed:p.sealed,light:p.light,feed:p.feed,pump:!!p.pump,filter:!!p.filter,heater:!!p.heater,wc:p.wc||0,mist:p.mist||0,heat:!!p.heat,
     region:p.region||'hk',real:false,water:p.water||'fresh',filled:p.filled!==false,level:p.level||0,hillH:p.hillH??6,log:[],hour:6,day:1});
   p.items.forEach(([t,n,par])=>{for(let i=0;i<n;i++){const it=makeItem(t,par);it.n=nextN(t);S.items.push(it);}});
@@ -394,7 +414,7 @@ function renderEnv(){
    ${sl('e-F',L('每日餵食','Food per day'),S.feed,0,6,.5,L('份',''),L('每朝 9 點落飼料；食唔晒會腐爛。','Food goes in at 9 am; leftovers rot.'))}
    ${aq?sw('e-W',S.filled,L('已注水','Filled with water'),L('抽乾會令水中生物死亡；新注嘅水未有細菌。','Draining kills water life; fresh water has no bacteria.'))
      :sl('e-Lv',L('水位','Water level'),S.level,0,14,1,'cm',L(`0 = 純陸缸。有泥土土坡時，前面低處係水區。而家約 ${fx(S.wL)} L 水、佔地面 ${Math.round(S.wFrac*100)}%。`,`0 = land only. With a soil slope, the low front is water. Now about ${fx(S.wL)} L covering ${Math.round(S.wFrac*100)}% of the floor.`))
-      +sl('e-Hill',L('土坡高度','Slope height'),S.hillH,0,14,1,'cm',L('要有泥土先有土坡；後面高、前面低。','Needs soil; high at the back, low at the front.'))}
+      +(S.terra?'':sl('e-Hill',L('土坡高度','Slope height'),S.hillH,0,14,1,'cm',L('要有泥土先有土坡；後面高、前面低。想自己揀位就用「自己砌缸」。','Needs soil; high at the back, low at the front. Use Build to shape it yourself.')))}
    ${hasW?sw('e-P',S.pump,L('氧氣泵','Air pump'),L('打氣入水，補氧同趕走 CO₂。','Bubbles air into the water, adding O₂ and removing CO₂.'))+sw('e-Fi',S.filter,L('過濾','Filter'),L('海綿入面住咗大量硝化菌，分解氨同隔走殘渣。','The sponge hosts lots of bacteria that remove ammonia and trap detritus.'))
      +sw('e-Ht',S.heater,L('加熱棒','Heater'),L('保持水溫，熱帶魚需要。','Keeps the water warm for tropical fish.'))
      +sl('e-WC',L('每週換水','Weekly water change'),S.wc,0,50,5,'%',L('每 7 日朝早 10 點換水，沖淡氨同硝酸鹽。','Every 7 days at 10 am, diluting ammonia and nitrate.')):''}
@@ -422,22 +442,23 @@ function renderEnv(){
   pe.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>loadPreset(b.dataset.p));
   $('#e-restart').onclick=()=>{S.items=S.items.filter(i=>{if(!i.alive){disposeObj(i.g);return false;}return true;});resetChem(S);S.hour=6;S.day=1;S.log=[];S.items.forEach(i=>{i.health=1;i.satiety=1;});renderAll();toast(L('時間重新開始','Time restarted'));};
 }
-function renderAll(){if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(curTab==='bal')renderBalance();}
+function renderAll(){if(S.build)renderBuildBar();if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(curTab==='bal')renderBalance();}
 
 /* ================= 三個瓶 & 儲存 ================= */
-const SNAP_KEYS=['region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day'];
-function snapshot(){const o={name:S.jarName,c:Object.assign({},S.c),log:S.log.slice(0,40),hist:S.hist.slice(-120),
+const SNAP_KEYS=['terra','region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day'];
+function snapshot(){if(S.terra)delete S.terra._info;const o={name:S.jarName,c:Object.assign({},S.c),log:S.log.slice(0,40),hist:S.hist.slice(-120),
   items:S.items.filter(i=>i.alive).map(i=>({type:i.type,params:i.params,name:i.name||'',n:i.n,health:+i.health.toFixed(3),satiety:+i.satiety.toFixed(3),rx:+i.rx.toFixed(3),rz:+i.rz.toFixed(3),age:i.age,up:i.userPlaced?1:0}))};
   SNAP_KEYS.forEach(k=>o[k]=S[k]);return o;}
 function restoreSnap(d){
   S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
   SNAP_KEYS.forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});S.jarName=d.name||'';
+  if(S.terra){S.terra=JSON.parse(JSON.stringify(S.terra));delete S.terra._info;}S.build=false;
   if(!SHAPES[S.shape])S.shape='jar';if(!MATS[S.mat])S.mat='glass';if(!PRESETS[S.mode])S.mode='aqua';if(S.wxMode!=='auto'&&!WX[S.wxMode])S.wxMode='auto';if(!WX[S.wx])S.wx='sunny';
   (d.items||[]).forEach(o=>{if(!CAT[o.type])return;const it=makeItem(o.type,o.params);Object.assign(it,{n:o.n||nextN(o.type),name:o.name||'',health:o.health??1,satiety:o.satiety??1});
     if(o.rx!=null){it.rx=o.rx;it.rz=o.rz;}if(o.age!=null)it.age=o.age;if(o.up)it.userPlaced=true;S.items.push(it);});
   buildJar({keepChem:true});resetChem(S);if(d.c)Object.assign(S.c,d.c);S.log=d.log||[];S.hist=d.hist||[];
 }
-const blankSnap=i=>({name:'',region:'hk',real:false,mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:false,light:12,feed:0,pump:false,filter:false,heater:false,wc:0,mist:0,heat:false,water:'fresh',filled:false,level:0,hillH:6,breed:true,wxMode:'auto',wx:'sunny',hour:6,day:1,items:[]});
+const blankSnap=i=>({terra:null,name:'',region:'hk',real:false,mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:false,light:12,feed:0,pump:false,filter:false,heater:false,wc:0,mist:0,heat:false,water:'fresh',filled:false,level:0,hillH:6,breed:true,wxMode:'auto',wx:'sunny',hour:6,day:1,items:[]});
 function switchJar(i){if(i===S.cur)return;S.jars[S.cur]=snapshot();S.cur=i;restoreSnap(S.jars[i]||blankSnap(i));renderAll();save();toast(L('轉咗去 ','Switched to ')+jarNames()[i]);}
 const KEY='ecojar.v4';
 let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{const jars=S.jars.slice();jars[S.cur]=snapshot();S.jars=jars;localStorage.setItem(KEY,JSON.stringify({cur:S.cur,jars,ana:S.ana}));}catch(e){}},500);}

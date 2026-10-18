@@ -160,11 +160,19 @@ function renderIssuePop(){
 /* ================= 真實嘅瓶：建議 & 副本試 ================= */
 function reportHtml(){
   const R=S.report;if(!R)return'';
-  if(R.suggest)return`<div class="report"><b>${L('改善建議（冇改任何嘢）','Suggestions (nothing changed)')}</b>${R.changes.length?`<ul>${R.changes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:`<p class="lede">${L('而家嘅設定已經係最平衡。','The current setup is already the most balanced.')}</p>`}
-    <p class="lede" style="margin-top:6px">${L('呢個係真實嘅瓶，所以只係列出建議。想試吓效果，可以複製去另一個瓶先套用。','This is a real tank, so these are only suggestions. Copy it to another jar to try them.')}</p>
-    ${R.changes.length?`<div class="ed-actions" style="margin-top:6px"><button class="btn primary" id="tryCopy">${L('複製去另一個瓶試','Try in another jar')}</button></div>`:''}</div>`;
-  return`<div class="report"><b>${L('一鍵平衡結果','Auto-balance result')}</b>${R.changes.length?`<ul>${R.changes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:`<p class="lede">${L('而家嘅設定已經係最平衡。','The current setup is already the most balanced.')}</p>`}
-    <p class="lede" style="margin-top:6px">${R.ok?L('模擬未來 5 日：冇生物死亡。','Simulated 5 days: nothing dies.'):L('模擬未來 5 日仍然有生物頂唔順，可能要移走部份動物。','Something still dies in a 5-day simulation; you may need fewer animals.')} ${L('水質已重設、生物已回復健康。生物本身嘅參數係佢哋嘅天性，所以只調環境同組合。','Water and air were reset and everything healed. Each species keeps its own needs; only the setup and mix changed.')}</p></div>`;
+  const li=a=>a&&a.length?`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'';
+  const sec=(t,a)=>a&&a.length?`<p style="margin:8px 0 0"><b>${t}</b></p>${li(a)}`:'';
+  const life=R.beforeDead&&R.beforeDead.length?`<p style="margin:6px 0 0">${L('原本會死：','Were going to die: ')}${esc(R.beforeDead.join(L('、',', ')))}</p>
+      <p style="margin:2px 0 0;color:var(--${R.afterDead.length?'bad':'good'})">${R.afterDead.length?L('仍然保唔住：','Still at risk: ')+esc(R.afterDead.join(L('、',', '))):L(R.suggest?'跟建議做，全部保得住。':'而家全部保得住。',R.suggest?'Following these suggestions saves them all.':'All of them are now safe.')}</p>`
+    :`<p style="margin:6px 0 0;color:var(--good)">${L('模擬未來 5 日，現有生物都冇事。','Simulated 5 days: every current creature is safe.')}</p>`;
+  const none=!(R.changes&&R.changes.length);
+  return`<div class="report"><b>${R.suggest?L('改善建議（冇改任何嘢）','Suggestions (nothing changed)'):L('一鍵平衡結果','Auto-balance result')}</b>
+    <p class="lede" style="margin:2px 0 0">${L('次序：先保住現有生物，再加水草同微生物，唔夠先調環境同水質。唔會移走任何生物。','Order: protect current creatures first, then add plants and microbes, then adjust the environment and water. No creature is removed.')}</p>
+    ${life}
+    ${none?`<p class="lede" style="margin-top:6px">${L('而家嘅設定已經係最平衡。','The current setup is already the most balanced.')}</p>`:''}
+    ${sec(L('保命必需','Essentials'),R.pre)}${sec(L('水草同微生物','Plants & microbes'),R.plantCh)}${sec(L('環境同水質','Environment & water'),R.envCh)}
+    ${R.afterDead&&R.afterDead.length?`<p class="lede" style="margin-top:6px">${L('有啲生物同呢個瓶嘅條件唔夾（例如溫度、水質），可以考慮搬去另一個瓶。','Some creatures do not suit this jar (temperature or water type, for example); consider moving them to another jar.')}</p>`:''}
+    ${R.suggest&&!none?`<p class="lede" style="margin-top:6px">${L('呢個係真實嘅瓶，所以只係列出建議。','This is a real tank, so these are only suggestions.')}</p><div class="ed-actions" style="margin-top:6px"><button class="btn primary" id="tryCopy">${L('複製去另一個瓶試','Try in another jar')}</button></div>`:''}</div>`;
 }
 function bindReport(){const b=$('#tryCopy');if(b)b.onclick=copyToTrial;}
 function copyToTrial(){

@@ -17,7 +17,7 @@ function shapeSamples(sh){const pts=sh.prof.map(([r,y])=>new THREE.Vector2(r,y))
 const floorR=()=>J.box?J.R:rAt(J.sTop);
 const floorF=()=>floorR()*.72;
 function floorMap(x,z){const f=floorF();return[x*f,z*f];}
-function hillAt(x,z){if(!J.terrain)return 0;const Rf=floorR(),u=x/Rf,v=z/Rf;
+function hillAt(x,z){if(S.terra)return terraH(x,z);if(!J.terrain)return 0;const Rf=floorR(),u=x/Rf,v=z/Rf;
   let b=clamp(-v*.8-u*.3+.25,0,1);b=b*b*(3-2*b);return Math.max(0,J.hillH*b+.008*J.k*(1+Math.sin(x*9)*Math.cos(z*7)));}
 const groundY=(x,z)=>J.sTop+hillAt(x,z);
 const inWater=(x,z,m=.03)=>J.waterTop!=null&&groundY(x,z)<J.waterTop-m;
@@ -46,10 +46,10 @@ function buildJar(opt){
   while(jarG.children.length)disposeObj(jarG.children[0]);J.terrMesh=null;
   const sh=SHAPES[S.shape],M=MATS[S.mat],k=Math.cbrt(S.V/4);
   J.k=k;J.box=!!sh.box;J.R=sh.R*k;J.H=sh.H*k;J.pts=shapeSamples(sh);
-  let y=.008*k;J.subs={};
-  for(const it of S.items)if(it.alive&&CAT[it.type].kind==='sub'){const d=it.params.depth*.025*k;J.subs[it.uid]=[y,y+d];y+=d;}
+  let y=.008*k;J.subs={};J.floor=y;
+  if(!S.terra)for(const it of S.items)if(it.alive&&CAT[it.type].kind==='sub'){const d=it.params.depth*.025*k;J.subs[it.uid]=[y,y+d];y+=d;}
   J.sTop=Math.min(y,J.H*.35);
-  J.terrain=S.mode==='rain'&&S.items.some(i=>i.alive&&i.type==='soil');
+  J.terrain=!S.terra&&S.mode==='rain'&&S.items.some(i=>i.alive&&i.type==='soil');
   J.hillH=(S.hillH||0)*.025*k;
   J.airTop=J.H*.9;
   if(S.mode==='aqua')J.waterTop=S.filled?J.H*sh.w:null;
@@ -63,8 +63,8 @@ function buildJar(opt){
   const oldWL=S._lastWL??wLOf(S);
   if(S.mode==='aqua'){S.wL=S.filled?S.V:0;S.wFrac=1;}
   else if(J.waterTop==null){S.wL=0;S.wFrac=0;}
-  else{let n=0;for(let i=0;i<240;i++){const [x,z]=randIn(J.sTop,.98);if(inWater(x,z,0))n++;}S.wFrac=n/240;
-    S.wL=+(S.V*clamp((J.waterTop-J.sTop)/(J.H*.82),0,1)*S.wFrac).toFixed(2);}
+  else{let n=0,sd=0;for(let i=0;i<240;i++){const [x,z]=randIn(J.sTop,.98),d=J.waterTop-groundY(x,z);if(d>0){n++;sd+=d;}}S.wFrac=n/240;
+    S.wL=+(S.V*clamp(sd/240/(J.H*.82),0,1)).toFixed(2);}
   if(!opt.keepChem)resetWaterIfNew(oldWL);
   S._lastWL=wLOf(S);
   // 玻璃
@@ -127,6 +127,7 @@ function buildJar(opt){
   buildMicrobeLayer();layoutWeather(maxR);
 }
 function buildTerrain(){
+  if(S.terra){buildTerraMesh();return;}
   if(J.terrMesh){disposeObj(J.terrMesh);J.terrMesh=null;}
   if(!J.terrain)return;
   const R=floorR()*.985,geo=new THREE.PlaneGeometry(2*R,2*R,52,52);geo.rotateX(-Math.PI/2);
@@ -437,10 +438,16 @@ function setFloorPos(it,x,z){const k=CAT[it.type].kind;
   else{const f=floorF();it.params.x=+clamp(x/f,-1,1).toFixed(2);it.params.z=+clamp(z/f,-1,1).toFixed(2);}
   placeItem(it);}
 const ptrs=new Map();let downXY=null,pinch0=0;
+let painting=false;
+function paintEv(e){setRay(e);let p=null;if(J.terrMesh){const h=ray.intersectObject(J.terrMesh)[0];if(h)p=h.point;}
+  if(!p){dragPlane.constant=-J.floor;if(ray.ray.intersectPlane(dragPlane,hitP))p=hitP;}if(p)applyBrush(p.x,p.z);}
 canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});downXY={x:e.clientX,y:e.clientY,moved:false};cam.idle=0;
+  if(S.build&&buildTool!=='view'&&ptrs.size===1){painting=true;drag=null;paintEv(e);return;}
+  if(painting&&ptrs.size>1)painting=false;
   if(ptrs.size===1){const it=hitItem(e,draggable);drag=it?{it,moved:false}:null;}else drag=null;
   if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);}});
 canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;
+  if(painting){paintEv(e);p.x=e.clientX;p.y=e.clientY;cam.idle=0;return;}
   if(drag&&ptrs.size===1){
     if(Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6){drag.moved=true;downXY.moved=true;}
     if(drag.moved){setRay(e);dragPlane.constant=-J.sTop;if(ray.ray.intersectPlane(dragPlane,hitP)){hitP.y=J.sTop;clampIn(hitP,.86);setFloorPos(drag.it,hitP.x,hitP.z);}}
@@ -451,6 +458,7 @@ canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)re
   if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*6);pinch0=d;}
   if(downXY&&Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6)downXY.moved=true;cam.idle=0;});
 const up=e=>{
+  if(painting){painting=false;ptrs.delete(e.pointerId);downXY=null;buildJar({keepCam:true});renderCatalog();renderMeters();save();return;}
   if(drag&&ptrs.size===1){const it=drag.it,moved=drag.moved;drag=null;ptrs.delete(e.pointerId);downXY=null;if(moved){if(S.sel===it)renderEditor();save();}select(it,e);return;}
   if(downXY&&!downXY.moved&&ptrs.size===1)pick(e);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=0;if(!ptrs.size)downXY=null;};
 canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);downXY=null;drag=null;});
@@ -469,6 +477,7 @@ function steer(m,spd,dt,rate){const d=m.tgt.clone().sub(m.p),l=d.length();if(l>1
 function swimTarget(m,lo,hi){const p=waterPoint(.06);if(!p){m.tgt.copy(m.p);return;}const gy=groundY(p[0],p[1]),a=gy+(lo??.08),b=Math.max(a,J.waterTop-(hi??.06));m.tgt.set(p[0],rnd(a,b),p[1]);}
 const SWIMMERS=['swim','swarm','jelly','seahorse','aqturtle'],BOTTOM=['crawl','pleco','crab'];
 function animate(dt,hf){
+  if(terraDirty){terraDirty=false;buildTerraMesh();}if(S.build)cam.idle=0;
   tAll+=dt;const lv=lightLevel(hf),w=WX[S.wx]||WX.cloudy,c=S.c,wL=wLOf(S);
   flash=Math.max(0,flash-dt*3);boltT=Math.max(0,boltT-dt);bolt.visible=boltT>0;
   if(w.bolt&&Math.random()<dt*.35){flash=1;boltT=.18;makeBolt();}
