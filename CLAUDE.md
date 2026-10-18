@@ -56,4 +56,5 @@ npm test             # build + automated tests (needs `npm install` once)
   They bypass every unlock (except presets and fast-forward) so people can model their own tank, but they never count towards collection, achievements or challenges.
 - After changes, run `npm test`; every preset except 「失衡示範」 must survive 6 and 30 simulated days.
   If one fails, `node tests/diag30.js aqua.eco` shows when and why animals die (`RUNS`, `DAYS` env vars).
+  To try a new preset before adding it, put {mode,key,preset} in a JSON file and run `node tests/try-preset.js file.json`.
 - `.stage>canvas` styles target only the 3D canvas; other canvases (the trend chart) live inside overlays.
