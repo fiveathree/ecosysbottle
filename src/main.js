@@ -4,7 +4,8 @@ if(!load()){
   p.items.forEach(([t,n])=>{for(let i=0;i<n;i++){const it=makeItem(t);it.n=nextN(t);S.items.push(it);}});
   buildJar({keepChem:true});resetChem(S);
 }
-renderAll();resize();fitOverlays();checkShareLink();
+renderAll();resize();fitOverlays();
+{const shared=location.hash.startsWith('#s=');checkShareLink();if(!shared&&pref.get('ecojar.tour')!=='1')setTimeout(startTour,700);} // 第一次嚟：新手教學
 let last=performance.now(),acc=0,lastUI=0,lastBal=0,lastSave=0,lastOv=0;
 const editing=()=>{const a=document.activeElement;return a&&a.closest&&a.closest('#editor,#catBar,#pane-env,#pane-ana')&&['INPUT','SELECT'].includes(a.tagName);};
 function frame(t){

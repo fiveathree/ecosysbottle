@@ -418,6 +418,18 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:700px) and (prefers-reduced-motion:reduce){.panel{transition:none}}
+
+/* ---- 新手教學 ---- */
+.tour{position:fixed;inset:0;z-index:58}
+.tour-block{position:absolute;inset:0}
+.tour-hl{position:fixed;z-index:59;border-radius:12px;border:2px solid var(--accent);box-shadow:0 0 0 9999px rgba(6,18,22,.62);pointer-events:none;transition:left .25s,top .25s,width .25s,height .25s}
+.tour-card{position:fixed;z-index:60;width:min(330px,calc(100vw - 32px));background:var(--surface);color:var(--ink);border:1px solid var(--accent);border-radius:14px;padding:14px 16px;box-shadow:0 14px 40px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:6px}
+.tour-card.center{left:50%!important;top:50%!important;transform:translate(-50%,-50%);box-shadow:0 0 0 9999px rgba(6,18,22,.62),0 14px 40px rgba(0,0,0,.3)}
+.tour-card h4{margin:0;font-family:var(--f-display);font-size:17px}
+.tour-card p{margin:0;font-size:13.5px}
+.tour-card .tour-n{color:var(--muted);font-size:11.5px;font-family:var(--f-mono)}
+.tour-card .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+@media (prefers-reduced-motion:reduce){.tour-hl{transition:none}}
 </style>
 <div class="app">
   <header class="top">
@@ -430,7 +442,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="grp"><button class="btn primary" id="playBtn"></button><div class="seg" id="speedSeg" role="group" aria-label="Speed"></div></div>
       <div class="grp"><button class="btn" id="feedBtn"></button><button class="btn magic" id="balBtn"></button></div>
       <div class="grp"><button class="btn build" id="buildHdr"></button></div>
-      <div class="grp more"><button class="btn" id="moreBtn" aria-haspopup="menu" aria-expanded="false">⋯</button><div class="menu" id="moreMenu" role="menu" hidden><button role="menuitem" id="shareBtn"></button><button role="menuitem" id="langBtn"></button></div></div>
+      <div class="grp more"><button class="btn" id="moreBtn" aria-haspopup="menu" aria-expanded="false">⋯</button><div class="menu" id="moreMenu" role="menu" hidden><button role="menuitem" id="shareBtn"></button><button role="menuitem" id="langBtn"></button><button role="menuitem" id="tourBtn"></button></div></div>
     </div>
   </header>
   <div class="main">
@@ -464,6 +476,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <nav class="dock" id="dock" role="tablist" aria-label="Panels"></nav>
 </div>
 <div class="toast" id="toast"></div>
+<div class="tour" id="tour" hidden><div class="tour-block"></div><div class="tour-hl" id="tourHl" hidden></div><div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-live="polite"></div></div>
 <dialog class="dlg" id="dlg"></dialog>
 <dialog class="dlg cel-dlg" id="celDlg" aria-label="Unlocked"></dialog>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -2028,7 +2041,7 @@ function renderChrome(){
   $('#brandT').textContent=L('生態瓶實驗室','Eco Jar Lab');$('#brandS').textContent=L('ECO JAR LAB','生態瓶實驗室');
   $('#playBtn').textContent=S.running?L('暫停','Pause'):L('繼續','Play');
   $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('🔗 分享呢個瓶','🔗 Share this jar');$('#presetBtn').textContent=L('預設組合','Presets');
-  $('#langBtn').textContent=LANG==='en'?'🌐 中文':'🌐 English';$('#moreBtn').setAttribute('aria-label',L('更多','More'));$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
+  $('#langBtn').textContent=LANG==='en'?'🌐 中文':'🌐 English';$('#moreBtn').setAttribute('aria-label',L('更多','More'));$('#tourBtn').textContent=L('🧭 新手教學','🧭 Quick guide');$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank'],play:['玩法','Play']};
   document.querySelectorAll('.tabs button').forEach(b=>{b.textContent=N(tabs[b.dataset.tab])+(b.dataset.tab==='jar'?` (${S.items.filter(i=>i.alive).length})`:'');});
@@ -2908,6 +2921,43 @@ async function checkShareLink(){
     renderAll();save();dl.close();toast(L(`已經複製咗「${name}」`,`Copied "${name}"`));};
 }
 
+
+/* ================= 新手教學 =================
+   第一次嚟會自動開始（pref ecojar.tour）；「⋯」選單可以重看。
+   每一步用射燈框住一個掣，旁邊有說明；手機同電腦揀唔同嘅目標。 */
+const TOUR=[
+  {t:['歡迎嚟到生態瓶實驗室','Welcome to Eco Jar Lab'],d:['你可以砌一個有水草、魚蝦同細菌嘅生態瓶，睇吓佢點樣自己運作。跟住幾步，一分鐘就識玩。','Build a jar with plants, fish, shrimp and bacteria, then watch it run itself. A few quick steps and you are ready.']},
+  {sel:['#stage'],t:['呢個就係你個瓶','This is your jar'],d:['單指拖動轉個瓶，兩隻手指縮放；撳一隻生物睇佢嘅資料、換顏色，或者用佢嘅第一視角。','Drag to turn it and pinch to zoom. Tap a creature to see its details, change its colour or see through its eyes.']},
+  {sel:['#status'],t:['個瓶好唔好','How is the jar doing?'],d:['綠色＝穩定，黃色＝要留意，紅色＝危險。撳佢睇有咩問題，好多問題撳一下就處理到。','Green is stable, amber needs watching, red is danger. Tap it to see the problems; many have a one-tap fix.']},
+  {sel:['#meters'],t:['水質同空氣','Water and air'],d:['溶氧、氨、溫度等等會隨時間變。條棒變紅就要處理。','Oxygen, ammonia, temperature and more change over time. A red bar needs attention.']},
+  {sel:['[data-dock="add"]','.tabs [data-tab="add"]'],t:['加入生物同造景','Add life and scenery'],d:['由細沙、石頭開始，再加水草、細菌，最後先加魚蝦。卡上面有佢需要咩。','Start with sand and stones, then plants and bacteria, and add fish and shrimp last. Each card shows what it needs.']},
+  {sel:['#balBtn'],t:['一鍵平衡','Auto-balance'],d:['唔知點調？撳一鍵平衡，佢會試算未來幾日，加水草、調光照同餵食，盡量保住每一隻生物。','Not sure what to change? Auto-balance simulates the next few days and adjusts plants, light and food to keep everything alive.']},
+  {sel:['#playBtn'],t:['時間','Time'],d:['暫停或者加快時間。1 日／秒最快，可以睇到生物生 BB。','Pause or speed up time. At 1 day per second you can watch animals have young.']},
+  {sel:['[data-dock="play"]','.tabs [data-tab="play"]'],t:['挑戰同解鎖','Challenges and unlocks'],d:['完成挑戰、成就同收藏，會解鎖雨林、水陸、海水同更多生物。想分析自己真實嘅缸，就喺「環境」開「呢個係真實嘅瓶」，乜都用得。','Challenges, achievements and your collection unlock rainforest, paludarium, salt water and more species. To analyse your real tank, turn on "This is a real tank" in Setup and everything is available.']},
+  {t:['準備好喇！','You are ready!'],d:['試吓撳「一鍵平衡」，或者去「玩法」揀個挑戰。想再睇教學，可以喺右上角「⋯」揀「新手教學」。','Try Auto-balance, or pick a challenge in Play. To see this guide again, choose "Quick guide" from the ⋯ menu at the top.']},
+];
+const tour={i:-1};
+function tourTarget(st){for(const s of st.sel||[]){const el=$(s);if(el&&el.offsetParent!==null&&el.getBoundingClientRect().width>0)return el;}return null;}
+function startTour(){setSheet&&isPhone()&&setSheet(false);closePop();tour.i=0;$('#tour').hidden=false;document.body.classList.add('touring');renderTour();}
+function endTour(){tour.i=-1;$('#tour').hidden=true;document.body.classList.remove('touring');pref.set('ecojar.tour','1');}
+function renderTour(){
+  const st=TOUR[tour.i];if(!st){endTour();return;}
+  const box=$('#tourHl'),card=$('#tourCard'),el=tourTarget(st);
+  card.innerHTML=`<p class="tour-n">${tour.i+1} / ${TOUR.length}</p><h4>${N(st.t)}</h4><p>${N(st.d)}</p>
+    <div class="acts">${tour.i?`<button class="btn" id="tourPrev">${L('上一步','Back')}</button>`:`<button class="btn" id="tourSkip">${L('跳過','Skip')}</button>`}<button class="btn primary" id="tourNext">${tour.i===TOUR.length-1?L('開始玩','Start playing'):tour.i?L('下一步','Next'):L('開始教學','Show me')}</button></div>`;
+  const p=$('#tourPrev'),s=$('#tourSkip');if(p)p.onclick=()=>{tour.i--;renderTour();};if(s)s.onclick=endTour;$('#tourNext').onclick=()=>{tour.i++;renderTour();};
+  if(!el){box.hidden=true;card.classList.add('center');card.style.left=card.style.top='';$('#tourNext').focus();return;}
+  el.scrollIntoView({block:'center',behavior:'instant'});
+  requestAnimationFrame(()=>{const r=el.getBoundingClientRect(),pad=6;box.hidden=false;card.classList.remove('center');
+    Object.assign(box.style,{left:(r.left-pad)+'px',top:(r.top-pad)+'px',width:(r.width+pad*2)+'px',height:(r.height+pad*2)+'px'});
+    const cw=card.offsetWidth,ch=card.offsetHeight,vw=innerWidth,vh=innerHeight;
+    let top=r.bottom+14;if(top+ch>vh-8)top=r.top-ch-14;if(top<8)top=Math.max(8,Math.min(vh-ch-8,r.top+r.height/2-ch/2));
+    card.style.left=clamp(r.left+r.width/2-cw/2,8,vw-cw-8)+'px';card.style.top=top+'px';$('#tourNext').focus();});
+}
+addEventListener('resize',()=>{if(tour.i>=0)renderTour();});
+document.addEventListener('keydown',e=>{if(tour.i<0)return;if(e.key==='Escape')endTour();else if(e.key==='ArrowRight'){tour.i++;renderTour();}else if(e.key==='ArrowLeft'&&tour.i>0){tour.i--;renderTour();}});
+$('#tourBtn').onclick=startTour;
+
 /* ================= 玩法：挑戰、成就、收藏、時間旅行 =================
    成就同收藏屬於玩家（每個瀏覽器一份，用 pref 存）；挑戰進度屬於個瓶（S.chal，跟 SNAP_KEYS 存）。
    全部只係睇模擬結果，唔會改個瓶。 */
@@ -3150,7 +3200,8 @@ if(!load()){
   p.items.forEach(([t,n])=>{for(let i=0;i<n;i++){const it=makeItem(t);it.n=nextN(t);S.items.push(it);}});
   buildJar({keepChem:true});resetChem(S);
 }
-renderAll();resize();fitOverlays();checkShareLink();
+renderAll();resize();fitOverlays();
+{const shared=location.hash.startsWith('#s=');checkShareLink();if(!shared&&pref.get('ecojar.tour')!=='1')setTimeout(startTour,700);} // 第一次嚟：新手教學
 let last=performance.now(),acc=0,lastUI=0,lastBal=0,lastSave=0,lastOv=0;
 const editing=()=>{const a=document.activeElement;return a&&a.closest&&a.closest('#editor,#catBar,#pane-env,#pane-ana')&&['INPUT','SELECT'].includes(a.tagName);};
 function frame(t){

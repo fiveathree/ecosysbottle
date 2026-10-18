@@ -315,3 +315,40 @@ async function checkShareLink(){
     restoreSnap(d);S.log=[];logEv(`複製咗朋友分享嘅「${name}」`,`Copied the shared jar "${name}"`,'muted');
     renderAll();save();dl.close();toast(L(`已經複製咗「${name}」`,`Copied "${name}"`));};
 }
+
+
+/* ================= 新手教學 =================
+   第一次嚟會自動開始（pref ecojar.tour）；「⋯」選單可以重看。
+   每一步用射燈框住一個掣，旁邊有說明；手機同電腦揀唔同嘅目標。 */
+const TOUR=[
+  {t:['歡迎嚟到生態瓶實驗室','Welcome to Eco Jar Lab'],d:['你可以砌一個有水草、魚蝦同細菌嘅生態瓶，睇吓佢點樣自己運作。跟住幾步，一分鐘就識玩。','Build a jar with plants, fish, shrimp and bacteria, then watch it run itself. A few quick steps and you are ready.']},
+  {sel:['#stage'],t:['呢個就係你個瓶','This is your jar'],d:['單指拖動轉個瓶，兩隻手指縮放；撳一隻生物睇佢嘅資料、換顏色，或者用佢嘅第一視角。','Drag to turn it and pinch to zoom. Tap a creature to see its details, change its colour or see through its eyes.']},
+  {sel:['#status'],t:['個瓶好唔好','How is the jar doing?'],d:['綠色＝穩定，黃色＝要留意，紅色＝危險。撳佢睇有咩問題，好多問題撳一下就處理到。','Green is stable, amber needs watching, red is danger. Tap it to see the problems; many have a one-tap fix.']},
+  {sel:['#meters'],t:['水質同空氣','Water and air'],d:['溶氧、氨、溫度等等會隨時間變。條棒變紅就要處理。','Oxygen, ammonia, temperature and more change over time. A red bar needs attention.']},
+  {sel:['[data-dock="add"]','.tabs [data-tab="add"]'],t:['加入生物同造景','Add life and scenery'],d:['由細沙、石頭開始，再加水草、細菌，最後先加魚蝦。卡上面有佢需要咩。','Start with sand and stones, then plants and bacteria, and add fish and shrimp last. Each card shows what it needs.']},
+  {sel:['#balBtn'],t:['一鍵平衡','Auto-balance'],d:['唔知點調？撳一鍵平衡，佢會試算未來幾日，加水草、調光照同餵食，盡量保住每一隻生物。','Not sure what to change? Auto-balance simulates the next few days and adjusts plants, light and food to keep everything alive.']},
+  {sel:['#playBtn'],t:['時間','Time'],d:['暫停或者加快時間。1 日／秒最快，可以睇到生物生 BB。','Pause or speed up time. At 1 day per second you can watch animals have young.']},
+  {sel:['[data-dock="play"]','.tabs [data-tab="play"]'],t:['挑戰同解鎖','Challenges and unlocks'],d:['完成挑戰、成就同收藏，會解鎖雨林、水陸、海水同更多生物。想分析自己真實嘅缸，就喺「環境」開「呢個係真實嘅瓶」，乜都用得。','Challenges, achievements and your collection unlock rainforest, paludarium, salt water and more species. To analyse your real tank, turn on "This is a real tank" in Setup and everything is available.']},
+  {t:['準備好喇！','You are ready!'],d:['試吓撳「一鍵平衡」，或者去「玩法」揀個挑戰。想再睇教學，可以喺右上角「⋯」揀「新手教學」。','Try Auto-balance, or pick a challenge in Play. To see this guide again, choose "Quick guide" from the ⋯ menu at the top.']},
+];
+const tour={i:-1};
+function tourTarget(st){for(const s of st.sel||[]){const el=$(s);if(el&&el.offsetParent!==null&&el.getBoundingClientRect().width>0)return el;}return null;}
+function startTour(){setSheet&&isPhone()&&setSheet(false);closePop();tour.i=0;$('#tour').hidden=false;document.body.classList.add('touring');renderTour();}
+function endTour(){tour.i=-1;$('#tour').hidden=true;document.body.classList.remove('touring');pref.set('ecojar.tour','1');}
+function renderTour(){
+  const st=TOUR[tour.i];if(!st){endTour();return;}
+  const box=$('#tourHl'),card=$('#tourCard'),el=tourTarget(st);
+  card.innerHTML=`<p class="tour-n">${tour.i+1} / ${TOUR.length}</p><h4>${N(st.t)}</h4><p>${N(st.d)}</p>
+    <div class="acts">${tour.i?`<button class="btn" id="tourPrev">${L('上一步','Back')}</button>`:`<button class="btn" id="tourSkip">${L('跳過','Skip')}</button>`}<button class="btn primary" id="tourNext">${tour.i===TOUR.length-1?L('開始玩','Start playing'):tour.i?L('下一步','Next'):L('開始教學','Show me')}</button></div>`;
+  const p=$('#tourPrev'),s=$('#tourSkip');if(p)p.onclick=()=>{tour.i--;renderTour();};if(s)s.onclick=endTour;$('#tourNext').onclick=()=>{tour.i++;renderTour();};
+  if(!el){box.hidden=true;card.classList.add('center');card.style.left=card.style.top='';$('#tourNext').focus();return;}
+  el.scrollIntoView({block:'center',behavior:'instant'});
+  requestAnimationFrame(()=>{const r=el.getBoundingClientRect(),pad=6;box.hidden=false;card.classList.remove('center');
+    Object.assign(box.style,{left:(r.left-pad)+'px',top:(r.top-pad)+'px',width:(r.width+pad*2)+'px',height:(r.height+pad*2)+'px'});
+    const cw=card.offsetWidth,ch=card.offsetHeight,vw=innerWidth,vh=innerHeight;
+    let top=r.bottom+14;if(top+ch>vh-8)top=r.top-ch-14;if(top<8)top=Math.max(8,Math.min(vh-ch-8,r.top+r.height/2-ch/2));
+    card.style.left=clamp(r.left+r.width/2-cw/2,8,vw-cw-8)+'px';card.style.top=top+'px';$('#tourNext').focus();});
+}
+addEventListener('resize',()=>{if(tour.i>=0)renderTour();});
+document.addEventListener('keydown',e=>{if(tour.i<0)return;if(e.key==='Escape')endTour();else if(e.key==='ArrowRight'){tour.i++;renderTour();}else if(e.key==='ArrowLeft'&&tour.i>0){tour.i--;renderTour();}});
+$('#tourBtn').onclick=startTour;
