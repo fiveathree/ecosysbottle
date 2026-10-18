@@ -232,6 +232,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .ovrow .mini b{display:block;height:100%}
 .pop{position:absolute;z-index:6;width:236px;background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:8px;font-size:12.5px}
 .pop.issues{width:min(360px,calc(100% - 20px));max-height:calc(100% - 60px);overflow:auto;left:10px;top:44px;border-color:var(--line)}
+.rotpad{display:grid;grid-template-columns:1fr auto auto;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted)}
+.rotpad button{width:34px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);font-size:14px;color:var(--ink)}
+.rotpad .rotreset{grid-column:1/-1;width:auto;font-size:12px}
 .kv2{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:12px;color:var(--muted)}
 .kv2 b{color:var(--ink)}
 .fixes{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
@@ -363,7 +366,9 @@ const PD={
   nh3TolW:P(['水中氨耐受','Water ammonia limit'],['mg/L','mg/L'],.1,3,.05,['水區入面氨高過呢個數會生病','Above this in the water it gets ill']),
   x:P(['左右位置','Left–right'],['',''],-1,1,.05,['亦可以喺 3D 畫面直接拖','You can also drag it in the 3D view']),
   z:P(['前後位置','Front–back'],['',''],-1,1,.05),
-  rot:P(['旋轉','Rotation'],['°','°'],0,360,5),
+  rot:P(['左右轉','Turn'],['°','°'],0,360,5,['繞住垂直軸轉一圈','Spin around the vertical axis']),
+  rotX:P(['前後傾','Tilt front–back'],['°','°'],-180,180,5,['向前或者向後翻','Tip it forwards or backwards']),
+  rotZ:P(['左右傾','Tilt left–right'],['°','°'],-180,180,5,['向左或者向右側','Tip it to the left or right']),
   size:P(['大細','Size'],['×','×'],.4,2,.05),
   depth:P(['厚度','Thickness'],['cm','cm'],1,8,.5,['越厚越多細菌住，但會佔空間','Thicker holds more bacteria but takes space'])
 };
@@ -377,7 +382,7 @@ const GROUPS={
   ranimal:[['resp','respL'],['food','food'],['wasteEvery','wasteEvery'],['wasteAmt','wasteL'],['humMin','humMin'],['humMax','humMax'],['tMin','tMin'],['tMax','tMax'],['breedDays','breedDays'],['litter','litter']],
   amph:[['resp','respL'],['food','food'],['wasteEvery','wasteEvery'],['wasteAmt','wasteL'],['humMin','humMin'],['humMax','humMax'],['tMin','tMin'],['tMax','tMax'],['nh3Tol','nh3TolW'],['breedDays','breedDays'],['litter','litter']],
   soilm:[['rate','rate'],['o2Per','o2Per']],
-  decor:[['x','x'],['z','z'],['rot','rot'],['size','size']],
+  decor:[['x','x'],['z','z'],['rot','rot'],['rotX','rotX'],['rotZ','rotZ'],['size','size']],
   sub:[['depth','depth']]
 };
 
@@ -439,10 +444,10 @@ const CAT={
   sand:{m:'both',hab:'none',kind:'sub',g:'sub',name:['細沙','Fine sand'],sci:'',color:'#cab68c',desc:['水草要種喺沙入面先生到根，細菌亦都住喺沙粒之間。','Rooted plants need it; bacteria live between the grains.'],params:{depth:3}},
   gravel:{m:'both',hab:'none',kind:'sub',g:'sub',name:['碎石','Gravel'],sci:'',color:'#8f8a80',desc:['通水性好，住得多細菌。','Good water flow and lots of bacteria.'],params:{depth:3}},
   soil:{m:'both',hab:'none',kind:'sub',g:'sub',name:['泥土','Soil'],sci:'',color:'#5b4030',desc:['雨林植物一定要有泥土；有泥土先會有陸地土坡。','Rainforest plants need it; soil also builds the land slope.'],params:{depth:4}},
-  stone:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['石頭','Stones'],sci:'',color:'#7d786f',desc:['增加細菌附著面積，黑木蕨同莫絲可以依附。','More surface for bacteria; Java fern and moss can attach.'],params:{x:.45,z:.3,rot:0,size:1}},
-  rockmtn:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['假山','Rock mountain'],sci:'',color:'#8a857c',desc:['層層疊嘅石山，俾生物躲藏，細菌都住得多。','Stacked rock for hiding, with room for bacteria.'],params:{x:-.4,z:-.3,rot:0,size:1}},
-  bridge:{m:'both',hab:'none',kind:'decor',g:'decor',name:['假橋','Bridge'],sci:'',color:'#9b3b2a',desc:['純裝飾，蝦同蜥蜴可以行過。','Pure decoration that shrimp and lizards can cross.'],params:{x:0,z:.25,rot:20,size:1}},
-  driftwood:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['沉木','Driftwood'],sci:'',color:'#5b3a22',desc:['天然木頭，植物可以依附，守宮可以攀爬。','Natural wood for plants to attach to and geckos to climb.'],params:{x:.2,z:-.35,rot:40,size:1}}
+  stone:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['石頭','Stones'],sci:'',color:'#7d786f',desc:['增加細菌附著面積，黑木蕨同莫絲可以依附。','More surface for bacteria; Java fern and moss can attach.'],params:{x:.45,z:.3,rot:0,rotX:0,rotZ:0,size:1}},
+  rockmtn:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['假山','Rock mountain'],sci:'',color:'#8a857c',desc:['層層疊嘅石山，俾生物躲藏，細菌都住得多。','Stacked rock for hiding, with room for bacteria.'],params:{x:-.4,z:-.3,rot:0,rotX:0,rotZ:0,size:1}},
+  bridge:{m:'both',hab:'none',kind:'decor',g:'decor',name:['假橋','Bridge'],sci:'',color:'#9b3b2a',desc:['純裝飾，蝦同蜥蜴可以行過。','Pure decoration that shrimp and lizards can cross.'],params:{x:0,z:.25,rot:20,rotX:0,rotZ:0,size:1}},
+  driftwood:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['沉木','Driftwood'],sci:'',color:'#5b3a22',desc:['天然木頭，植物可以依附，守宮可以攀爬。','Natural wood for plants to attach to and geckos to climb.'],params:{x:.2,z:-.35,rot:40,rotX:0,rotZ:0,size:1}}
 };
 const BREED={gardeneel:[0,1],guppy:[7,3],medaka:[6,2],minnow:[10,2],shrimp:[8,3],snail:[10,2],seahorse:[14,2],frog:[20,1]};
 const LIMIT={stone:4,rockmtn:2,bridge:2,driftwood:2,sand:2,gravel:2,soil:2};
@@ -1283,7 +1288,7 @@ function plantF(it){if(it.type==='duckweed')return J.box?J.R*.6:rAt(J.waterTop||
 function placeItem(it){
   const C=CAT[it.type],k=C.kind,g=it.g;if(!g)return;
   if(k==='sub'){g.position.set(0,0,0);return;}
-  if(k==='decor'){const [x,z]=floorMap(it.params.x,it.params.z);g.position.set(x,groundY(x,z),z);g.rotation.y=(it.params.rot||0)*Math.PI/180;g.scale.setScalar(it.params.size*J.k);return;}
+  if(k==='decor'){const [x,z]=floorMap(it.params.x,it.params.z);g.position.set(x,groundY(x,z),z);const d2r=Math.PI/180;g.rotation.order='YXZ';g.rotation.set((it.params.rotX||0)*d2r,(it.params.rot||0)*d2r,(it.params.rotZ||0)*d2r);g.scale.setScalar(it.params.size*J.k);return;}
   if(k==='plant'){
     const f=plantF(it);let px=it.rx*f,pz=it.rz*f;
     if(S.mode==='rain'&&!it.userPlaced){
@@ -2319,8 +2324,16 @@ function renderPop(){
   if(k==='plant'&&it.alive)rows.push([L('而家產氧','O₂ now'),fx(it.lastProd,2)+' mg/h']);
   pop.innerHTML=`<div class="ed-head"><span class="dot" style="background:${c.color}"></span><b style="margin-right:auto">${esc(label(it))}</b><button class="x" id="popX" aria-label="${L('關閉','Close')}">×</button></div>
     <div id="popDyn">${popDyn(it)}</div>
+    ${k==='decor'&&it.alive?`<div class="rotpad"><span>${L('左右轉','Turn')}</span><button data-r="rot,-15">⟲</button><button data-r="rot,15">⟳</button>
+      <span>${L('前後傾','Tilt F/B')}</span><button data-r="rotX,-15">▲</button><button data-r="rotX,15">▼</button>
+      <span>${L('左右傾','Tilt L/R')}</span><button data-r="rotZ,15">◀</button><button data-r="rotZ,-15">▶</button>
+      <button class="rotreset" data-r="reset">${L('擺返正','Level it')}</button></div>`:''}
     <div class="ed-actions"><button class="btn primary" id="popMore">${L('詳細設定','Settings')}</button><button class="btn danger" id="popDel">${it.alive?L('移走','Remove'):L('清走','Clear')}</button></div>`;
   $('#popX').onclick=closePop;
+  pop.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const v=b.dataset.r;
+    if(v==='reset'){it.params.rotX=0;it.params.rotZ=0;}
+    else{const [key,dv]=v.split(','),p=it.params;let n=(p[key]||0)+ +dv;if(key==='rot')n=(n%360+360)%360;else{if(n>180)n-=360;if(n<-180)n+=360;}p[key]=n;}
+    placeItem(it);save();if(S.sel===it&&$('#editor'))renderEditor();});
   $('#popMore').onclick=()=>{closePop();showTab('jar');renderJarList();renderEditor();const e=$('#editor');if(e)e.scrollIntoView({behavior:'smooth',block:'nearest'});if(innerWidth<920)$('.panel').scrollIntoView({behavior:'smooth',block:'start'});};
   $('#popDel').onclick=()=>{closePop();removeItem(it);};
 }

@@ -374,7 +374,7 @@ function plantF(it){if(it.type==='duckweed')return J.box?J.R*.6:rAt(J.waterTop||
 function placeItem(it){
   const C=CAT[it.type],k=C.kind,g=it.g;if(!g)return;
   if(k==='sub'){g.position.set(0,0,0);return;}
-  if(k==='decor'){const [x,z]=floorMap(it.params.x,it.params.z);g.position.set(x,groundY(x,z),z);g.rotation.y=(it.params.rot||0)*Math.PI/180;g.scale.setScalar(it.params.size*J.k);return;}
+  if(k==='decor'){const [x,z]=floorMap(it.params.x,it.params.z);g.position.set(x,groundY(x,z),z);const d2r=Math.PI/180;g.rotation.order='YXZ';g.rotation.set((it.params.rotX||0)*d2r,(it.params.rot||0)*d2r,(it.params.rotZ||0)*d2r);g.scale.setScalar(it.params.size*J.k);return;}
   if(k==='plant'){
     const f=plantF(it);let px=it.rx*f,pz=it.rz*f;
     if(S.mode==='rain'&&!it.userPlaced){

@@ -40,7 +40,9 @@ const PD={
   nh3TolW:P(['水中氨耐受','Water ammonia limit'],['mg/L','mg/L'],.1,3,.05,['水區入面氨高過呢個數會生病','Above this in the water it gets ill']),
   x:P(['左右位置','Left–right'],['',''],-1,1,.05,['亦可以喺 3D 畫面直接拖','You can also drag it in the 3D view']),
   z:P(['前後位置','Front–back'],['',''],-1,1,.05),
-  rot:P(['旋轉','Rotation'],['°','°'],0,360,5),
+  rot:P(['左右轉','Turn'],['°','°'],0,360,5,['繞住垂直軸轉一圈','Spin around the vertical axis']),
+  rotX:P(['前後傾','Tilt front–back'],['°','°'],-180,180,5,['向前或者向後翻','Tip it forwards or backwards']),
+  rotZ:P(['左右傾','Tilt left–right'],['°','°'],-180,180,5,['向左或者向右側','Tip it to the left or right']),
   size:P(['大細','Size'],['×','×'],.4,2,.05),
   depth:P(['厚度','Thickness'],['cm','cm'],1,8,.5,['越厚越多細菌住，但會佔空間','Thicker holds more bacteria but takes space'])
 };
@@ -54,7 +56,7 @@ const GROUPS={
   ranimal:[['resp','respL'],['food','food'],['wasteEvery','wasteEvery'],['wasteAmt','wasteL'],['humMin','humMin'],['humMax','humMax'],['tMin','tMin'],['tMax','tMax'],['breedDays','breedDays'],['litter','litter']],
   amph:[['resp','respL'],['food','food'],['wasteEvery','wasteEvery'],['wasteAmt','wasteL'],['humMin','humMin'],['humMax','humMax'],['tMin','tMin'],['tMax','tMax'],['nh3Tol','nh3TolW'],['breedDays','breedDays'],['litter','litter']],
   soilm:[['rate','rate'],['o2Per','o2Per']],
-  decor:[['x','x'],['z','z'],['rot','rot'],['size','size']],
+  decor:[['x','x'],['z','z'],['rot','rot'],['rotX','rotX'],['rotZ','rotZ'],['size','size']],
   sub:[['depth','depth']]
 };
 
@@ -116,10 +118,10 @@ const CAT={
   sand:{m:'both',hab:'none',kind:'sub',g:'sub',name:['細沙','Fine sand'],sci:'',color:'#cab68c',desc:['水草要種喺沙入面先生到根，細菌亦都住喺沙粒之間。','Rooted plants need it; bacteria live between the grains.'],params:{depth:3}},
   gravel:{m:'both',hab:'none',kind:'sub',g:'sub',name:['碎石','Gravel'],sci:'',color:'#8f8a80',desc:['通水性好，住得多細菌。','Good water flow and lots of bacteria.'],params:{depth:3}},
   soil:{m:'both',hab:'none',kind:'sub',g:'sub',name:['泥土','Soil'],sci:'',color:'#5b4030',desc:['雨林植物一定要有泥土；有泥土先會有陸地土坡。','Rainforest plants need it; soil also builds the land slope.'],params:{depth:4}},
-  stone:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['石頭','Stones'],sci:'',color:'#7d786f',desc:['增加細菌附著面積，黑木蕨同莫絲可以依附。','More surface for bacteria; Java fern and moss can attach.'],params:{x:.45,z:.3,rot:0,size:1}},
-  rockmtn:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['假山','Rock mountain'],sci:'',color:'#8a857c',desc:['層層疊嘅石山，俾生物躲藏，細菌都住得多。','Stacked rock for hiding, with room for bacteria.'],params:{x:-.4,z:-.3,rot:0,size:1}},
-  bridge:{m:'both',hab:'none',kind:'decor',g:'decor',name:['假橋','Bridge'],sci:'',color:'#9b3b2a',desc:['純裝飾，蝦同蜥蜴可以行過。','Pure decoration that shrimp and lizards can cross.'],params:{x:0,z:.25,rot:20,size:1}},
-  driftwood:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['沉木','Driftwood'],sci:'',color:'#5b3a22',desc:['天然木頭，植物可以依附，守宮可以攀爬。','Natural wood for plants to attach to and geckos to climb.'],params:{x:.2,z:-.35,rot:40,size:1}}
+  stone:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['石頭','Stones'],sci:'',color:'#7d786f',desc:['增加細菌附著面積，黑木蕨同莫絲可以依附。','More surface for bacteria; Java fern and moss can attach.'],params:{x:.45,z:.3,rot:0,rotX:0,rotZ:0,size:1}},
+  rockmtn:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['假山','Rock mountain'],sci:'',color:'#8a857c',desc:['層層疊嘅石山，俾生物躲藏，細菌都住得多。','Stacked rock for hiding, with room for bacteria.'],params:{x:-.4,z:-.3,rot:0,rotX:0,rotZ:0,size:1}},
+  bridge:{m:'both',hab:'none',kind:'decor',g:'decor',name:['假橋','Bridge'],sci:'',color:'#9b3b2a',desc:['純裝飾，蝦同蜥蜴可以行過。','Pure decoration that shrimp and lizards can cross.'],params:{x:0,z:.25,rot:20,rotX:0,rotZ:0,size:1}},
+  driftwood:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['沉木','Driftwood'],sci:'',color:'#5b3a22',desc:['天然木頭，植物可以依附，守宮可以攀爬。','Natural wood for plants to attach to and geckos to climb.'],params:{x:.2,z:-.35,rot:40,rotX:0,rotZ:0,size:1}}
 };
 const BREED={gardeneel:[0,1],guppy:[7,3],medaka:[6,2],minnow:[10,2],shrimp:[8,3],snail:[10,2],seahorse:[14,2],frog:[20,1]};
 const LIMIT={stone:4,rockmtn:2,bridge:2,driftwood:2,sand:2,gravel:2,soil:2};
