@@ -242,6 +242,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .bb-tools button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
 .sw2{width:12px;height:12px;border-radius:3px;display:inline-block;background:var(--muted)}
 .t-sand{background:#cab68c}.t-gravel{background:#8f8a80}.t-soil{background:#5b4030}.t-water{background:#5fa8c4}.t-raise{background:linear-gradient(0deg,#5b4030 50%,transparent 50%)}.t-lower{background:linear-gradient(180deg,#5b4030 50%,transparent 50%)}.t-smooth{background:#a89a80;border-radius:6px}.t-erase{background:transparent;border:1px dashed var(--muted)}.t-view{background:transparent;border:2px solid var(--muted);border-radius:50%}
+.bb-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:12.5px}
+.bb-tools.mats{max-height:76px;overflow:auto}
+.bb-cam{display:flex;gap:4px;margin-left:auto}
+.bb-cam button{font-size:12.5px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
 .bb-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .bb-sl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:1;min-width:140px}
 .bb-sl input{flex:1;min-width:60px}
@@ -554,11 +558,11 @@ function freshWater(c,dWL,first){c.O2+=sat(c.T||24)*dWL;c.CO2+=.6*dWL;c.NO3+=.5*
 const TMAT={1:'sand',2:'gravel',3:'soil'},TMAT_ID={sand:1,gravel:2,soil:3};
 function terraInfo(t){if(t._info)return t._info;const n=t.n*t.n,area={};let hs=0;
   for(let i=0;i<n;i++){const m=t.m[i];if(m){area[m]=(area[m]||0)+1;hs+=t.h[i];}}
-  const subTypes={};Object.entries(area).forEach(([m,a])=>{if(a/n>.01)subTypes[TMAT[m]]=1;});
-  return t._info={sub:hs/n,subTypes};}
+  const subTypes={};let rocks=0;Object.entries(area).forEach(([m,a])=>{const tm=TMATS[m]||TMATS[1];if(a/n>.01)subTypes[tm.cls]=1;if(tm.rock&&a/n>.05)rocks++;});
+  return t._info={sub:hs/n,subTypes,rocks};}
 function envInfo(st){
   const E={sub:0,subTypes:{},rocks:0};
-  if(st.terra){const ti=terraInfo(st.terra);E.sub+=ti.sub;Object.assign(E.subTypes,ti.subTypes);}
+  if(st.terra){const ti=terraInfo(st.terra);E.sub+=ti.sub;Object.assign(E.subTypes,ti.subTypes);E.rocks+=ti.rocks;}
   for(const it of st.items){if(!it.alive)continue;const c=CAT[it.type];
     if(c.kind==='sub'){E.sub+=it.params.depth;E.subTypes[it.type]=1;}
     if(c.rock)E.rocks++;}
@@ -1335,17 +1339,19 @@ function setFloorPos(it,x,z){const k=CAT[it.type].kind;
   if(k==='plant'){const f=plantF(it);it.rx=clamp(x/f,-1.3,1.3);it.rz=clamp(z/f,-1.3,1.3);it.userPlaced=true;}
   else{const f=floorF();it.params.x=+clamp(x/f,-1,1).toFixed(2);it.params.z=+clamp(z/f,-1,1).toFixed(2);}
   placeItem(it);}
-const ptrs=new Map();let downXY=null,pinch0=0;
-let painting=false;
+const ptrs=new Map();let downXY=null,pinch0=0,mid0=null;
+let painting=false,terraTouched=false;
 function paintEv(e){setRay(e);let p=null;if(J.terrMesh){const h=ray.intersectObject(J.terrMesh)[0];if(h)p=h.point;}
-  if(!p){dragPlane.constant=-J.floor;if(ray.ray.intersectPlane(dragPlane,hitP))p=hitP;}if(p)applyBrush(p.x,p.z);}
+  if(!p){dragPlane.constant=-J.floor;if(ray.ray.intersectPlane(dragPlane,hitP))p=hitP;}if(p){applyBrush(p.x,p.z);terraTouched=true;}}
 canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});downXY={x:e.clientX,y:e.clientY,moved:false};cam.idle=0;
-  if(S.build&&buildTool!=='view'&&ptrs.size===1){painting=true;drag=null;paintEv(e);return;}
-  if(painting&&ptrs.size>1)painting=false;
+  if(S.build&&buildTool!=='view'&&ptrs.size===1&&e.button===0){painting=true;drag=null;paintEv(e);return;}
+  if(S.build&&e.button!==0)drag=null;
+  if(painting&&ptrs.size>1){painting=false;}
   if(ptrs.size===1){const it=hitItem(e,draggable);drag=it?{it,moved:false}:null;}else drag=null;
-  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);}});
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);mid0={x:(a.x+b.x)/2,y:(a.y+b.y)/2};}});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;
-  if(painting){paintEv(e);p.x=e.clientX;p.y=e.clientY;cam.idle=0;return;}
+  if(painting&&ptrs.size===1){paintEv(e);p.x=e.clientX;p.y=e.clientY;cam.idle=0;return;}
   if(drag&&ptrs.size===1){
     if(Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6){drag.moved=true;downXY.moved=true;}
     if(drag.moved){setRay(e);dragPlane.constant=-J.sTop;if(ray.ray.intersectPlane(dragPlane,hitP)){hitP.y=J.sTop;clampIn(hitP,.86);setFloorPos(drag.it,hitP.x,hitP.z);}}
@@ -1353,13 +1359,14 @@ canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)re
   const dx=e.clientX-p.x,dy=e.clientY-p.y;
   if(ptrs.size===1){cam.theta-=dx*.008;cam.phi=clamp(cam.phi-dy*.006,.25,1.62);}
   p.x=e.clientX;p.y=e.clientY;
-  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*6);pinch0=d;}
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*6);pinch0=d;
+    if(mid0){cam.theta-=(mx-mid0.x)*.008;cam.phi=clamp(cam.phi-(my-mid0.y)*.006,.25,1.62);}mid0={x:mx,y:my};}
   if(downXY&&Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6)downXY.moved=true;cam.idle=0;});
 const up=e=>{
-  if(painting){painting=false;ptrs.delete(e.pointerId);downXY=null;buildJar({keepCam:true});renderCatalog();renderMeters();save();return;}
+  if(painting||(S.build&&terraTouched)){painting=false;terraTouched=false;ptrs.delete(e.pointerId);if(ptrs.size<2){pinch0=0;mid0=null;}if(!ptrs.size)downXY=null;buildJar({keepCam:true});renderCatalog();renderMeters();save();return;}
   if(drag&&ptrs.size===1){const it=drag.it,moved=drag.moved;drag=null;ptrs.delete(e.pointerId);downXY=null;if(moved){if(S.sel===it)renderEditor();save();}select(it,e);return;}
-  if(downXY&&!downXY.moved&&ptrs.size===1)pick(e);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=0;if(!ptrs.size)downXY=null;};
-canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);downXY=null;drag=null;});
+  if(downXY&&!downXY.moved&&ptrs.size===1)pick(e);ptrs.delete(e.pointerId);if(ptrs.size<2){pinch0=0;mid0=null;}if(!ptrs.size)downXY=null;};
+canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);downXY=null;drag=null;if(painting){painting=false;buildJar({keepCam:true});}mid0=null;pinch0=0;});
 canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=clamp(cam.dist*(1+e.deltaY*.001),J.H*1.1,J.H*6);cam.idle=0;},{passive:false});
 function pick(e){const it=hitItem(e,i=>CAT[i.type].kind!=='microbe');if(it)select(it,e);else closePop();}
 
@@ -1532,7 +1539,11 @@ new ResizeObserver(resize).observe(stage);
 
 /* ================= 自己砌缸：地形高度圖 =================
    S.terra = {n, h:[cm 高度], m:[0 冇 / 1 細沙 / 2 碎石 / 3 泥土]}，蓋住成個瓶底 */
-const TCOL={0:0xb9c6ca,1:0xcab68c,2:0x8f8a80,3:0x5b4030};
+const TMATS={
+  1:{n:['細沙','Fine sand'],c:0xcab68c,cls:'sand'},4:{n:['白沙','White sand'],c:0xe9e3d3,cls:'sand'},5:{n:['珊瑚沙','Coral sand'],c:0xf0d4bc,cls:'sand'},6:{n:['黑金沙','Black sand'],c:0x2f2d2a,cls:'sand'},
+  2:{n:['碎石','Gravel'],c:0x8f8a80,cls:'gravel',rough:1},7:{n:['卵石','Pebbles'],c:0xa7a196,cls:'gravel',rough:2},8:{n:['火山石','Lava rock'],c:0x6a3a2a,cls:'gravel',rough:2,rock:1},
+  3:{n:['泥土','Soil'],c:0x5b4030,cls:'soil'},9:{n:['水草泥','Aqua soil'],c:0x3a2c22,cls:'soil',rough:1},10:{n:['赤玉土','Akadama'],c:0xa5603a,cls:'soil',rough:1},11:{n:['苔蘚地','Moss bed'],c:0x4f7d2e,cls:'soil',moss:1}};
+const TCOL=new Proxy({},{get:(o,m)=>m==0?0xb9c6ca:(TMATS[m]||TMATS[1]).c});
 const TN=24;
 function terraIdx(x,z){const Rf=floorR()*.985,n=S.terra.n;return[clamp((x/Rf+1)/2*(n-1),0,n-1),clamp((z/Rf+1)/2*(n-1),0,n-1)];}
 function terraH(x,z){const t=S.terra;if(!t)return 0;const n=t.n,[u,v]=terraIdx(x,z),i0=Math.floor(u),j0=Math.floor(v),i1=Math.min(n-1,i0+1),j1=Math.min(n-1,j0+1),fu=u-i0,fv=v-j0;
@@ -1551,14 +1562,14 @@ function terraEnsure(t){
   for(let i=0;i<T.h.length;i++)if(!T.m[i]){T.m[i]=id;T.h[i]=Math.max(T.h[i],1.5);}
   delete T._info;buildJar({keepCam:true});
 }
-const BRUSH_TOOLS=[['sand',['細沙','Sand']],['gravel',['碎石','Gravel']],['soil',['泥土','Soil']],['raise',['堆高','Raise']],['lower',['挖低','Dig']],['smooth',['抹平','Smooth']],['water',['水區','Water']],['erase',['清走','Clear']],['view',['轉視角','Rotate']]];
-let buildTool='sand',brushSize=.18,terraDirty=false;
+const BRUSH_TOOLS=[['raise',['堆高','Raise']],['lower',['挖低','Dig']],['smooth',['抹平','Smooth']],['water',['水區','Water']],['erase',['清走','Clear']],['view',['淨係睇','View only']]];
+let buildTool='paint',paintMat=1,brushSize=.18,terraDirty=false;
 function applyBrush(x,z){
   const T=S.terra;if(!T)return;const n=T.n,Rf=floorR()*.985,cu=(x/Rf+1)/2*(n-1),cv=(z/Rf+1)/2*(n-1),br=brushSize*(n-1)/2;
   const lvl=S.mode==='rain'?S.level:0,defM=S.mode==='rain'?3:1;
   for(let j=Math.max(0,Math.floor(cv-br));j<=Math.min(n-1,Math.ceil(cv+br));j++)for(let i=Math.max(0,Math.floor(cu-br));i<=Math.min(n-1,Math.ceil(cu+br));i++){
     const d=Math.hypot(i-cu,j-cv)/br;if(d>1)continue;const w=1-d*d,k=j*n+i;
-    if(buildTool==='sand'||buildTool==='gravel'||buildTool==='soil'){T.m[k]=TMAT_ID[buildTool];T.h[k]=Math.max(T.h[k],1.5*w+.5);}
+    if(buildTool==='paint'){T.m[k]=paintMat;T.h[k]=Math.min(15,T.h[k]+.6*w);}
     else if(buildTool==='raise'){T.h[k]=Math.min(15,T.h[k]+.5*w);if(!T.m[k])T.m[k]=defM;}
     else if(buildTool==='lower'){T.h[k]=Math.max(0,T.h[k]-.5*w);if(T.h[k]<.1)T.m[k]=0;}
     else if(buildTool==='smooth'){let s=0,c=0;for(let b=-1;b<=1;b++)for(let a=-1;a<=1;a++){const ii=i+a,jj=j+b;if(ii>=0&&jj>=0&&ii<n&&jj<n){s+=T.h[jj*n+ii];c++;}}T.h[k]+=(s/c-T.h[k])*.35*w;}
@@ -1575,8 +1586,8 @@ function buildTerraMesh(){
   const Rf=floorR()*.985,pos=[],col=[],idx=[],ring=[],fl=J.floor,c=new THREE.Color(),moss=new THREE.Color(0x4f6b2e),wet=new THREE.Color(0x3e2b1f);
   const vtx=(x,z,y)=>{pos.push(x,y,z);return pos.length/3-1;};
   const colorAt=(x,z,y,top)=>{const m=top?terraM(x,z):3;c.setHex(TCOL[m]);if(!top)c.multiplyScalar(.75);
-    if(top&&m===3&&S.mode==='rain'){const under=J.waterTop!=null&&y<J.waterTop;c.lerp(under?wet:moss,under?.4:clamp(.35+.3*Math.sin(x*13+z*11),0,.7));}
-    if(top&&m&&m!==3)c.multiplyScalar(.92+.08*Math.sin(x*29+z*17));col.push(c.r,c.g,c.b);};
+    if(top&&TMATS[m]&&TMATS[m].cls==='soil'&&!TMATS[m].moss&&S.mode==='rain'){const under=J.waterTop!=null&&y<J.waterTop;c.lerp(under?wet:moss,under?.4:clamp(.35+.3*Math.sin(x*13+z*11),0,.7));}
+    const tm=TMATS[m];if(top&&tm&&tm.cls!=='soil')c.multiplyScalar(.92+.08*Math.sin(x*29+z*17));if(top&&tm&&tm.rough)c.multiplyScalar(1-.18*tm.rough*Math.abs(Math.sin(x*61)*Math.cos(z*53)));if(top&&tm&&tm.moss)c.lerp(moss,.3+.2*Math.sin(x*17+z*9));col.push(c.r,c.g,c.b);};
   if(J.box){const G=40,grid=[];
     for(let j=0;j<=G;j++)for(let i=0;i<=G;i++){const x=(i/G*2-1)*Rf,z=(j/G*2-1)*Rf,y=fl+terraH(x,z)+.002;grid.push(vtx(x,z,y));colorAt(x,z,y,true);}
     for(let j=0;j<G;j++)for(let i=0;i<G;i++){const a=j*(G+1)+i,b=a+1,d=a+G+1,e=d+1;idx.push(a,d,b,b,d,e);}
@@ -1596,17 +1607,22 @@ function buildTerraMesh(){
 /* 砌缸工具列 */
 function enterBuild(){
   if(!S.terra){initTerra();buildJar({keepCam:true});}
-  S.build=true;closePop();issueOpen=false;renderIssuePop();buildTool=S.mode==='rain'?'soil':'sand';
-  cam.phi=Math.min(cam.phi,.75);renderBuildBar();toast(L('用手指或者滑鼠喺瓶底掃，就可以鋪沙、堆高或者挖水區。','Brush across the floor to lay sand, raise ground or dig water areas.'));
+  S.build=true;closePop();issueOpen=false;renderIssuePop();buildTool='paint';paintMat=S.mode==='rain'?3:(S.water==='salt'?5:1);
+  renderBuildBar();toast(L('一隻手指／左鍵：砌（同一位置撳多幾下會疊高）；兩隻手指或右鍵：轉視角；捏或滾輪：縮放。','One finger or left click builds (tap the same spot to stack higher); two fingers or right-drag rotates; pinch or scroll zooms.'));
 }
 function exitBuild(){S.build=false;$('#buildBar').hidden=true;$('#meters').hidden=false;buildJar({keepCam:true});renderAll();save();toast(L('砌好咗','Build saved'));}
 function renderBuildBar(){
   const b=$('#buildBar');b.hidden=!S.build;$('#meters').hidden=!!S.build;if(!S.build)return;
   const lvl=S.mode==='rain'?`<label class="bb-sl">${L('水位','Water')} <output id="bbLvO">${S.level} cm</output><input type="range" id="bbLv" min="0" max="14" step="1" value="${S.level}"></label>`:'';
-  b.innerHTML=`<div class="bb-tools" role="group" aria-label="${L('工具','Tools')}">${BRUSH_TOOLS.filter(([k])=>k!=='water'||S.mode==='rain').map(([k,n])=>`<button data-tool="${k}" aria-pressed="${buildTool===k}"><i class="sw2 t-${k}"></i>${N(n)}</button>`).join('')}</div>
+  b.innerHTML=`<div class="bb-head"><b>${L('材質','Material')}</b><span class="lede">${L('揀一樣再喺瓶底掃；同一位置撳多幾下會疊高。','Pick one, then brush the floor; tap the same spot again to stack higher.')}</span></div>
+    <div class="bb-tools mats" role="group" aria-label="${L('材質','Material')}">${Object.entries(TMATS).map(([id,t])=>`<button data-mat="${id}" aria-pressed="${buildTool==='paint'&&paintMat==id}"><i class="sw2" style="background:#${t.c.toString(16).padStart(6,'0')}"></i>${N(t.n)}</button>`).join('')}</div>
+    <div class="bb-tools" role="group" aria-label="${L('地形工具','Shape tools')}">${BRUSH_TOOLS.filter(([k])=>k!=='water'||S.mode==='rain').map(([k,n])=>`<button data-tool="${k}" aria-pressed="${buildTool===k}"><i class="sw2 t-${k}"></i>${N(n)}</button>`).join('')}
+      <span class="bb-cam"><button data-cam="l" aria-label="${L('向左轉','Rotate left')}">⟲</button><button data-cam="r" aria-label="${L('向右轉','Rotate right')}">⟳</button><button data-cam="top">${L('俯視','Top')}</button><button data-cam="side">${L('側視','Side')}</button></span></div>
     <div class="bb-row"><label class="bb-sl">${L('筆刷','Brush')} <input type="range" id="bbSz" min=".06" max=".45" step=".01" value="${brushSize}"></label>${lvl}
     <button class="btn" id="bbFlat">${L('全部鋪平','Flatten all')}</button><button class="btn primary" id="bbDone">${L('完成','Done')}</button></div>`;
   b.querySelectorAll('[data-tool]').forEach(x=>x.onclick=()=>{buildTool=x.dataset.tool;renderBuildBar();});
+  b.querySelectorAll('[data-mat]').forEach(x=>x.onclick=()=>{buildTool='paint';paintMat=+x.dataset.mat;renderBuildBar();});
+  b.querySelectorAll('[data-cam]').forEach(x=>x.onclick=()=>{const v=x.dataset.cam;if(v==='l')cam.theta+=.5;if(v==='r')cam.theta-=.5;if(v==='top')cam.phi=.3;if(v==='side')cam.phi=1.3;});
   $('#bbSz').oninput=e=>{brushSize=+e.target.value;};
   const lv=$('#bbLv');if(lv){lv.oninput=()=>{$('#bbLvO').textContent=lv.value+' cm';};lv.onchange=()=>{setLevel(+lv.value);renderBuildBar();};}
   $('#bbFlat').onclick=()=>{const T=S.terra;const avg=T.h.reduce((a,b)=>a+b,0)/T.h.length;T.h=T.h.map(()=>+avg.toFixed(1));delete T._info;buildJar({keepCam:true});};

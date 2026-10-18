@@ -445,17 +445,19 @@ function setFloorPos(it,x,z){const k=CAT[it.type].kind;
   if(k==='plant'){const f=plantF(it);it.rx=clamp(x/f,-1.3,1.3);it.rz=clamp(z/f,-1.3,1.3);it.userPlaced=true;}
   else{const f=floorF();it.params.x=+clamp(x/f,-1,1).toFixed(2);it.params.z=+clamp(z/f,-1,1).toFixed(2);}
   placeItem(it);}
-const ptrs=new Map();let downXY=null,pinch0=0;
-let painting=false;
+const ptrs=new Map();let downXY=null,pinch0=0,mid0=null;
+let painting=false,terraTouched=false;
 function paintEv(e){setRay(e);let p=null;if(J.terrMesh){const h=ray.intersectObject(J.terrMesh)[0];if(h)p=h.point;}
-  if(!p){dragPlane.constant=-J.floor;if(ray.ray.intersectPlane(dragPlane,hitP))p=hitP;}if(p)applyBrush(p.x,p.z);}
+  if(!p){dragPlane.constant=-J.floor;if(ray.ray.intersectPlane(dragPlane,hitP))p=hitP;}if(p){applyBrush(p.x,p.z);terraTouched=true;}}
 canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});downXY={x:e.clientX,y:e.clientY,moved:false};cam.idle=0;
-  if(S.build&&buildTool!=='view'&&ptrs.size===1){painting=true;drag=null;paintEv(e);return;}
-  if(painting&&ptrs.size>1)painting=false;
+  if(S.build&&buildTool!=='view'&&ptrs.size===1&&e.button===0){painting=true;drag=null;paintEv(e);return;}
+  if(S.build&&e.button!==0)drag=null;
+  if(painting&&ptrs.size>1){painting=false;}
   if(ptrs.size===1){const it=hitItem(e,draggable);drag=it?{it,moved:false}:null;}else drag=null;
-  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);}});
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);mid0={x:(a.x+b.x)/2,y:(a.y+b.y)/2};}});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;
-  if(painting){paintEv(e);p.x=e.clientX;p.y=e.clientY;cam.idle=0;return;}
+  if(painting&&ptrs.size===1){paintEv(e);p.x=e.clientX;p.y=e.clientY;cam.idle=0;return;}
   if(drag&&ptrs.size===1){
     if(Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6){drag.moved=true;downXY.moved=true;}
     if(drag.moved){setRay(e);dragPlane.constant=-J.sTop;if(ray.ray.intersectPlane(dragPlane,hitP)){hitP.y=J.sTop;clampIn(hitP,.86);setFloorPos(drag.it,hitP.x,hitP.z);}}
@@ -463,13 +465,14 @@ canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)re
   const dx=e.clientX-p.x,dy=e.clientY-p.y;
   if(ptrs.size===1){cam.theta-=dx*.008;cam.phi=clamp(cam.phi-dy*.006,.25,1.62);}
   p.x=e.clientX;p.y=e.clientY;
-  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*6);pinch0=d;}
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*6);pinch0=d;
+    if(mid0){cam.theta-=(mx-mid0.x)*.008;cam.phi=clamp(cam.phi-(my-mid0.y)*.006,.25,1.62);}mid0={x:mx,y:my};}
   if(downXY&&Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6)downXY.moved=true;cam.idle=0;});
 const up=e=>{
-  if(painting){painting=false;ptrs.delete(e.pointerId);downXY=null;buildJar({keepCam:true});renderCatalog();renderMeters();save();return;}
+  if(painting||(S.build&&terraTouched)){painting=false;terraTouched=false;ptrs.delete(e.pointerId);if(ptrs.size<2){pinch0=0;mid0=null;}if(!ptrs.size)downXY=null;buildJar({keepCam:true});renderCatalog();renderMeters();save();return;}
   if(drag&&ptrs.size===1){const it=drag.it,moved=drag.moved;drag=null;ptrs.delete(e.pointerId);downXY=null;if(moved){if(S.sel===it)renderEditor();save();}select(it,e);return;}
-  if(downXY&&!downXY.moved&&ptrs.size===1)pick(e);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=0;if(!ptrs.size)downXY=null;};
-canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);downXY=null;drag=null;});
+  if(downXY&&!downXY.moved&&ptrs.size===1)pick(e);ptrs.delete(e.pointerId);if(ptrs.size<2){pinch0=0;mid0=null;}if(!ptrs.size)downXY=null;};
+canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);downXY=null;drag=null;if(painting){painting=false;buildJar({keepCam:true});}mid0=null;pinch0=0;});
 canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=clamp(cam.dist*(1+e.deltaY*.001),J.H*1.1,J.H*6);cam.idle=0;},{passive:false});
 function pick(e){const it=hitItem(e,i=>CAT[i.type].kind!=='microbe');if(it)select(it,e);else closePop();}
 

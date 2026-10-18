@@ -19,11 +19,11 @@ function freshWater(c,dWL,first){c.O2+=sat(c.T||24)*dWL;c.CO2+=.6*dWL;c.NO3+=.5*
 const TMAT={1:'sand',2:'gravel',3:'soil'},TMAT_ID={sand:1,gravel:2,soil:3};
 function terraInfo(t){if(t._info)return t._info;const n=t.n*t.n,area={};let hs=0;
   for(let i=0;i<n;i++){const m=t.m[i];if(m){area[m]=(area[m]||0)+1;hs+=t.h[i];}}
-  const subTypes={};Object.entries(area).forEach(([m,a])=>{if(a/n>.01)subTypes[TMAT[m]]=1;});
-  return t._info={sub:hs/n,subTypes};}
+  const subTypes={};let rocks=0;Object.entries(area).forEach(([m,a])=>{const tm=TMATS[m]||TMATS[1];if(a/n>.01)subTypes[tm.cls]=1;if(tm.rock&&a/n>.05)rocks++;});
+  return t._info={sub:hs/n,subTypes,rocks};}
 function envInfo(st){
   const E={sub:0,subTypes:{},rocks:0};
-  if(st.terra){const ti=terraInfo(st.terra);E.sub+=ti.sub;Object.assign(E.subTypes,ti.subTypes);}
+  if(st.terra){const ti=terraInfo(st.terra);E.sub+=ti.sub;Object.assign(E.subTypes,ti.subTypes);E.rocks+=ti.rocks;}
   for(const it of st.items){if(!it.alive)continue;const c=CAT[it.type];
     if(c.kind==='sub'){E.sub+=it.params.depth;E.subTypes[it.type]=1;}
     if(c.rock)E.rocks++;}
