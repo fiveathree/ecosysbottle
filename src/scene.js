@@ -343,7 +343,7 @@ function itemModel(it){
   else if(t==='javafern'){g=fronds(C.color,6,.22,.06,.25);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.07,0),mat(0x6d6a63));r.scale.y=.6;r.position.y=.03;g.add(r);}
   else if(t==='moss'){g=clump(['#3d6b25','#4f7d2e','#2f5a1d'],26,.16,.055,.12);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.12,0),mat(0x6d6a63));r.scale.set(1.3,.6,1);r.position.y=.03;g.add(r);}
   else if(t==='marimo'){g=new THREE.Group();const s=new THREE.Mesh(new THREE.IcosahedronGeometry(.07,2),mat(C.color));s.position.y=.07;g.add(s);g.userData.top=.14;}
-  else if(t==='lotus'){g=new THREE.Group();const top=J.waterTop!=null?J.waterTop-J.sTop:J.H*.4,sm=mat(0x5f7d2a),lm=mat(0x4f8f3a,{side:THREE.DoubleSide}),pk=mat(0xf0a3b8,{side:THREE.DoubleSide}),yl=mat(0xf2d35a);
+  else if(t==='lotus'){g=new THREE.Group();const top=J.waterTop!=null?J.waterTop-J.sTop:J.H*.4,sm=mat(0x5f7d2a),lm=mat(0x4f8f3a,{side:THREE.DoubleSide}),pk=mat(variantOf(it).c,{side:THREE.DoubleSide}),yl=mat(0xf2d35a);
     for(let i=0;i<5;i++){const a=rnd(0,6.28),r=rnd(.05,.22),up=i<2?rnd(.08,.2):0,h=top+up,x=Math.cos(a)*r,z=Math.sin(a)*r;
       g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0),new THREE.Vector3(x*.4,h*.5,z*.4),new THREE.Vector3(x,h,z)]),10,.007,5,false),sm));
       const pad=new THREE.Mesh(new THREE.CircleGeometry(rnd(.1,.15),20,.15,Math.PI*2-.3),lm);pad.rotation.x=-Math.PI/2;pad.rotation.z=rnd(0,6.28);pad.position.set(x,h+.003,z);if(up){pad.rotation.x=-Math.PI/2+rnd(-.5,.5);pad.scale.setScalar(.9);}g.add(pad);}
@@ -352,6 +352,18 @@ function itemModel(it){
     for(let i=0;i<9;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),pk);p.scale.set(.45,1,.2);const a=i/9*6.28;p.position.set(Math.cos(a)*.025,.03,Math.sin(a)*.025);p.rotation.set(Math.sin(a)*.5,-a,Math.cos(a)*-.5);fl.add(p);}
     const pod=new THREE.Mesh(new THREE.CylinderGeometry(.015,.01,.02,10),yl);pod.position.y=.03;fl.add(pod);g.add(fl);g.userData.top=fh;}
   else if(t==='caulerpa')g=clump(['#4fa04a','#6abf5a','#3f8a3a'],34,.15,.03,.14);
+  else if(t==='softcoral'){const v=variantOf(it);g=new THREE.Group();const bm=mat(v.c),pm=mat(v.p);
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.045,.06,.09,10),bm);trunk.position.y=.045;g.add(trunk);
+    const cap=new THREE.Mesh(new THREE.SphereGeometry(.11,14,8,0,Math.PI*2,0,Math.PI/2),bm);cap.scale.y=.45;cap.position.y=.09;g.add(cap);
+    g.userData.blades=[];for(let i=0;i<46;i++){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*.1,p=new THREE.Mesh(new THREE.CylinderGeometry(.004,.003,.028,4),pm);p.position.set(Math.cos(a)*r,.09+.05*(1-r/.11)+.012,Math.sin(a)*r);p.userData.ph=rnd(0,6);g.add(p);g.userData.blades.push(p);}
+    g.userData.top=.17;}
+  else if(t==='mushroom'){const v=variantOf(it);g=new THREE.Group();const dm=mat(v.c),cm=mat(v.p);
+    for(let i=0;i<5;i++){const a=i/5*6.28+rnd(-.3,.3),r=i?rnd(.04,.09):0,s=rnd(.032,.048),d=new THREE.Group();
+      const disc=new THREE.Mesh(new THREE.CylinderGeometry(s,s*.8,.012,14),dm);d.add(disc);const dot=new THREE.Mesh(new THREE.CircleGeometry(s*.25,10),cm);dot.rotation.x=-Math.PI/2;dot.position.y=.0065;d.add(dot);
+      d.position.set(Math.cos(a)*r,.015+rnd(0,.02),Math.sin(a)*r);d.rotation.set(rnd(-.4,.4),0,rnd(-.4,.4));g.add(d);}
+    g.userData.top=.06;}
+  else if(t==='seagrass')g=blades(C.color,12,Math.min(wH*.45,.35),.014,.3);
+  else if(t==='redalgae'){const v=variantOf(it);g=clump(v.cs,40,.16,.028,.16);}
   else if(t==='duckweed'){g=new THREE.Group();const m=mat(C.color,{side:THREE.DoubleSide});
     for(let i=0;i<14;i++){const l=new THREE.Mesh(new THREE.CircleGeometry(rnd(.025,.04),10),m);l.rotation.x=-Math.PI/2;const a=rnd(0,6.28),r=rnd(0,.2);l.position.set(Math.cos(a)*r,.004,Math.sin(a)*r);g.add(l);}g.userData.top=0;}
   else if(t==='fern')g=fronds(C.color,9,.32,.07,.5);
@@ -360,17 +372,16 @@ function itemModel(it){
     const cv=new THREE.CatmullRomCurve3(pts);g.add(new THREE.Mesh(new THREE.TubeGeometry(cv,30,.008,5,false),mat(0x5f7d2a)));
     const lm=mat(C.color,{side:THREE.DoubleSide});for(let i=1;i<14;i++){const p=cv.getPoint(i/14),lf=new THREE.Mesh(new THREE.CircleGeometry(.045,10),lm);lf.scale.set(.75,1,1);lf.position.copy(p);lf.rotation.set(rnd(-.6,.6),i*1.9,rnd(-.4,.4));lf.translateX(.04);g.add(lf);}
     g.userData.top=h;}
-  else if(t==='bromeliad'){g=fronds('#3f7d35',10,.2,.04,.6);g.add(fronds(C.color,5,.09,.03,.4));}
-  else if(t==='fittonia')g=clump(['#c8607a','#3f6f35','#d77a92'],30,.13,.04,.1);
-  else if(t==='guppy')g=fishModel(0xe8a04a,[0x3a6fd8,0xd8463a,0x8a3ad8][it.n%3],.055,false);
-  else if(t==='medaka')g=fishModel(0xe6d3a3,0xf0b860,.045,true);
+  else if(t==='bromeliad'){g=fronds('#3f7d35',10,.2,.04,.6);g.add(fronds(variantOf(it).c,5,.09,.03,.4));}
+  else if(t==='fittonia')g=clump(variantOf(it).cs,30,.13,.04,.1);
+  else if(t==='guppy'){const v=variantOf(it);g=fishModel(v.b,v.f,.055,false);}
+  else if(t==='medaka'){const v=variantOf(it);g=fishModel(v.b,v.f,.045,true);}
   else if(t==='minnow')g=fishModel(0xc9d3c2,0xd3473a,.05,true);
-  else if(t==='betta')g=fishModel(0x3b4fd1,[0xd23b5a,0x3b8fd1,0x8a3ad8][it.n%3],.055,false,true);
+  else if(t==='betta'){const v=variantOf(it);g=fishModel(v.b,v.f,.055,false,true);}
   else if(t==='pleco')g=fishModel(0x5a4a35,0x3d3226,.06,false);
-  else if(t==='shrimp')g=shrimpModel(0xd9452f,.92);
+  else if(t==='shrimp')g=shrimpModel(variantOf(it).c,.92);
   else if(t==='amano')g=shrimpModel(0xb9b2a0,.6);
-  else if(t==='snail')g=snailModel(0x7a5532,0x3e2a17);
-  else if(t==='nerite')g=snailModel(0x2d2a20,0xd8c25a);
+  else if(t==='snail'||t==='nerite'){const v=variantOf(it);g=snailModel(v.c,v.s);}
   else if(t==='daphnia')g=swarmPoints(40,0xd9b46a,.022,.12);
   else if(t==='jelly')g=jellyModel(0xe9eef2,.035);
   else if(t==='moonjelly')g=jellyModel(0xdfe6ff,.06);

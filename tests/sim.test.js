@@ -59,6 +59,7 @@ setup('aqua','eco');
 ok(!!T.lockOf('type','seahorse')&&!!T.presetLock('aqua','sea',T.PRESETS.aqua.sea)&&!T.presetLock('aqua','eco',T.PRESETS.aqua.eco),'新玩家：海馬同海馬缸鎖住，密封生態瓶開放');
 ok(Object.entries(T.PRESETS.aqua).filter(([k,p])=>!T.presetLock('aqua',k,p)).length===4&&!!T.lockOf('feature','rain')&&!!T.lockOf('feature','palu'),'新玩家：只開 3 個預設（加由零開始），雨林同水陸鎖住');
 {const n=S.items.length;T.addFromCatalog('seahorse');ok(S.items.length===n,'鎖住嘅生物加唔到');}
+{S.real=true;const free=!T.lockOf('type','seahorse')&&!T.lockOf('feature','rain')&&!T.lockOf('feature','salt');const c0=Object.keys(T.PLAY.col).length;S.items.push(...[]);T.startChal('tiny');const noChal=!S.chal;S.real=false;ok(free&&noChal,'真實嘅瓶：所有生物同模式都用得，但唔可以做挑戰');}
 {const R=T.travelPreview(30);ok(R.length===31&&R[30].day===S.day+30,`預覽 30 日（第 ${R[0].day} → ${R[30].day} 日），動物 ${Object.entries(R[30].counts).filter(([t])=>CAT[t].kind==='animal').reduce((a,[,n])=>a+n,0)} 隻`);
   ok(S.day===1&&S.hour===6,'預覽冇改到個瓶');}
 T.startChal('sealed7');ok(S.chal&&S.chal.id==='sealed7','密封瓶可以開始「密封一星期」');

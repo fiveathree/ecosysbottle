@@ -465,7 +465,7 @@ function renderEnv(){
   bind('e-Lv',(v,done)=>{if(done)setLevel(v);},'cm');
   bind('e-Hill',(v,done)=>{S.hillH=v;if(done){buildJar({keepCam:true});renderEnv();}},'cm');
   const chk=(id,k)=>{const e=$('#'+id);if(e)e.onchange=()=>{S[k]=e.checked;save();};};
-  chk('e-Real','real');const er=$('#e-Real');if(er)er.addEventListener('change',renderJarSeg);chk('e-P','pump');chk('e-Fi','filter');chk('e-Ht','heater');chk('e-Fan','fan');chk('e-H','heat');chk('e-S','sealed');{const es=$('#e-S');if(es)es.addEventListener('change',renderEnv);}chk('e-B','breed');
+  chk('e-Real','real');const er=$('#e-Real');if(er)er.addEventListener('change',()=>{renderAll();toast(S.real?L('真實嘅瓶：所有生物同設定都用得，只做分析','Real tank: every species and setting is available, for analysis only'):L('返回模擬瓶','Back to a simulated jar'));});chk('e-P','pump');chk('e-Fi','filter');chk('e-Ht','heater');chk('e-Fan','fan');chk('e-H','heat');chk('e-S','sealed');{const es=$('#e-S');if(es)es.addEventListener('change',renderEnv);}chk('e-B','breed');
   const ew=$('#e-W');if(ew)ew.onchange=()=>fillWater(ew.checked);
   const en=$('#e-name');en.oninput=()=>{S.jarName=en.value.trim().slice(0,16);renderJarSeg();save();};
   const pe=$('#pane-env');bindPaneTags('env',pe);bindCustomRegion();

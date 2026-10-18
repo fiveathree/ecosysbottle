@@ -31,7 +31,7 @@ npm test             # build + automated tests (needs `npm install` once)
 ## Modules
 | File | What lives there |
 |---|---|
-| `data.js` | Helpers: `$`, `clamp`, `L`, `N`, `esc`<br>Param defs `PD`<br>Species catalogue `CAT`: hab water/land/amph, `w` fresh/salt, roots, preys/attacks<br>`BREED`, `LIMIT`, `SHAPES`, `MATS` (with `therm`), weather `WX`, `REGIONS`<br>`REGIONS` types: `city` (incl. `custom`) and `biome`, with `modes`<br>Also `PRESETS` per mode, `TAGS` |
+| `data.js` | Helpers: `$`, `clamp`, `L`, `N`, `esc`<br>Param defs `PD`<br>Species catalogue `CAT`: hab water/land/amph, `w` fresh/salt, roots, preys/attacks<br>`BREED`, `LIMIT`, `SHAPES`, `MATS` (with `therm`), weather `WX`, `REGIONS`<br>`REGIONS` types: `city` (incl. `custom`) and `biome`, with `modes`<br>Also `PRESETS` per mode, `TAGS`<br>`VARIANTS` colour morphs per species (`params.v`, random on add, babies inherit; `variantOf(it)`) |
 | `sim.js` | Global state `S` (incl. `fan`: cools 2–3°C when the lid is open)<br>Hourly `step` covers:<br>• water chemistry O2/CO2/NH3/NO3/algae/detritus, in mg over water volume `wL`<br>• land/air humidity, waste, mould<br>• temperature, predation, breeding<br>`forecast`/`runTrial`<br>`autoBalance`: staged greedy, scored with a fixed random seed (`seeded`) so options are compared fairly; protects animals first and never removes them; animals it still cannot save are listed in `S.report.doomed` for the "move to an empty jar" button; a real tank gets suggestions only (`S.report`)<br>`eat`: hungry animals eat up to 3× so fullness can recover; animals eat in a shuffled order each hour<br>Food web: a surface biofilm (light × surface × volume) and plant litter keep grazers fed; land animals get their share of food before fish<br>Breeding: capped by jar size (smaller when sealed), needs fullness > 90%, and flake-fed fish only breed if the daily food covers another litter |
 | `scene.js` | Renderer, camera, jar geometry, terrain helpers (`groundY`, `inWater`, `fitInJar`, `clampInR`, so nothing passes through the glass)<br>Creature and decor models<br>Weather visuals<br>Pointer input (touch: vertical swipe scrolls the page)<br>Camera follow / first-person view (`camF`, `camFollow`, `camStop`)<br>`animate()` |
 | `terra.js` | Build-your-own terrain:<br>• heightmap `S.terra={n:24,h[],m[]}`<br>• 11 materials `TMATS`<br>• brushes and stacking<br>• `enterBuild`/`exitBuild` (build mode: paused, daytime, clear weather, no auto-rotate)<br>• build toolbar |
@@ -51,6 +51,7 @@ npm test             # build + automated tests (needs `npm install` once)
 - External scripts come only from cdnjs, and stylesheets only from Google Fonts.
 - Colours are CSS tokens on `:root`, with light and dark themes. Layout must work at phone width.
 - Real-tank jars (`S.real`): never auto-delete or auto-change anything; give suggestions only.
+  They bypass every unlock (except presets and fast-forward) so people can model their own tank, but they never count towards collection, achievements or challenges.
 - After changes, run `npm test`; every preset except 「失衡示範」 must survive 6 and 30 simulated days.
   If one fails, `node tests/diag30.js aqua.eco` shows when and why animals die (`RUNS`, `DAYS` env vars).
 - `.stage>canvas` styles target only the 3D canvas; other canvases (the trend chart) live inside overlays.

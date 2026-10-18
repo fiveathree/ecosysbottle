@@ -62,7 +62,7 @@ const UNLOCKS=[
   {id:'u_week',t:['平安一星期','A calm week'],cond:()=>!!PLAY.ach.week,
     features:['palu','ff'],types:['jelly','pleco','crab'],regions:['amazon','amazonriver','borneo','pantanal','mekong'],presets:['aqua.jelly','rain.palu','rain.amazon']},
   {id:'u_col12',t:['收藏 12 種生物','Collect 12 species'],prog:()=>`${Math.min(12,colN())}/12`,cond:()=>colN()>=12,
-    features:['salt'],types:['caulerpa','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],presets:['aqua.sea']},
+    features:['salt'],types:['caulerpa','softcoral','mushroom','seagrass','redalgae','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],presets:['aqua.sea']},
   {id:'u_ch3',t:['完成 3 個挑戰','Complete 3 challenges'],prog:()=>`${Math.min(3,chN())}/3`,cond:()=>chN()>=3,
     types:['gecko','newt','turtle','slider','leopard'],regions:['sahara','cloudforest','tanganyika','baikal'],presets:['rain.gecko','rain.newt','rain.turtle','rain.desert']},
 ];
@@ -75,10 +75,12 @@ const FREE_PRESETS=['aqua.eco','aqua.tank','aqua.betta','aqua.zero'];
 /* 隱藏開關：連撳標題 7 下 → 全部解鎖（方便測試） */
 PLAY.all=pref.get('ecojar.all')==='1';
 /* 回傳鎖住佢嘅解鎖項目（冇鎖就 null）；kind = type／region／feature／preset */
-function lockOf(kind,key){if(PLAY.all)return null;const f=kind+'s';
+function lockOf(kind,key){if(PLAY.all)return null;
+  if(S.real&&kind!=='preset'&&key!=='ff')return null; // 真實嘅瓶：為咗分析，乜都用得（但唔計進度）
+  const f=kind+'s';
   if(kind==='preset'&&!FREE_PRESETS.includes(key)&&!UNLOCKS.some(u=>(u.presets||[]).includes(key)))return null;
   for(const u of UNLOCKS)if(u[f]&&u[f].includes(key)&&!u.cond())return u;return null;}
-const lockText=u=>L('🔒 解鎖條件：','🔒 Unlock by: ')+N(u.t)+(u.prog?L(`（${u.prog()}）`,` (${u.prog()})`):'');
+const lockText=u=>L('🔒 解鎖條件：','🔒 Unlock by: ')+N(u.t)+(u.prog?L(`（${u.prog()}）`,` (${u.prog()})`):'')+L('；真實嘅瓶唔使解鎖','; real tanks need no unlocking');
 function presetLock(mode,key,p){const u0=lockOf('preset',mode+'.'+key);if(u0)return u0;
   if(mode==='rain'){const u=lockOf('feature',p.level>0?'palu':'rain')||lockOf('feature','rain');if(u)return u;}
   for(const [t] of p.items){const u=lockOf('type',t);if(u)return u;}return lockOf('region',p.region||'hk')||(p.water==='salt'?lockOf('feature','salt'):null);}
@@ -142,14 +144,14 @@ function unlock(id){
 
 /* ---- 收藏：一種生物喺瓶入面撐過一個午夜就收錄 ---- */
 const COL_TYPES=()=>Object.keys(CAT).filter(t=>['plant','animal'].includes(CAT[t].kind));
-function collectNow(){let n=0;for(const it of S.items){if(!it.alive||!['plant','animal'].includes(CAT[it.type].kind)||PLAY.col[it.type])continue;PLAY.col[it.type]=Date.now();n++;}
+function collectNow(){if(S.real)return;let n=0;for(const it of S.items){if(!it.alive||!['plant','animal'].includes(CAT[it.type].kind)||PLAY.col[it.type])continue;PLAY.col[it.type]=Date.now();n++;}
   if(!n)return;savePlay();const c=Object.keys(PLAY.col).length;if(c>=10)unlock('col10');if(c>=30)unlock('col30');checkUnlocks();if(curTab==='play')renderPlay();}
 
 /* ---- 每秒檢查一次（main.js 叫） ---- */
 function playTick(){
   const animals=aliveK('animal').length,dn=S.deathN||0;
   if(PLAY.lastDay!=null&&S.day!==PLAY.lastDay){collectNow();
-    if(S.day>=8&&!dn&&animals>=2)unlock('week');if(S.day>=31&&!dn&&animals>=1)unlock('month');}
+    if(!S.real){if(S.day>=8&&!dn&&animals>=2)unlock('week');if(S.day>=31&&!dn&&animals>=1)unlock('month');}}
   PLAY.lastDay=S.day;
   if(!S.chal)return;const c=CHAL.find(x=>x.id===S.chal.id);if(!c){S.chal=null;return;}
   const why=(c.type==='survive'&&dn>S.chal.dead0?L('有動物死咗','An animal died'):null)||c.keep();
@@ -160,7 +162,7 @@ function playTick(){
   const pg=$('#chProg');if(pg){const f=Math.min(1,h/(c.days*24));pg.querySelector('b').style.width=(f*100)+'%';pg.querySelector('span').textContent=chalProgText(c,h);}
 }
 const chalProgText=(c,h)=>(c.prog?c.prog()+' · ':'')+L(`第 ${Math.floor(h/24)}／${c.days} 日`,`Day ${Math.floor(h/24)}/${c.days}`);
-function startChal(id){const c=CHAL.find(x=>x.id===id),why=c.req();if(why){toast(L('未啱條件：','Not ready: ')+why);return;}
+function startChal(id){if(S.real){toast(L('真實嘅瓶只做分析，唔計挑戰；轉去另一個瓶玩','Real tanks are for analysis only; use another jar for challenges'));return;}const c=CHAL.find(x=>x.id===id),why=c.req();if(why){toast(L('未啱條件：','Not ready: ')+why);return;}
   S.chal={id,d0:S.day,h0:S.hour,dead0:S.deathN||0};logEv(`開始挑戰「${c.n[0]}」`,`Started the challenge "${c.n[1]}"`,'muted');save();renderPlay();toast(L(`開始挑戰：${c.n[0]}`,`Challenge started: ${c.n[1]}`));}
 
 /* ---- 時間旅行：用試算預覽未來 30 日，唔會改個瓶；想真係去到嗰日先撳「快轉」 ---- */
@@ -205,6 +207,7 @@ function renderPlay(){
   const cur=S.chal&&CHAL.find(x=>x.id===S.chal.id);
   pe.innerHTML=`${paneTagBar('play',PLAY_TAGS)}
    <section data-sec="unlock"><h3>${L('解鎖','Unlocks')} · ${UNLOCKS.filter(u=>u.cond()).length}/${UNLOCKS.length}</h3><p class="lede">${L('完成挑戰、成就同收藏，就會開放更多生物、地區同玩法。','Complete challenges, achievements and collections to open up more species, regions and features.')}</p>
+    <p class="lede">${L('想分析自己真實嘅缸？喺「環境同天氣」開「呢個係真實嘅瓶」，所有生物、模式同設定即刻用得（只做分析，唔計收藏、成就同挑戰）；或者用「分析水缸」分頁填資料。','Analysing your own real tank? Turn on "This is a real tank" in Setup and every species, mode and setting is available at once (analysis only; it does not count towards collection, achievements or challenges). Or fill in the Analyse a tank tab.')}</p>
     <div class="unls">${UNLOCKS.map(u=>{const ok=u.cond();return`<div class="unl${ok?' got':''}"><b>${ok?'🔓':'🔒'} ${N(u.t)}${!ok&&u.prog?` <span class="lede">${u.prog()}</span>`:''}</b><span>${rewardNames(u).join(L('、',', '))}</span></div>`;}).join('')}</div></section>
    <section data-sec="chal"><h3>${L('挑戰','Challenges')} · ${CHAL.filter(c=>done(c.id)).length}/${CHAL.length}</h3>
     ${cur?`<div class="chal on"><div class="bh"><b>${N(cur.n)}</b><button class="linkbtn" id="chQuit">${L('放棄','Give up')}</button></div><p>${N(cur.d)}</p>

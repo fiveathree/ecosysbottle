@@ -79,6 +79,10 @@ const CAT={
   marimo:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['綠藻球','Marimo ball'],sci:'Aegagropila',color:'#3e7d2c',root:'none',desc:['慢慢生長嘅毛球，產氧唔多，但蝦好鍾意喺上面揾食。','Slow fuzzy ball; little oxygen, but shrimp love grazing on it.'],params:{o2Prod:.12,resp:.02,uptake:.003}},
   duckweed:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['浮萍','Duckweed'],sci:'Lemna',color:'#8fc13f',root:'none',floating:1,desc:['浮喺水面，一半氧氣散去空氣，但吸收養分快，壓制藻類。','Floats; half its oxygen escapes, but it soaks up nutrients and starves algae.'],params:{o2Prod:.3,resp:.03,uptake:.016}},
   lotus:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['荷花','Lotus'],sci:'Nelumbo nucifera',color:'#e58fa8',root:'mud',shade:.15,airO2:1,desc:['根要種喺泥入面，葉浮喺水面遮光，藻類會少好多；大部份氧氣由葉面散去空氣。','Roots in mud; its pads shade the water and cut algae, and much of its oxygen goes to the air.'],params:{o2Prod:1.2,resp:.15,uptake:.02}},
+  softcoral:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['軟珊瑚','Leather coral'],sci:'Sarcophyton',color:'#e89ab0',root:'rock',shade:.02,desc:['珊瑚其實係動物，體內住咗共生藻做光合作用，所以要夠光；要黐喺石頭或者假山上面。觸手會伸出嚟擺動。','Corals are animals with algae living inside that photosynthesise, so they need light; it must sit on stone or rock. Its polyps sway in the water.'],params:{o2Prod:.45,resp:.09,uptake:.006}},
+  mushroom:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['香菇珊瑚','Mushroom coral'],sci:'Discosoma',color:'#8a5fd1',root:'rock',desc:['好似一朵朵細菇，好耐得，光唔使太猛，新手啱玩；要黐喺石頭上。','Like little mushrooms; hardy and happy in modest light, good for beginners. Needs a rock to sit on.'],params:{o2Prod:.3,resp:.06,uptake:.005}},
+  seagrass:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['海草','Seagrass'],sci:'Halophila',color:'#5f9e3c',root:'sand',desc:['真正會開花嘅海洋植物，要種喺細沙度；係海馬同小魚匿埋嘅草場。','A true flowering sea plant that roots in sand; a meadow where seahorses and small fish hide.'],params:{o2Prod:.55,resp:.08,uptake:.01}},
+  redalgae:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['紅藻','Red algae'],sci:'Gracilaria',color:'#c0392b',root:'none',desc:['紅色嘅海藻（龍鬚菜），唔使種，浮喺水中都得；食硝酸鹽，寄居蟹都鍾意咬。','Red seaweed that floats freely; it soaks up nitrate and hermit crabs like to nibble it.'],params:{o2Prod:.5,resp:.07,uptake:.013}},
   caulerpa:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['海葡萄','Sea grapes'],sci:'Caulerpa',color:'#4fa04a',root:'none',desc:['海水藻類，吸收硝酸鹽好快，幫手產氧。','Marine algae that absorbs nitrate quickly and adds oxygen.'],params:{o2Prod:.6,resp:.07,uptake:.014}},
 
   guppy:{m:'both',hab:'water',kind:'animal',g:'aanimal',move:'swim',name:['孔雀魚','Guppy'],sci:'Poecilia',color:'#e89a3c',diet:{flake:1,algae:.3},desc:['活潑耐養，但食量大、排泄多，要定時餵。','Lively and hardy, but eats and poops a lot; feed daily.'],params:{resp:.1,food:1,wasteEvery:6,wasteAmt:.05,o2Min:3,nh3Tol:.4,tMin:22,tMax:30}},
@@ -126,6 +130,22 @@ const CAT={
   driftwood:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['沉木','Driftwood'],sci:'',color:'#5b3a22',desc:['天然木頭，植物可以依附，守宮可以攀爬。','Natural wood for plants to attach to and geckos to climb.'],params:{x:.2,z:-.35,rot:40,rotX:0,rotZ:0,size:1}}
 };
 const BREED={gardeneel:[0,1],guppy:[7,3],medaka:[6,2],minnow:[10,2],shrimp:[8,3],snail:[10,2],seahorse:[14,2],frog:[20,1]};
+/* 顏色變化：每隻生物加入時隨機揀一個，BB 跟返父母；喺彈出視窗可以轉 */
+const VARIANTS={
+  guppy:[{n:['藍尾','Blue tail'],b:0xe8a04a,f:0x3a6fd8},{n:['紅尾','Red tail'],b:0xe8a04a,f:0xd8463a},{n:['紫尾','Purple tail'],b:0xe8a04a,f:0x8a3ad8},{n:['黃金','Gold'],b:0xf2cf5a,f:0xf0a830},{n:['黑禮服','Tuxedo'],b:0xd8d0c0,f:0x2a2a30},{n:['藍草','Blue grass'],b:0x9fc6e8,f:0x2f7fd0}],
+  betta:[{n:['寶藍','Royal blue'],b:0x3b4fd1,f:0xd23b5a},{n:['大紅','Red'],b:0xc8283c,f:0x8a1a2a},{n:['白金','Platinum'],b:0xf0efe8,f:0xd8d8f0},{n:['黃金','Yellow'],b:0xe8b83a,f:0xf0d060},{n:['黑橙','Black orange'],b:0x2a2a30,f:0xe8702a},{n:['藍天','Sky'],b:0x3b8fd1,f:0x6ac0f0}],
+  medaka:[{n:['白','White'],b:0xe6d3a3,f:0xf0b860},{n:['楊貴妃（橙）','Orange'],b:0xf09040,f:0xf0b060},{n:['黑','Black'],b:0x4a4a4a,f:0x6a6a6a},{n:['幹之（藍光）','Blue sheen'],b:0xb8d0e0,f:0x80b0d8}],
+  shrimp:[{n:['紅','Red'],c:0xd9452f},{n:['藍','Blue'],c:0x2f6fd9},{n:['黃','Yellow'],c:0xe8c23a},{n:['綠','Green'],c:0x4caf50},{n:['黑','Black'],c:0x2a2a2a},{n:['橙','Orange'],c:0xf07a2a}],
+  snail:[{n:['啡','Brown'],c:0x7a5532,s:0x3e2a17},{n:['金','Gold'],c:0xc9a24a,s:0x7a5a20},{n:['紅','Red'],c:0xb5432f,s:0x6a2015}],
+  nerite:[{n:['斑馬','Zebra'],c:0x2d2a20,s:0xd8c25a},{n:['虎紋','Tiger'],c:0x8a5a20,s:0x2a1a0a},{n:['橄欖','Olive'],c:0x5a6a30,s:0x2a3018}],
+  fittonia:[{n:['粉紅','Pink'],cs:['#c8607a','#3f6f35','#d77a92']},{n:['紅','Red'],cs:['#c43c3c','#3f6f35','#d65a5a']},{n:['白','White'],cs:['#ecece2','#3f6f35','#f6f6ee']}],
+  bromeliad:[{n:['粉紅','Pink'],c:'#e0607a'},{n:['紅','Red'],c:'#d23b2b'},{n:['黃','Yellow'],c:'#e8c23a'},{n:['橙','Orange'],c:'#f07a2a'}],
+  lotus:[{n:['粉紅','Pink'],c:0xf0a3b8},{n:['白','White'],c:0xf6f2ea},{n:['黃','Yellow'],c:0xf2d35a}],
+  softcoral:[{n:['粉紅','Pink'],c:0xe89ab0,p:0xf6d4de},{n:['綠','Green'],c:0x7fc49a,p:0xd8f0c8},{n:['黃','Yellow'],c:0xe8c86a,p:0xfaf0c0},{n:['紫','Purple'],c:0x9a6ad0,p:0xe0c8f6}],
+  mushroom:[{n:['紫','Purple'],c:0x8a5fd1,p:0x4a2a8a},{n:['紅','Red'],c:0xd0484a,p:0x7a1a1a},{n:['藍綠','Teal'],c:0x3fb0a8,p:0x1a5a58},{n:['橙','Orange'],c:0xf0903a,p:0x8a4010}],
+  redalgae:[{n:['紅','Red'],cs:['#c0392b','#a93226','#d35400']},{n:['紫紅','Magenta'],cs:['#b03a6a','#8a2a50','#d0508a']}],
+};
+const variantOf=it=>{const V=VARIANTS[it.type];if(!V)return null;const v=it.params&&it.params.v;return V[(v!=null?v:it.n||0)%V.length];};
 const LIMIT={stone:4,rockmtn:2,bridge:2,driftwood:2,sand:2,gravel:2,soil:2};
 const PH={betta:[6,7.5],shrimp:[6.5,7.8],amano:[6.5,7.8],slider:[6,8.5],crab:[6.5,8]};
 Object.entries(CAT).forEach(([k,c])=>{
@@ -199,8 +219,8 @@ const PRESETS={
       V:4,shape:'jar',sealed:true,light:12,feed:0,items:[['sand',1],['stone',1],['hornwort',2],['moss',1],['vallis',1],['shrimp',5],['snail',2],['nitri',1]]},
     tank:{n:['開口小魚缸','Open fish tank'],d:['10L 方缸，有氧氣泵、過濾同加熱棒，碎石、假山、假橋、孔雀魚 4 條。','10 L box tank with pump, filter and heater, gravel, rock mountain, bridge and 4 guppies.'],
       V:10,shape:'box',sealed:false,light:10,feed:5,pump:true,filter:true,heater:true,items:[['gravel',1],['rockmtn',1],['bridge',1],['hornwort',2],['vallis',2],['duckweed',1],['guppy',4],['snail',1],['nitri',1],['decomp',1]]},
-    sea:{n:['海馬小海缸','Seahorse reef'],d:['20L 海水方缸：厚細沙、假山、海葡萄、海馬、花園鰻同寄居蟹，有過濾同加熱棒。','20 L salt-water box tank with deep sand, rock mountain, sea grapes, seahorses, garden eels and hermit crabs; filter and heater.'],
-      V:20,shape:'box',water:'salt',sealed:false,light:10,feed:3.5,filter:true,heater:true,region:'med',items:[['sand',1,{depth:5}],['rockmtn',1],['caulerpa',2],['seahorse',2],['gardeneel',3],['hermit',2],['nitri',1],['decomp',1]]},
+    sea:{n:['海馬小海缸','Seahorse reef'],d:['20L 海水方缸：厚細沙、假山上面嘅軟珊瑚、海草、海葡萄、海馬、花園鰻同寄居蟹，有過濾同加熱棒。','20 L salt-water box tank with deep sand, a leather coral on the rock mountain, seagrass, sea grapes, seahorses, garden eels and hermit crabs; filter and heater.'],
+      V:20,shape:'box',water:'salt',sealed:false,light:10,feed:3.5,filter:true,heater:true,region:'med',items:[['sand',1,{depth:5}],['rockmtn',1],['softcoral',1],['seagrass',1],['caulerpa',2],['seahorse',2],['gardeneel',3],['hermit',2],['nitri',1],['decomp',1]]},
     shrimp:{n:['米蝦水草缸','Shrimp planted tank'],d:['8L 圓柱瓶：沉木、黑木蕨、莫絲、水蘊草、綠藻球、10 隻米蝦同斑馬螺，少少餵。','8 L cylinder with driftwood, Java fern, moss, waterweed, marimo, 10 cherry shrimp and nerites; light feeding.'],
       V:8,shape:'cyl',sealed:false,light:10,feed:1,items:[['sand',1],['driftwood',1],['javafern',1],['moss',1],['elodea',2],['marimo',1],['shrimp',10],['nerite',2],['nitri',1],['decomp',1]]},
     betta:{n:['鬥魚獨居缸','Betta solo tank'],d:['5L 方缸，有加熱棒：一條鬥魚、黑木蕨、綠藻球同一隻石田螺。','5 L box tank with a heater: one betta, Java fern, marimo and a pond snail.'],

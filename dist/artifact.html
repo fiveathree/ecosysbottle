@@ -380,6 +380,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .cel-dlg[open]{animation:celPop .35s ease-out}
 @media (prefers-reduced-motion:reduce){.cel-icon,.cel-top,.cel-dlg[open]{animation:none}}
 .seg button.locked{opacity:.55}
+/* 顏色揀選 */
+.swatches{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.swatches button{width:22px;height:22px;border-radius:50%;background:var(--sw);border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line);padding:0;cursor:pointer}
+.swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
 </style>
 <div class="app">
   <header class="top">
@@ -510,6 +514,10 @@ const CAT={
   marimo:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['綠藻球','Marimo ball'],sci:'Aegagropila',color:'#3e7d2c',root:'none',desc:['慢慢生長嘅毛球，產氧唔多，但蝦好鍾意喺上面揾食。','Slow fuzzy ball; little oxygen, but shrimp love grazing on it.'],params:{o2Prod:.12,resp:.02,uptake:.003}},
   duckweed:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['浮萍','Duckweed'],sci:'Lemna',color:'#8fc13f',root:'none',floating:1,desc:['浮喺水面，一半氧氣散去空氣，但吸收養分快，壓制藻類。','Floats; half its oxygen escapes, but it soaks up nutrients and starves algae.'],params:{o2Prod:.3,resp:.03,uptake:.016}},
   lotus:{m:'both',hab:'water',kind:'plant',g:'aplant',name:['荷花','Lotus'],sci:'Nelumbo nucifera',color:'#e58fa8',root:'mud',shade:.15,airO2:1,desc:['根要種喺泥入面，葉浮喺水面遮光，藻類會少好多；大部份氧氣由葉面散去空氣。','Roots in mud; its pads shade the water and cut algae, and much of its oxygen goes to the air.'],params:{o2Prod:1.2,resp:.15,uptake:.02}},
+  softcoral:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['軟珊瑚','Leather coral'],sci:'Sarcophyton',color:'#e89ab0',root:'rock',shade:.02,desc:['珊瑚其實係動物，體內住咗共生藻做光合作用，所以要夠光；要黐喺石頭或者假山上面。觸手會伸出嚟擺動。','Corals are animals with algae living inside that photosynthesise, so they need light; it must sit on stone or rock. Its polyps sway in the water.'],params:{o2Prod:.45,resp:.09,uptake:.006}},
+  mushroom:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['香菇珊瑚','Mushroom coral'],sci:'Discosoma',color:'#8a5fd1',root:'rock',desc:['好似一朵朵細菇，好耐得，光唔使太猛，新手啱玩；要黐喺石頭上。','Like little mushrooms; hardy and happy in modest light, good for beginners. Needs a rock to sit on.'],params:{o2Prod:.3,resp:.06,uptake:.005}},
+  seagrass:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['海草','Seagrass'],sci:'Halophila',color:'#5f9e3c',root:'sand',desc:['真正會開花嘅海洋植物，要種喺細沙度；係海馬同小魚匿埋嘅草場。','A true flowering sea plant that roots in sand; a meadow where seahorses and small fish hide.'],params:{o2Prod:.55,resp:.08,uptake:.01}},
+  redalgae:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['紅藻','Red algae'],sci:'Gracilaria',color:'#c0392b',root:'none',desc:['紅色嘅海藻（龍鬚菜），唔使種，浮喺水中都得；食硝酸鹽，寄居蟹都鍾意咬。','Red seaweed that floats freely; it soaks up nitrate and hermit crabs like to nibble it.'],params:{o2Prod:.5,resp:.07,uptake:.013}},
   caulerpa:{m:'aqua',hab:'water',w:'salt',kind:'plant',g:'aplant',name:['海葡萄','Sea grapes'],sci:'Caulerpa',color:'#4fa04a',root:'none',desc:['海水藻類，吸收硝酸鹽好快，幫手產氧。','Marine algae that absorbs nitrate quickly and adds oxygen.'],params:{o2Prod:.6,resp:.07,uptake:.014}},
 
   guppy:{m:'both',hab:'water',kind:'animal',g:'aanimal',move:'swim',name:['孔雀魚','Guppy'],sci:'Poecilia',color:'#e89a3c',diet:{flake:1,algae:.3},desc:['活潑耐養，但食量大、排泄多，要定時餵。','Lively and hardy, but eats and poops a lot; feed daily.'],params:{resp:.1,food:1,wasteEvery:6,wasteAmt:.05,o2Min:3,nh3Tol:.4,tMin:22,tMax:30}},
@@ -557,6 +565,22 @@ const CAT={
   driftwood:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['沉木','Driftwood'],sci:'',color:'#5b3a22',desc:['天然木頭，植物可以依附，守宮可以攀爬。','Natural wood for plants to attach to and geckos to climb.'],params:{x:.2,z:-.35,rot:40,rotX:0,rotZ:0,size:1}}
 };
 const BREED={gardeneel:[0,1],guppy:[7,3],medaka:[6,2],minnow:[10,2],shrimp:[8,3],snail:[10,2],seahorse:[14,2],frog:[20,1]};
+/* 顏色變化：每隻生物加入時隨機揀一個，BB 跟返父母；喺彈出視窗可以轉 */
+const VARIANTS={
+  guppy:[{n:['藍尾','Blue tail'],b:0xe8a04a,f:0x3a6fd8},{n:['紅尾','Red tail'],b:0xe8a04a,f:0xd8463a},{n:['紫尾','Purple tail'],b:0xe8a04a,f:0x8a3ad8},{n:['黃金','Gold'],b:0xf2cf5a,f:0xf0a830},{n:['黑禮服','Tuxedo'],b:0xd8d0c0,f:0x2a2a30},{n:['藍草','Blue grass'],b:0x9fc6e8,f:0x2f7fd0}],
+  betta:[{n:['寶藍','Royal blue'],b:0x3b4fd1,f:0xd23b5a},{n:['大紅','Red'],b:0xc8283c,f:0x8a1a2a},{n:['白金','Platinum'],b:0xf0efe8,f:0xd8d8f0},{n:['黃金','Yellow'],b:0xe8b83a,f:0xf0d060},{n:['黑橙','Black orange'],b:0x2a2a30,f:0xe8702a},{n:['藍天','Sky'],b:0x3b8fd1,f:0x6ac0f0}],
+  medaka:[{n:['白','White'],b:0xe6d3a3,f:0xf0b860},{n:['楊貴妃（橙）','Orange'],b:0xf09040,f:0xf0b060},{n:['黑','Black'],b:0x4a4a4a,f:0x6a6a6a},{n:['幹之（藍光）','Blue sheen'],b:0xb8d0e0,f:0x80b0d8}],
+  shrimp:[{n:['紅','Red'],c:0xd9452f},{n:['藍','Blue'],c:0x2f6fd9},{n:['黃','Yellow'],c:0xe8c23a},{n:['綠','Green'],c:0x4caf50},{n:['黑','Black'],c:0x2a2a2a},{n:['橙','Orange'],c:0xf07a2a}],
+  snail:[{n:['啡','Brown'],c:0x7a5532,s:0x3e2a17},{n:['金','Gold'],c:0xc9a24a,s:0x7a5a20},{n:['紅','Red'],c:0xb5432f,s:0x6a2015}],
+  nerite:[{n:['斑馬','Zebra'],c:0x2d2a20,s:0xd8c25a},{n:['虎紋','Tiger'],c:0x8a5a20,s:0x2a1a0a},{n:['橄欖','Olive'],c:0x5a6a30,s:0x2a3018}],
+  fittonia:[{n:['粉紅','Pink'],cs:['#c8607a','#3f6f35','#d77a92']},{n:['紅','Red'],cs:['#c43c3c','#3f6f35','#d65a5a']},{n:['白','White'],cs:['#ecece2','#3f6f35','#f6f6ee']}],
+  bromeliad:[{n:['粉紅','Pink'],c:'#e0607a'},{n:['紅','Red'],c:'#d23b2b'},{n:['黃','Yellow'],c:'#e8c23a'},{n:['橙','Orange'],c:'#f07a2a'}],
+  lotus:[{n:['粉紅','Pink'],c:0xf0a3b8},{n:['白','White'],c:0xf6f2ea},{n:['黃','Yellow'],c:0xf2d35a}],
+  softcoral:[{n:['粉紅','Pink'],c:0xe89ab0,p:0xf6d4de},{n:['綠','Green'],c:0x7fc49a,p:0xd8f0c8},{n:['黃','Yellow'],c:0xe8c86a,p:0xfaf0c0},{n:['紫','Purple'],c:0x9a6ad0,p:0xe0c8f6}],
+  mushroom:[{n:['紫','Purple'],c:0x8a5fd1,p:0x4a2a8a},{n:['紅','Red'],c:0xd0484a,p:0x7a1a1a},{n:['藍綠','Teal'],c:0x3fb0a8,p:0x1a5a58},{n:['橙','Orange'],c:0xf0903a,p:0x8a4010}],
+  redalgae:[{n:['紅','Red'],cs:['#c0392b','#a93226','#d35400']},{n:['紫紅','Magenta'],cs:['#b03a6a','#8a2a50','#d0508a']}],
+};
+const variantOf=it=>{const V=VARIANTS[it.type];if(!V)return null;const v=it.params&&it.params.v;return V[(v!=null?v:it.n||0)%V.length];};
 const LIMIT={stone:4,rockmtn:2,bridge:2,driftwood:2,sand:2,gravel:2,soil:2};
 const PH={betta:[6,7.5],shrimp:[6.5,7.8],amano:[6.5,7.8],slider:[6,8.5],crab:[6.5,8]};
 Object.entries(CAT).forEach(([k,c])=>{
@@ -630,8 +654,8 @@ const PRESETS={
       V:4,shape:'jar',sealed:true,light:12,feed:0,items:[['sand',1],['stone',1],['hornwort',2],['moss',1],['vallis',1],['shrimp',5],['snail',2],['nitri',1]]},
     tank:{n:['開口小魚缸','Open fish tank'],d:['10L 方缸，有氧氣泵、過濾同加熱棒，碎石、假山、假橋、孔雀魚 4 條。','10 L box tank with pump, filter and heater, gravel, rock mountain, bridge and 4 guppies.'],
       V:10,shape:'box',sealed:false,light:10,feed:5,pump:true,filter:true,heater:true,items:[['gravel',1],['rockmtn',1],['bridge',1],['hornwort',2],['vallis',2],['duckweed',1],['guppy',4],['snail',1],['nitri',1],['decomp',1]]},
-    sea:{n:['海馬小海缸','Seahorse reef'],d:['20L 海水方缸：厚細沙、假山、海葡萄、海馬、花園鰻同寄居蟹，有過濾同加熱棒。','20 L salt-water box tank with deep sand, rock mountain, sea grapes, seahorses, garden eels and hermit crabs; filter and heater.'],
-      V:20,shape:'box',water:'salt',sealed:false,light:10,feed:3.5,filter:true,heater:true,region:'med',items:[['sand',1,{depth:5}],['rockmtn',1],['caulerpa',2],['seahorse',2],['gardeneel',3],['hermit',2],['nitri',1],['decomp',1]]},
+    sea:{n:['海馬小海缸','Seahorse reef'],d:['20L 海水方缸：厚細沙、假山上面嘅軟珊瑚、海草、海葡萄、海馬、花園鰻同寄居蟹，有過濾同加熱棒。','20 L salt-water box tank with deep sand, a leather coral on the rock mountain, seagrass, sea grapes, seahorses, garden eels and hermit crabs; filter and heater.'],
+      V:20,shape:'box',water:'salt',sealed:false,light:10,feed:3.5,filter:true,heater:true,region:'med',items:[['sand',1,{depth:5}],['rockmtn',1],['softcoral',1],['seagrass',1],['caulerpa',2],['seahorse',2],['gardeneel',3],['hermit',2],['nitri',1],['decomp',1]]},
     shrimp:{n:['米蝦水草缸','Shrimp planted tank'],d:['8L 圓柱瓶：沉木、黑木蕨、莫絲、水蘊草、綠藻球、10 隻米蝦同斑馬螺，少少餵。','8 L cylinder with driftwood, Java fern, moss, waterweed, marimo, 10 cherry shrimp and nerites; light feeding.'],
       V:8,shape:'cyl',sealed:false,light:10,feed:1,items:[['sand',1],['driftwood',1],['javafern',1],['moss',1],['elodea',2],['marimo',1],['shrimp',10],['nerite',2],['nitri',1],['decomp',1]]},
     betta:{n:['鬥魚獨居缸','Betta solo tank'],d:['5L 方缸，有加熱棒：一條鬥魚、黑木蕨、綠藻球同一隻石田螺。','5 L box tank with a heater: one betta, Java fern, marimo and a pond snail.'],
@@ -724,7 +748,8 @@ const label=it=>it.name||`${N(CAT[it.type].name)} #${it.n}`;
 function randName(){const used=new Set(S.items.map(i=>i.name));const free=PET_NAMES.filter(n=>!used.has(N(n)));const Lst=free.length?free:PET_NAMES;return N(Lst[Math.floor(Math.random()*Lst.length)]);}
 function makeItem(type,params){
   const c=CAT[type];
-  const it={uid:S.uid++,type,n:0,name:'',params:Object.assign({},c.params,params||{}),health:1,satiety:1,wt:Math.floor(Math.random()*6),nShort:0,alive:true,stress:'',lastProd:0,rx:0,rz:0,deadT:0};
+  const P=Object.assign({},c.params,params||{});if(VARIANTS[type]&&P.v==null)P.v=Math.floor(Math.random()*VARIANTS[type].length);
+  const it={uid:S.uid++,type,n:0,name:'',params:P,health:1,satiety:1,wt:Math.floor(Math.random()*6),nShort:0,alive:true,stress:'',lastProd:0,rx:0,rz:0,deadT:0};
   const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*.75;it.rx=Math.cos(a)*r;it.rz=Math.sin(a)*r;
   return it;
 }
@@ -958,7 +983,7 @@ function breedStep(st){const cap=breedCap(st);
         if(st.trial){const b=makeItem(t,p);S.uid--;b.age=0;b.satiety=.8;st.items.push(b);}
         else{const b=addItem(t,Object.assign({},p),true);b.age=0;b.satiety=.8;}
       }
-      if(!st.trial){unlock('baby');logEv(`${CAT[t].name[0]}生咗 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
+      if(!st.trial){if(!S.real)unlock('baby');logEv(`${CAT[t].name[0]}生咗 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
     }
   }
 }
@@ -1420,7 +1445,7 @@ function itemModel(it){
   else if(t==='javafern'){g=fronds(C.color,6,.22,.06,.25);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.07,0),mat(0x6d6a63));r.scale.y=.6;r.position.y=.03;g.add(r);}
   else if(t==='moss'){g=clump(['#3d6b25','#4f7d2e','#2f5a1d'],26,.16,.055,.12);const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.12,0),mat(0x6d6a63));r.scale.set(1.3,.6,1);r.position.y=.03;g.add(r);}
   else if(t==='marimo'){g=new THREE.Group();const s=new THREE.Mesh(new THREE.IcosahedronGeometry(.07,2),mat(C.color));s.position.y=.07;g.add(s);g.userData.top=.14;}
-  else if(t==='lotus'){g=new THREE.Group();const top=J.waterTop!=null?J.waterTop-J.sTop:J.H*.4,sm=mat(0x5f7d2a),lm=mat(0x4f8f3a,{side:THREE.DoubleSide}),pk=mat(0xf0a3b8,{side:THREE.DoubleSide}),yl=mat(0xf2d35a);
+  else if(t==='lotus'){g=new THREE.Group();const top=J.waterTop!=null?J.waterTop-J.sTop:J.H*.4,sm=mat(0x5f7d2a),lm=mat(0x4f8f3a,{side:THREE.DoubleSide}),pk=mat(variantOf(it).c,{side:THREE.DoubleSide}),yl=mat(0xf2d35a);
     for(let i=0;i<5;i++){const a=rnd(0,6.28),r=rnd(.05,.22),up=i<2?rnd(.08,.2):0,h=top+up,x=Math.cos(a)*r,z=Math.sin(a)*r;
       g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0),new THREE.Vector3(x*.4,h*.5,z*.4),new THREE.Vector3(x,h,z)]),10,.007,5,false),sm));
       const pad=new THREE.Mesh(new THREE.CircleGeometry(rnd(.1,.15),20,.15,Math.PI*2-.3),lm);pad.rotation.x=-Math.PI/2;pad.rotation.z=rnd(0,6.28);pad.position.set(x,h+.003,z);if(up){pad.rotation.x=-Math.PI/2+rnd(-.5,.5);pad.scale.setScalar(.9);}g.add(pad);}
@@ -1429,6 +1454,18 @@ function itemModel(it){
     for(let i=0;i<9;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),pk);p.scale.set(.45,1,.2);const a=i/9*6.28;p.position.set(Math.cos(a)*.025,.03,Math.sin(a)*.025);p.rotation.set(Math.sin(a)*.5,-a,Math.cos(a)*-.5);fl.add(p);}
     const pod=new THREE.Mesh(new THREE.CylinderGeometry(.015,.01,.02,10),yl);pod.position.y=.03;fl.add(pod);g.add(fl);g.userData.top=fh;}
   else if(t==='caulerpa')g=clump(['#4fa04a','#6abf5a','#3f8a3a'],34,.15,.03,.14);
+  else if(t==='softcoral'){const v=variantOf(it);g=new THREE.Group();const bm=mat(v.c),pm=mat(v.p);
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.045,.06,.09,10),bm);trunk.position.y=.045;g.add(trunk);
+    const cap=new THREE.Mesh(new THREE.SphereGeometry(.11,14,8,0,Math.PI*2,0,Math.PI/2),bm);cap.scale.y=.45;cap.position.y=.09;g.add(cap);
+    g.userData.blades=[];for(let i=0;i<46;i++){const a=rnd(0,6.28),r=Math.sqrt(Math.random())*.1,p=new THREE.Mesh(new THREE.CylinderGeometry(.004,.003,.028,4),pm);p.position.set(Math.cos(a)*r,.09+.05*(1-r/.11)+.012,Math.sin(a)*r);p.userData.ph=rnd(0,6);g.add(p);g.userData.blades.push(p);}
+    g.userData.top=.17;}
+  else if(t==='mushroom'){const v=variantOf(it);g=new THREE.Group();const dm=mat(v.c),cm=mat(v.p);
+    for(let i=0;i<5;i++){const a=i/5*6.28+rnd(-.3,.3),r=i?rnd(.04,.09):0,s=rnd(.032,.048),d=new THREE.Group();
+      const disc=new THREE.Mesh(new THREE.CylinderGeometry(s,s*.8,.012,14),dm);d.add(disc);const dot=new THREE.Mesh(new THREE.CircleGeometry(s*.25,10),cm);dot.rotation.x=-Math.PI/2;dot.position.y=.0065;d.add(dot);
+      d.position.set(Math.cos(a)*r,.015+rnd(0,.02),Math.sin(a)*r);d.rotation.set(rnd(-.4,.4),0,rnd(-.4,.4));g.add(d);}
+    g.userData.top=.06;}
+  else if(t==='seagrass')g=blades(C.color,12,Math.min(wH*.45,.35),.014,.3);
+  else if(t==='redalgae'){const v=variantOf(it);g=clump(v.cs,40,.16,.028,.16);}
   else if(t==='duckweed'){g=new THREE.Group();const m=mat(C.color,{side:THREE.DoubleSide});
     for(let i=0;i<14;i++){const l=new THREE.Mesh(new THREE.CircleGeometry(rnd(.025,.04),10),m);l.rotation.x=-Math.PI/2;const a=rnd(0,6.28),r=rnd(0,.2);l.position.set(Math.cos(a)*r,.004,Math.sin(a)*r);g.add(l);}g.userData.top=0;}
   else if(t==='fern')g=fronds(C.color,9,.32,.07,.5);
@@ -1437,17 +1474,16 @@ function itemModel(it){
     const cv=new THREE.CatmullRomCurve3(pts);g.add(new THREE.Mesh(new THREE.TubeGeometry(cv,30,.008,5,false),mat(0x5f7d2a)));
     const lm=mat(C.color,{side:THREE.DoubleSide});for(let i=1;i<14;i++){const p=cv.getPoint(i/14),lf=new THREE.Mesh(new THREE.CircleGeometry(.045,10),lm);lf.scale.set(.75,1,1);lf.position.copy(p);lf.rotation.set(rnd(-.6,.6),i*1.9,rnd(-.4,.4));lf.translateX(.04);g.add(lf);}
     g.userData.top=h;}
-  else if(t==='bromeliad'){g=fronds('#3f7d35',10,.2,.04,.6);g.add(fronds(C.color,5,.09,.03,.4));}
-  else if(t==='fittonia')g=clump(['#c8607a','#3f6f35','#d77a92'],30,.13,.04,.1);
-  else if(t==='guppy')g=fishModel(0xe8a04a,[0x3a6fd8,0xd8463a,0x8a3ad8][it.n%3],.055,false);
-  else if(t==='medaka')g=fishModel(0xe6d3a3,0xf0b860,.045,true);
+  else if(t==='bromeliad'){g=fronds('#3f7d35',10,.2,.04,.6);g.add(fronds(variantOf(it).c,5,.09,.03,.4));}
+  else if(t==='fittonia')g=clump(variantOf(it).cs,30,.13,.04,.1);
+  else if(t==='guppy'){const v=variantOf(it);g=fishModel(v.b,v.f,.055,false);}
+  else if(t==='medaka'){const v=variantOf(it);g=fishModel(v.b,v.f,.045,true);}
   else if(t==='minnow')g=fishModel(0xc9d3c2,0xd3473a,.05,true);
-  else if(t==='betta')g=fishModel(0x3b4fd1,[0xd23b5a,0x3b8fd1,0x8a3ad8][it.n%3],.055,false,true);
+  else if(t==='betta'){const v=variantOf(it);g=fishModel(v.b,v.f,.055,false,true);}
   else if(t==='pleco')g=fishModel(0x5a4a35,0x3d3226,.06,false);
-  else if(t==='shrimp')g=shrimpModel(0xd9452f,.92);
+  else if(t==='shrimp')g=shrimpModel(variantOf(it).c,.92);
   else if(t==='amano')g=shrimpModel(0xb9b2a0,.6);
-  else if(t==='snail')g=snailModel(0x7a5532,0x3e2a17);
-  else if(t==='nerite')g=snailModel(0x2d2a20,0xd8c25a);
+  else if(t==='snail'||t==='nerite'){const v=variantOf(it);g=snailModel(v.c,v.s);}
   else if(t==='daphnia')g=swarmPoints(40,0xd9b46a,.022,.12);
   else if(t==='jelly')g=jellyModel(0xe9eef2,.035);
   else if(t==='moonjelly')g=jellyModel(0xdfe6ff,.06);
@@ -2363,7 +2399,7 @@ function renderEnv(){
   bind('e-Lv',(v,done)=>{if(done)setLevel(v);},'cm');
   bind('e-Hill',(v,done)=>{S.hillH=v;if(done){buildJar({keepCam:true});renderEnv();}},'cm');
   const chk=(id,k)=>{const e=$('#'+id);if(e)e.onchange=()=>{S[k]=e.checked;save();};};
-  chk('e-Real','real');const er=$('#e-Real');if(er)er.addEventListener('change',renderJarSeg);chk('e-P','pump');chk('e-Fi','filter');chk('e-Ht','heater');chk('e-Fan','fan');chk('e-H','heat');chk('e-S','sealed');{const es=$('#e-S');if(es)es.addEventListener('change',renderEnv);}chk('e-B','breed');
+  chk('e-Real','real');const er=$('#e-Real');if(er)er.addEventListener('change',()=>{renderAll();toast(S.real?L('真實嘅瓶：所有生物同設定都用得，只做分析','Real tank: every species and setting is available, for analysis only'):L('返回模擬瓶','Back to a simulated jar'));});chk('e-P','pump');chk('e-Fi','filter');chk('e-Ht','heater');chk('e-Fan','fan');chk('e-H','heat');chk('e-S','sealed');{const es=$('#e-S');if(es)es.addEventListener('change',renderEnv);}chk('e-B','breed');
   const ew=$('#e-W');if(ew)ew.onchange=()=>fillWater(ew.checked);
   const en=$('#e-name');en.oninput=()=>{S.jarName=en.value.trim().slice(0,16);renderJarSeg();save();};
   const pe=$('#pane-env');bindPaneTags('env',pe);bindCustomRegion();
@@ -2642,8 +2678,10 @@ function renderPop(){
       <span>${L('大細','Size')} <b class="mono" id="popSz">${(+it.params.size).toFixed(2)}×</b></span><button data-sz="-.1" aria-label="${L('縮細','Smaller')}">－</button><button data-sz=".1" aria-label="${L('放大','Larger')}">＋</button>
       <button class="rotreset" data-r="reset">${L('擺返正','Level it')}</button></div>`:''}
     ${k==='animal'&&it.alive?`<div class="ed-actions"><button class="btn" id="popFollow">${L('鏡頭跟住佢','Follow it')}</button><button class="btn" id="popPov">${L('佢嘅第一視角','See as it sees')}</button></div>`:''}
+    ${VARIANTS[it.type]&&it.alive?`<div class="swatches" role="group" aria-label="${L('顏色','Colour')}"><span>${L('顏色','Colour')}</span>${VARIANTS[it.type].map((v,i)=>{const c=v.c!=null?v.c:v.f!=null?v.f:v.cs[0],hx=typeof c==='number'?'#'+c.toString(16).padStart(6,'0'):c;return`<button data-var="${i}" aria-pressed="${variantOf(it)===v}" title="${esc(N(v.n))}" aria-label="${esc(N(v.n))}" style="--sw:${hx}"></button>`;}).join('')}</div>`:''}
     <div class="ed-actions"><button class="btn primary" id="popMore">${L('詳細設定','Settings')}</button><button class="btn danger" id="popDel">${it.alive?L('移走','Remove'):L('清走','Clear')}</button></div>`;
   $('#popX').onclick=closePop;
+  pop.querySelectorAll('[data-var]').forEach(b=>b.onclick=()=>{it.params.v=+b.dataset.var;const sel=S.sel;disposeObj(it.g);buildItem(it);S.sel=sel;save();renderPop();toast(L('換咗做','Now ')+N(VARIANTS[it.type][it.params.v].n));});
   const pf=$('#popFollow'),pv=$('#popPov');if(pf)pf.onclick=()=>{closePop();camFollow(it,'follow');};if(pv)pv.onclick=()=>{closePop();camFollow(it,'pov');};
   pop.querySelectorAll('[data-sz]').forEach(b=>b.onclick=()=>{const p=it.params;p.size=+clamp((+p.size)+(+b.dataset.sz),.4,2).toFixed(2);placeItem(it);const z=$('#popSz');if(z)z.textContent=p.size.toFixed(2)+'×';save();if(S.sel===it&&$('#editor'))renderEditor();});
   makeDraggable(pop,pop.querySelector('.ed-head'));
@@ -2868,7 +2906,7 @@ const UNLOCKS=[
   {id:'u_week',t:['平安一星期','A calm week'],cond:()=>!!PLAY.ach.week,
     features:['palu','ff'],types:['jelly','pleco','crab'],regions:['amazon','amazonriver','borneo','pantanal','mekong'],presets:['aqua.jelly','rain.palu','rain.amazon']},
   {id:'u_col12',t:['收藏 12 種生物','Collect 12 species'],prog:()=>`${Math.min(12,colN())}/12`,cond:()=>colN()>=12,
-    features:['salt'],types:['caulerpa','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],presets:['aqua.sea']},
+    features:['salt'],types:['caulerpa','softcoral','mushroom','seagrass','redalgae','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],presets:['aqua.sea']},
   {id:'u_ch3',t:['完成 3 個挑戰','Complete 3 challenges'],prog:()=>`${Math.min(3,chN())}/3`,cond:()=>chN()>=3,
     types:['gecko','newt','turtle','slider','leopard'],regions:['sahara','cloudforest','tanganyika','baikal'],presets:['rain.gecko','rain.newt','rain.turtle','rain.desert']},
 ];
@@ -2881,10 +2919,12 @@ const FREE_PRESETS=['aqua.eco','aqua.tank','aqua.betta','aqua.zero'];
 /* 隱藏開關：連撳標題 7 下 → 全部解鎖（方便測試） */
 PLAY.all=pref.get('ecojar.all')==='1';
 /* 回傳鎖住佢嘅解鎖項目（冇鎖就 null）；kind = type／region／feature／preset */
-function lockOf(kind,key){if(PLAY.all)return null;const f=kind+'s';
+function lockOf(kind,key){if(PLAY.all)return null;
+  if(S.real&&kind!=='preset'&&key!=='ff')return null; // 真實嘅瓶：為咗分析，乜都用得（但唔計進度）
+  const f=kind+'s';
   if(kind==='preset'&&!FREE_PRESETS.includes(key)&&!UNLOCKS.some(u=>(u.presets||[]).includes(key)))return null;
   for(const u of UNLOCKS)if(u[f]&&u[f].includes(key)&&!u.cond())return u;return null;}
-const lockText=u=>L('🔒 解鎖條件：','🔒 Unlock by: ')+N(u.t)+(u.prog?L(`（${u.prog()}）`,` (${u.prog()})`):'');
+const lockText=u=>L('🔒 解鎖條件：','🔒 Unlock by: ')+N(u.t)+(u.prog?L(`（${u.prog()}）`,` (${u.prog()})`):'')+L('；真實嘅瓶唔使解鎖','; real tanks need no unlocking');
 function presetLock(mode,key,p){const u0=lockOf('preset',mode+'.'+key);if(u0)return u0;
   if(mode==='rain'){const u=lockOf('feature',p.level>0?'palu':'rain')||lockOf('feature','rain');if(u)return u;}
   for(const [t] of p.items){const u=lockOf('type',t);if(u)return u;}return lockOf('region',p.region||'hk')||(p.water==='salt'?lockOf('feature','salt'):null);}
@@ -2948,14 +2988,14 @@ function unlock(id){
 
 /* ---- 收藏：一種生物喺瓶入面撐過一個午夜就收錄 ---- */
 const COL_TYPES=()=>Object.keys(CAT).filter(t=>['plant','animal'].includes(CAT[t].kind));
-function collectNow(){let n=0;for(const it of S.items){if(!it.alive||!['plant','animal'].includes(CAT[it.type].kind)||PLAY.col[it.type])continue;PLAY.col[it.type]=Date.now();n++;}
+function collectNow(){if(S.real)return;let n=0;for(const it of S.items){if(!it.alive||!['plant','animal'].includes(CAT[it.type].kind)||PLAY.col[it.type])continue;PLAY.col[it.type]=Date.now();n++;}
   if(!n)return;savePlay();const c=Object.keys(PLAY.col).length;if(c>=10)unlock('col10');if(c>=30)unlock('col30');checkUnlocks();if(curTab==='play')renderPlay();}
 
 /* ---- 每秒檢查一次（main.js 叫） ---- */
 function playTick(){
   const animals=aliveK('animal').length,dn=S.deathN||0;
   if(PLAY.lastDay!=null&&S.day!==PLAY.lastDay){collectNow();
-    if(S.day>=8&&!dn&&animals>=2)unlock('week');if(S.day>=31&&!dn&&animals>=1)unlock('month');}
+    if(!S.real){if(S.day>=8&&!dn&&animals>=2)unlock('week');if(S.day>=31&&!dn&&animals>=1)unlock('month');}}
   PLAY.lastDay=S.day;
   if(!S.chal)return;const c=CHAL.find(x=>x.id===S.chal.id);if(!c){S.chal=null;return;}
   const why=(c.type==='survive'&&dn>S.chal.dead0?L('有動物死咗','An animal died'):null)||c.keep();
@@ -2966,7 +3006,7 @@ function playTick(){
   const pg=$('#chProg');if(pg){const f=Math.min(1,h/(c.days*24));pg.querySelector('b').style.width=(f*100)+'%';pg.querySelector('span').textContent=chalProgText(c,h);}
 }
 const chalProgText=(c,h)=>(c.prog?c.prog()+' · ':'')+L(`第 ${Math.floor(h/24)}／${c.days} 日`,`Day ${Math.floor(h/24)}/${c.days}`);
-function startChal(id){const c=CHAL.find(x=>x.id===id),why=c.req();if(why){toast(L('未啱條件：','Not ready: ')+why);return;}
+function startChal(id){if(S.real){toast(L('真實嘅瓶只做分析，唔計挑戰；轉去另一個瓶玩','Real tanks are for analysis only; use another jar for challenges'));return;}const c=CHAL.find(x=>x.id===id),why=c.req();if(why){toast(L('未啱條件：','Not ready: ')+why);return;}
   S.chal={id,d0:S.day,h0:S.hour,dead0:S.deathN||0};logEv(`開始挑戰「${c.n[0]}」`,`Started the challenge "${c.n[1]}"`,'muted');save();renderPlay();toast(L(`開始挑戰：${c.n[0]}`,`Challenge started: ${c.n[1]}`));}
 
 /* ---- 時間旅行：用試算預覽未來 30 日，唔會改個瓶；想真係去到嗰日先撳「快轉」 ---- */
@@ -3011,6 +3051,7 @@ function renderPlay(){
   const cur=S.chal&&CHAL.find(x=>x.id===S.chal.id);
   pe.innerHTML=`${paneTagBar('play',PLAY_TAGS)}
    <section data-sec="unlock"><h3>${L('解鎖','Unlocks')} · ${UNLOCKS.filter(u=>u.cond()).length}/${UNLOCKS.length}</h3><p class="lede">${L('完成挑戰、成就同收藏，就會開放更多生物、地區同玩法。','Complete challenges, achievements and collections to open up more species, regions and features.')}</p>
+    <p class="lede">${L('想分析自己真實嘅缸？喺「環境同天氣」開「呢個係真實嘅瓶」，所有生物、模式同設定即刻用得（只做分析，唔計收藏、成就同挑戰）；或者用「分析水缸」分頁填資料。','Analysing your own real tank? Turn on "This is a real tank" in Setup and every species, mode and setting is available at once (analysis only; it does not count towards collection, achievements or challenges). Or fill in the Analyse a tank tab.')}</p>
     <div class="unls">${UNLOCKS.map(u=>{const ok=u.cond();return`<div class="unl${ok?' got':''}"><b>${ok?'🔓':'🔒'} ${N(u.t)}${!ok&&u.prog?` <span class="lede">${u.prog()}</span>`:''}</b><span>${rewardNames(u).join(L('、',', '))}</span></div>`;}).join('')}</div></section>
    <section data-sec="chal"><h3>${L('挑戰','Challenges')} · ${CHAL.filter(c=>done(c.id)).length}/${CHAL.length}</h3>
     ${cur?`<div class="chal on"><div class="bh"><b>${N(cur.n)}</b><button class="linkbtn" id="chQuit">${L('放棄','Give up')}</button></div><p>${N(cur.d)}</p>

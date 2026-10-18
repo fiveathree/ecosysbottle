@@ -34,7 +34,8 @@ const label=it=>it.name||`${N(CAT[it.type].name)} #${it.n}`;
 function randName(){const used=new Set(S.items.map(i=>i.name));const free=PET_NAMES.filter(n=>!used.has(N(n)));const Lst=free.length?free:PET_NAMES;return N(Lst[Math.floor(Math.random()*Lst.length)]);}
 function makeItem(type,params){
   const c=CAT[type];
-  const it={uid:S.uid++,type,n:0,name:'',params:Object.assign({},c.params,params||{}),health:1,satiety:1,wt:Math.floor(Math.random()*6),nShort:0,alive:true,stress:'',lastProd:0,rx:0,rz:0,deadT:0};
+  const P=Object.assign({},c.params,params||{});if(VARIANTS[type]&&P.v==null)P.v=Math.floor(Math.random()*VARIANTS[type].length);
+  const it={uid:S.uid++,type,n:0,name:'',params:P,health:1,satiety:1,wt:Math.floor(Math.random()*6),nShort:0,alive:true,stress:'',lastProd:0,rx:0,rz:0,deadT:0};
   const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*.75;it.rx=Math.cos(a)*r;it.rz=Math.sin(a)*r;
   return it;
 }
@@ -268,7 +269,7 @@ function breedStep(st){const cap=breedCap(st);
         if(st.trial){const b=makeItem(t,p);S.uid--;b.age=0;b.satiety=.8;st.items.push(b);}
         else{const b=addItem(t,Object.assign({},p),true);b.age=0;b.satiety=.8;}
       }
-      if(!st.trial){unlock('baby');logEv(`${CAT[t].name[0]}生咗 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
+      if(!st.trial){if(!S.real)unlock('baby');logEv(`${CAT[t].name[0]}生咗 ${n} 隻BB`,`${CAT[t].name[1]} had ${n} young`,'good');dirtyList=true;}
     }
   }
 }

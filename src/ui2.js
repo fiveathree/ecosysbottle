@@ -127,8 +127,10 @@ function renderPop(){
       <span>${L('大細','Size')} <b class="mono" id="popSz">${(+it.params.size).toFixed(2)}×</b></span><button data-sz="-.1" aria-label="${L('縮細','Smaller')}">－</button><button data-sz=".1" aria-label="${L('放大','Larger')}">＋</button>
       <button class="rotreset" data-r="reset">${L('擺返正','Level it')}</button></div>`:''}
     ${k==='animal'&&it.alive?`<div class="ed-actions"><button class="btn" id="popFollow">${L('鏡頭跟住佢','Follow it')}</button><button class="btn" id="popPov">${L('佢嘅第一視角','See as it sees')}</button></div>`:''}
+    ${VARIANTS[it.type]&&it.alive?`<div class="swatches" role="group" aria-label="${L('顏色','Colour')}"><span>${L('顏色','Colour')}</span>${VARIANTS[it.type].map((v,i)=>{const c=v.c!=null?v.c:v.f!=null?v.f:v.cs[0],hx=typeof c==='number'?'#'+c.toString(16).padStart(6,'0'):c;return`<button data-var="${i}" aria-pressed="${variantOf(it)===v}" title="${esc(N(v.n))}" aria-label="${esc(N(v.n))}" style="--sw:${hx}"></button>`;}).join('')}</div>`:''}
     <div class="ed-actions"><button class="btn primary" id="popMore">${L('詳細設定','Settings')}</button><button class="btn danger" id="popDel">${it.alive?L('移走','Remove'):L('清走','Clear')}</button></div>`;
   $('#popX').onclick=closePop;
+  pop.querySelectorAll('[data-var]').forEach(b=>b.onclick=()=>{it.params.v=+b.dataset.var;const sel=S.sel;disposeObj(it.g);buildItem(it);S.sel=sel;save();renderPop();toast(L('換咗做','Now ')+N(VARIANTS[it.type][it.params.v].n));});
   const pf=$('#popFollow'),pv=$('#popPov');if(pf)pf.onclick=()=>{closePop();camFollow(it,'follow');};if(pv)pv.onclick=()=>{closePop();camFollow(it,'pov');};
   pop.querySelectorAll('[data-sz]').forEach(b=>b.onclick=()=>{const p=it.params;p.size=+clamp((+p.size)+(+b.dataset.sz),.4,2).toFixed(2);placeItem(it);const z=$('#popSz');if(z)z.textContent=p.size.toFixed(2)+'×';save();if(S.sel===it&&$('#editor'))renderEditor();});
   makeDraggable(pop,pop.querySelector('.ed-head'));
