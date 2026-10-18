@@ -57,7 +57,7 @@ function renderChrome(){
   document.documentElement.lang=LANG==='en'?'en':'zh-Hant';
   $('#brandT').textContent=L('生態瓶實驗室','Eco Jar Lab');$('#brandS').textContent=L('ECO JAR LAB','生態瓶實驗室');
   $('#playBtn').textContent=S.running?L('暫停','Pause'):L('繼續','Play');
-  $('#feedBtn').textContent=L('立即餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成造景','Finish building'):(lockOf('feature','build')?'🔒 ':'')+L('自訂造景','Build');if(typeof renderTaskChip==='function')renderTaskChip();$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('🔗 分享這個瓶','🔗 Share this jar');$('#presetBtn').textContent=L('預設組合','Presets');
+  $('#feedBtn').textContent=L('立即餵食','Feed now');renderAdvSeg();$('#buildHdr').textContent=S.build?L('完成造景','Finish building'):(lockOf('feature','build')?'🔒 ':'')+L('自訂造景','Build');if(typeof renderTaskChip==='function')renderTaskChip();$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('🔗 分享這個瓶','🔗 Share this jar');$('#presetBtn').textContent=L('預設組合','Presets');
   $('#langBtn').textContent=LANG==='en'?'🌐 中文':'🌐 English';$('#moreBtn').setAttribute('aria-label',L('更多','More'));$('#tourBtn').textContent=L('🧭 新手教學','🧭 Quick guide');$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境和天氣','Setup & weather'],ana:['分析水缸','Analyse a tank'],play:['玩法','Play']};
@@ -438,6 +438,11 @@ function shapeIcon(k){const sh=SHAPES[k];
   return`<svg viewBox="0 0 40 50" aria-hidden="true"><path d="${d}"/></svg>`;}
 const matHex=k=>'#'+MATS[k].c.toString(16).padStart(6,'0');
 let envAdv=pref.get('ecojar.envAdv')==='1'; // 環境設定：false＝簡易（預設），true＝進階
+/* 頂部「簡易｜進階」：同「環境和天氣」入面嗰個同步 */
+function setEnvAdv(v){envAdv=v;pref.set('ecojar.envAdv',v?'1':'0');renderAdvSeg();renderEnv();}
+function renderAdvSeg(){const g=$('#advSeg');if(!g)return;g.setAttribute('aria-label',L('顯示設定','Show settings'));
+  g.innerHTML=[[0,['簡易','Simple']],[1,['進階','Advanced']]].map(([v,n])=>`<button data-adv-top="${v}" aria-pressed="${!!v===envAdv}" title="${esc(v?L('顯示全部設定','Show every setting'):L('只顯示常用設定','Common settings only'))}">${N(n)}</button>`).join('');
+  g.querySelectorAll('[data-adv-top]').forEach(b=>b.onclick=()=>setEnvAdv(b.dataset.advTop==='1'));}
 function renderEnv(){
   const aq=S.mode==='aqua',wL=wLOf(S);
   const sw=(id,on,t,d)=>`<label class="switch" for="${id}"><span><b>${t}</b><br><span class="lede">${d}</span></span><input type="checkbox" id="${id}" ${on?'checked':''}></label>`;
@@ -478,7 +483,7 @@ function renderEnv(){
    <section class="presets" data-sec="preset"><h3>${L('預設組合','Presets')}</h3><p class="lede">${L(`這個模式有 ${Object.keys(PRESETS[S.mode]).length} 個預設，亦可以在頂部「預設組合」選。`,`${Object.keys(PRESETS[S.mode]).length} presets for this mode; also under Presets at the top.`)}</p></section>
    <div class="ed-actions" data-sec="preset"><button class="btn primary" id="e-presets">${L('選預設組合','Choose a preset')}</button><button class="btn" id="e-restart" data-adv>${L('保留生物，重新開始時間','Keep everything, restart time')}</button></div>`;
   $('#pane-env').classList.toggle('simple',!envAdv);
-  $('#pane-env').querySelectorAll('[data-envm]').forEach(b=>b.onclick=()=>{envAdv=b.dataset.envm==='1';pref.set('ecojar.envAdv',envAdv?'1':'0');renderEnv();});
+  $('#pane-env').querySelectorAll('[data-envm]').forEach(b=>b.onclick=()=>setEnvAdv(b.dataset.envm==='1'));
   const bind=(id,f,u)=>{const e=$('#'+id);if(!e)return;e.oninput=()=>{$('#o'+id).textContent=e.value+' '+u;f(+e.value,false);save();};e.onchange=()=>f(+e.value,true);};
   bind('e-V',(v,done)=>{if(!done)return;const r=v/S.V;['O2','CO2','NH3','NO3','aO2','aCO2','waste'].forEach(k=>{if(S.c[k]!=null)S.c[k]*=r;});S.V=v;buildJar({keepChem:S.mode==='aqua'});renderEnv();},'L');
   bind('e-L',v=>S.light=v,L('小時','h'));bind('e-F',v=>S.feed=v,L('份',''));bind('e-M',v=>S.mist=v,L('次','×'));bind('e-WC',v=>S.wc=v,'%');

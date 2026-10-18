@@ -7,7 +7,7 @@
     <div class="clock"><b id="clkDay"></b><b id="clkTime"></b><span id="lightTag" class="tag"></span></div>
     <div class="ctrls">
       <div class="grp"><button class="btn primary" id="playBtn"></button><div class="seg" id="speedSeg" role="group" aria-label="Speed"></div></div>
-      <div class="grp"><button class="btn" id="feedBtn"></button><button class="btn magic" id="balBtn"></button></div>
+      <div class="grp"><div class="seg" id="advSeg" role="group"></div><button class="btn magic" id="balBtn"></button></div>
       <div class="grp"><button class="btn build" id="buildHdr"></button></div>
       <div class="grp more"><button class="btn" id="moreBtn" aria-haspopup="menu" aria-expanded="false">⋯</button><div class="menu" id="moreMenu" role="menu" hidden><button role="menuitem" id="shareBtn"></button><button role="menuitem" id="langBtn"></button><button role="menuitem" id="tourBtn"></button></div></div>
     </div>
@@ -16,7 +16,7 @@
     <section class="stage" id="stage">
       <canvas id="c"></canvas>
       <div class="hud"><div class="hud-l"><button class="pill click" id="status" aria-haspopup="dialog"><i></i><span></span></button><div class="pill wx" id="wxPill"></div><button class="tglbtn" id="dnBtn"></button><button class="pill click taskchip" id="taskChip" hidden></button></div>
-        <div class="hud-r"><div class="hud-rr"><button class="clearbtn" id="clearBtn"></button></div><span class="hint" id="hint"></span></div></div>
+        <div class="hud-r"><div class="hud-rr"><button class="feedbtn" id="feedBtn"></button><button class="clearbtn" id="clearBtn"></button></div><span class="hint" id="hint"></span></div></div>
       <div class="ov ovL" id="ovL" hidden><div class="ovhead"><h4 id="ovLT"></h4><button class="x" id="ovLX" aria-label="Close">×</button></div><div class="ovbody" id="pane-bal"></div></div><div class="ov ovR" id="ovR" hidden></div>
       <button class="edge edgeL" id="edgeL"></button><button class="edge edgeR" id="edgeR"></button>
       <div class="cambar" id="camBar" hidden></div>
