@@ -13,6 +13,26 @@ function rAt(y){if(J.box)return J.R;const t=clamp(y/J.H,0,1),Pt=J.pts;
 function randIn(y,f){if(J.box)return[rnd(-1,1)*J.R*f,rnd(-1,1)*J.R*f];const a=rnd(0,6.28),r=Math.sqrt(Math.random())*rAt(y)*f;return[Math.cos(a)*r,Math.sin(a)*r];}
 function edgeFrac(p){return J.box?Math.max(Math.abs(p.x),Math.abs(p.z))/J.R:Math.hypot(p.x,p.z)/Math.max(.01,rAt(p.y));}
 function clampIn(p,f){if(J.box){const m=J.R*f;p.x=clamp(p.x,-m,m);p.z=clamp(p.z,-m,m);return;}const m=rAt(p.y)*f,r=Math.hypot(p.x,p.z);if(r>m){p.x*=m/r;p.z*=m/r;}}
+function clampInR(p,r){if(J.box){const m=Math.max(.02,J.R*.985-r);p.x=clamp(p.x,-m,m);p.z=clamp(p.z,-m,m);return;}const m=Math.max(.02,rAt(p.y)*.985-r),d=Math.hypot(p.x,p.z);if(d>m){p.x*=m/d;p.z*=m/d;}}
+const _fb=new THREE.Box3();
+/* 唔准穿玻璃：超出就推返入去，太大就縮細 */
+function fitInJar(it){const g=it.g;if(!g)return;
+  for(let pass=0;pass<4;pass++){
+    g.updateMatrixWorld(true);_fb.setFromObject(g);if(_fb.isEmpty())return;
+    const cx=(_fb.min.x+_fb.max.x)/2,cz=(_fb.min.z+_fb.max.z)/2,hx=(_fb.max.x-_fb.min.x)/2,hz=(_fb.max.z-_fb.min.z)/2,top=J.H*.96;
+    if(_fb.max.y>top&&_fb.max.y>g.position.y+1e-4){const f=(top-g.position.y)/(_fb.max.y-g.position.y);if(f>0&&f<1){g.scale.multiplyScalar(f*.98);continue;}}
+    let moved=false;
+    if(J.box){const lim=J.R*.97;if(hx>lim||hz>lim){g.scale.multiplyScalar(Math.min(lim/hx,lim/hz)*.98);continue;}
+      let dx=0,dz=0;if(cx+hx>lim)dx=lim-(cx+hx);if(cx-hx<-lim)dx=-lim-(cx-hx);if(cz+hz>lim)dz=lim-(cz+hz);if(cz-hz<-lim)dz=-lim-(cz-hz);
+      if(dx||dz){g.position.x+=dx;g.position.z+=dz;moved=true;}}
+    else{let rmin=Infinity;for(let k=0;k<=6;k++)rmin=Math.min(rmin,rAt(_fb.min.y+(_fb.max.y-_fb.min.y)*k/6));
+      const lim=rmin*.97,rr=Math.hypot(hx,hz)*.78;
+      if(rr>lim){g.scale.multiplyScalar(lim/rr*.98);continue;}
+      const d=Math.hypot(cx,cz);if(d+rr>lim){const f=d>1e-4?Math.max(0,lim-rr)/d:0;g.position.x+=cx*f-cx;g.position.z+=cz*f-cz;moved=true;}}
+    if(!moved)break;
+    if(it.type!=='duckweed')g.position.y=groundY(g.position.x,g.position.z);
+  }
+}
 function shapeSamples(sh){const pts=sh.prof.map(([r,y])=>new THREE.Vector2(r,y));return pts.length>2?new THREE.SplineCurve(pts).getPoints(60):pts;}
 const floorR=()=>J.box?J.R:rAt(J.sTop);
 const floorF=()=>floorR()*.72;
@@ -366,6 +386,7 @@ function buildItem(it){
     for(let i=0;i<8;i++){const b=new THREE.Mesh(new THREE.SphereGeometry(.013,8,6),m);b.scale.set(1.7,.55,1.1);g.add(b);it.agents.push({mesh:b,p:new THREE.Vector3(),hd:rnd(0,6.28)});}}
   else if(t==='springtail')g=swarmPoints(70,0xeeeeea,.014,.2);
   else {g=new THREE.Group();g.add(new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.02,24),new THREE.MeshBasicMaterial({visible:false})));}
+  if(k==='animal'){const b=new THREE.Box3().setFromObject(g);g.userData.br=b.isEmpty()?.05:Math.max(Math.abs(b.min.x),Math.abs(b.max.x),Math.abs(b.min.z),Math.abs(b.max.z))||.05;}
   g.userData.uid=it.uid;it.g=g;world.add(g);
   it.m={p:new THREE.Vector3(),v:new THREE.Vector3(),tgt:new THREE.Vector3(),prev:new THREE.Vector3(),tt:0,spd:.05,hd:rnd(0,6.28),ph:rnd(0,6),hop:0,h0:new THREE.Vector3()};
   placeItem(it);
@@ -374,7 +395,7 @@ function plantF(it){if(it.type==='duckweed')return J.box?J.R*.6:rAt(J.waterTop||
 function placeItem(it){
   const C=CAT[it.type],k=C.kind,g=it.g;if(!g)return;
   if(k==='sub'){g.position.set(0,0,0);return;}
-  if(k==='decor'){const [x,z]=floorMap(it.params.x,it.params.z);g.position.set(x,groundY(x,z),z);const d2r=Math.PI/180;g.rotation.order='YXZ';g.rotation.set((it.params.rotX||0)*d2r,(it.params.rot||0)*d2r,(it.params.rotZ||0)*d2r);g.scale.setScalar(it.params.size*J.k);return;}
+  if(k==='decor'){const [x,z]=floorMap(it.params.x,it.params.z);g.position.set(x,groundY(x,z),z);const d2r=Math.PI/180;g.rotation.order='YXZ';g.rotation.set((it.params.rotX||0)*d2r,(it.params.rot||0)*d2r,(it.params.rotZ||0)*d2r);g.scale.setScalar(it.params.size*J.k);fitInJar(it);return;}
   if(k==='plant'){
     const f=plantF(it);let px=it.rx*f,pz=it.rz*f;
     if(S.mode==='rain'&&!it.userPlaced){
@@ -384,6 +405,7 @@ function placeItem(it){
     if(it.type==='duckweed')g.position.set(px,J.waterTop!=null?J.waterTop:J.sTop,pz);
     else g.position.set(px,groundY(px,pz),pz);
     g.visible=!(it.type==='duckweed'&&J.waterTop==null);
+    fitInJar(it);
     return;
   }
   if(k==='animal'){
@@ -537,7 +559,7 @@ function animate(dt,hf){
       continue;
     }
     if(k!=='animal')continue;
-    const mv=C.move,p=it.params,u=g.userData,hb=.5+.5*it.health,hab=C.hab;
+    const mv=C.move,p=it.params,u=g.userData,hb=.5+.5*it.health,hab=C.hab,BR=Math.min(.25,(u.br||.05)*(g.scale.x||1))+.006;
     if(it.age!=null)g.scale.setScalar(.45+.55*clamp(it.age/4,0,1));
     m.prev.copy(m.p);
     // 攻擊：追住目標；俾人攻擊：走快啲
@@ -561,7 +583,7 @@ function animate(dt,hf){
       if(!m.onLand){const q=landPoint();m.tgt.set(q[0],groundY(q[0],q[1])+.006,q[1]);m.onLand=true;m.tt=rnd(8,16);}
       m.tt-=dt;if(m.tt<=0||lv<.3){m.onLand=false;swimTarget(m);m.tt=rnd(4,8);}
       const sw=inWater(m.p.x,m.p.z,.02);steer(m,(sw?.1:.05)*hb,dt,1.2);m.v.y=0;
-      m.p.addScaledVector(m.v,dt*vis);clampIn(m.p,.86);m.p.y=sw?Math.min(m.p.y,wt-.015):groundY(m.p.x,m.p.z)+.006;
+      m.p.addScaledVector(m.v,dt*vis);clampInR(m.p,BR);m.p.y=sw?Math.min(m.p.y,wt-.015):groundY(m.p.x,m.p.z)+.006;
       g.position.copy(m.p);face(g,m.v,0);continue;
     } else if(mv==='aqturtle'){
       m.tt-=dt;if(m.tt<=0||m.p.distanceTo(m.tgt)<.08){swimTarget(m);if(Math.random()<.4)m.tgt.y=wt-.05;m.tt=rnd(4,8);}
@@ -594,7 +616,7 @@ function animate(dt,hf){
       it.agents.forEach(a=>{a.hd+=rnd(-1,1)*dt*1.5;if(edgeFrac(a.p)>.85)a.hd=Math.atan2(-a.p.z,-a.p.x)+rnd(-.3,.3);
         const s=.03*hb,nx=a.p.x+Math.cos(a.hd)*s*dt*vis,nz=a.p.z+Math.sin(a.hd)*s*dt*vis;
         if(inWater(nx,nz,0))a.hd+=Math.PI;else{a.p.x=nx;a.p.z=nz;}
-        a.p.y=groundY(a.p.x,a.p.z)+.006;clampIn(a.p,.88);a.mesh.position.copy(a.p);a.mesh.rotation.y=-a.hd;});
+        a.p.y=groundY(a.p.x,a.p.z)+.006;clampInR(a.p,.025);a.mesh.position.copy(a.p);a.mesh.rotation.y=-a.hd;});
       m.p.copy(it.agents[0].p);continue;
     } else if(mv==='amph'){
       m.tt-=dt;
@@ -623,16 +645,16 @@ function animate(dt,hf){
     m.p.addScaledVector(m.v,dt*vis*boost);
     // 按棲息地限制位置
     if(SWIMMERS.includes(mv)||mv==='hop'){
-      clampIn(m.p,.86);const gy=groundY(m.p.x,m.p.z);m.p.y=clamp(m.p.y,gy+.02,wt-.03);
+      clampInR(m.p,BR);const gy=groundY(m.p.x,m.p.z);m.p.y=clamp(m.p.y,gy+.02,wt-.03);
       if(!inWater(m.p.x,m.p.z,.01)){m.p.copy(m.prev);m.tt=0;m.v.multiplyScalar(-.3);}
     } else if(BOTTOM.includes(mv)){
-      clampIn(m.p,.86);if(!inWater(m.p.x,m.p.z,.01)){m.p.copy(m.prev);m.hd+=Math.PI;}m.p.y=groundY(m.p.x,m.p.z)+.005;
+      clampInR(m.p,BR);if(!inWater(m.p.x,m.p.z,.01)){m.p.copy(m.prev);m.hd+=Math.PI;}m.p.y=groundY(m.p.x,m.p.z)+.005;
     } else if(mv==='walk'){
-      clampIn(m.p,.86);if(inWater(m.p.x,m.p.z,0)){m.p.copy(m.prev);m.hd+=Math.PI;}m.p.y=groundY(m.p.x,m.p.z)+.005;
+      clampInR(m.p,BR);if(inWater(m.p.x,m.p.z,0)){m.p.copy(m.prev);m.hd+=Math.PI;}m.p.y=groundY(m.p.x,m.p.z)+.005;
     } else if(mv==='amph'){
-      clampIn(m.p,.86);m.p.y=inWater(m.p.x,m.p.z,.02)?wt-.015+Math.sin(tAll*2+m.ph)*.003:groundY(m.p.x,m.p.z)+.006;
+      clampInR(m.p,BR);m.p.y=inWater(m.p.x,m.p.z,.02)?wt-.015+Math.sin(tAll*2+m.ph)*.003:groundY(m.p.x,m.p.z)+.006;
     } else if(mv==='climb'){
-      clampIn(m.p,.95);m.p.y=clamp(m.p.y,groundY(m.p.x,m.p.z)+.01,J.H*.85);
+      clampInR(m.p,.03);m.p.y=clamp(m.p.y,groundY(m.p.x,m.p.z)+.01,J.H*.85);
       if(inWater(m.p.x,m.p.z,0)&&m.p.y<wt+.01){m.p.copy(m.prev);m.tt=0;}
     }
     g.position.copy(m.p);
