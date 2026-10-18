@@ -49,7 +49,7 @@ function addFromCatalog(t){
 }
 
 /* ================= 外框 ================= */
-function showTab(t){if(t==='bal'){openBal();return;}curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+function showTab(t){if(t==='bal'){openBal();return;}curTab=t;if(typeof setSheet==='function'&&isPhone())setSheet(true);document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
   ['add','jar','env','ana','play'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='jar')renderJarList();if(t==='play')renderPlay();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 let toastT;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1900);}
@@ -62,6 +62,7 @@ function renderChrome(){
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank'],play:['玩法','Play']};
   document.querySelectorAll('.tabs button').forEach(b=>{b.textContent=N(tabs[b.dataset.tab])+(b.dataset.tab==='jar'?` (${S.items.filter(i=>i.alive).length})`:'');});
+  if(typeof renderDock==='function')renderDock(tabs);
   $('#c').setAttribute('aria-label',L('3D 生態瓶，拖動旋轉，撳生物睇參數','3D jar: drag to rotate, tap a creature to see its settings'));
 }
 const SPEEDS=[[1,['1 小時/秒','1 h/s']],[4,['4 小時/秒','4 h/s']],[24,['1 日/秒','1 day/s']]];

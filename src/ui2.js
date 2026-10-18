@@ -37,6 +37,27 @@ function renderOvToggles(){
 const saveOv=()=>pref.set('ecojar.ov',JSON.stringify(ovOpen));
 function setOv(s,v){ovOpen[s]=v;saveOv();renderOv();if(s==='L'&&v)renderBalance();}
 $('#edgeL').onclick=()=>setOv('L',!ovOpen.L);$('#edgeR').onclick=()=>setOv('R',!ovOpen.R);
+/* ---- 手機版：底部工具列 + 拉起面板 ----
+   闊度 700px 以下：右邊面板變成由底部拉起嘅面板（半高／全高），用底部工具列揀分頁。 */
+const isPhone=()=>matchMedia('(max-width:700px)').matches;
+const DOCK_ICON={add:'＋',jar:'🫙',env:'⚙︎',ana:'🔍',play:'🏆'};
+const sheet={open:false,full:false};
+function renderDock(tabs){const d=$('#dock');if(!d)return;const short={add:['加入','Add'],jar:['瓶內','In jar'],env:['環境','Setup'],ana:['分析','Analyse'],play:['玩法','Play']};
+  d.innerHTML=Object.keys(short).map(k=>`<button role="tab" data-dock="${k}" aria-selected="${sheet.open&&curTab===k}"><i aria-hidden="true">${DOCK_ICON[k]}</i><span>${N(short[k])}${k==='jar'?` ${S.items.filter(i=>i.alive).length}`:''}</span></button>`).join('');
+  d.querySelectorAll('[data-dock]').forEach(b=>b.onclick=()=>{const k=b.dataset.dock;if(sheet.open&&curTab===k){setSheet(false);return;}showTab(k);});}
+function setSheet(open,full){const p=$('#panel');sheet.open=open;if(full!=null)sheet.full=full;if(!open)sheet.full=false;
+  p.classList.toggle('open',open);p.classList.toggle('full',sheet.full);p.style.height='';document.body.classList.toggle('sheet-open',open);
+  $('#grab').setAttribute('aria-label',open?(sheet.full?L('縮細面板','Shrink panel'):L('拉大面板','Expand panel')):L('打開面板','Open panel'));
+  document.querySelectorAll('#dock [data-dock]').forEach(b=>b.setAttribute('aria-selected',open&&curTab===b.dataset.dock));}
+{const g=$('#grab'),p=$('#panel');let y0=null,h0=0,moved=false;
+  g.addEventListener('pointerdown',e=>{if(!isPhone())return;y0=e.clientY;h0=p.getBoundingClientRect().height;moved=false;g.setPointerCapture(e.pointerId);p.classList.add('drag');});
+  g.addEventListener('pointermove',e=>{if(y0==null)return;const dy=e.clientY-y0;if(Math.abs(dy)>6)moved=true;p.style.height=clamp(h0-dy,innerHeight*.15,innerHeight*.92)+'px';});
+  const end=e=>{if(y0==null)return;p.classList.remove('drag');const h=p.getBoundingClientRect().height/innerHeight;y0=null;
+    if(!moved){setSheet(true,!sheet.full);return;}if(h<.3)setSheet(false);else setSheet(true,h>.7);};
+  g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end);
+  g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSheet(true,!sheet.full);}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sheet.open&&isPhone()&&!document.querySelector('dialog[open]'))setSheet(false);});
+  matchMedia('(max-width:700px)').addEventListener('change',()=>setSheet(false));}
 /* 頂部「⋯」選單：分享、語言等少用嘅掣 */
 {const btn=$('#moreBtn'),menu=$('#moreMenu');const set=o=>{menu.hidden=!o;btn.setAttribute('aria-expanded',o);};
   btn.onclick=e=>{e.stopPropagation();set(menu.hidden);};menu.addEventListener('click',()=>set(false));

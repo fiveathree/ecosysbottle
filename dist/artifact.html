@@ -393,6 +393,25 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .swatches{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 .swatches button{width:22px;height:22px;border-radius:50%;background:var(--sw);border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line);padding:0;cursor:pointer}
 .swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+
+/* ---- 手機版：底部工具列 + 拉起面板 ---- */
+.dock,.grab{display:none}
+@media (max-width:700px){
+  .app{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .dock{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+  .dock button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;color:var(--muted);padding:6px 0;font-size:11px;border-radius:10px;min-height:48px}
+  .dock button i{font-style:normal;font-size:18px;line-height:1.2}
+  .dock button[aria-selected="true"]{color:var(--accent);font-weight:700;background:var(--accent-soft)}
+  .panel{position:fixed;left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom,0px));height:56vh;z-index:35;border-radius:18px 18px 0 0;border-bottom:0;box-shadow:0 -10px 30px rgba(0,0,0,.2);transform:translateY(calc(100% + 80px));transition:transform .25s ease,height .25s ease;visibility:hidden}
+  .panel.open{transform:none;visibility:visible}
+  .panel.full{height:calc(100svh - 80px)}
+  .panel.drag{transition:none}
+  .panel .tabs{display:none}
+  .grab{display:flex;justify-content:center;padding:8px 0 6px;cursor:grab;touch-action:none;flex:none}
+  .grab span{width:44px;height:5px;border-radius:3px;background:var(--line)}
+  .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-width:700px) and (prefers-reduced-motion:reduce){.panel{transition:none}}
 </style>
 <div class="app">
   <header class="top">
@@ -420,7 +439,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="meters" id="meters"></div>
       <div class="buildbar" id="buildBar" hidden></div>
     </section>
-    <aside class="panel">
+    <aside class="panel" id="panel">
+      <div class="grab" id="grab" role="button" tabindex="0"><span></span></div>
       <nav class="tabs" role="tablist">
         <button role="tab" data-tab="add" aria-selected="true"></button>
         <button role="tab" data-tab="jar" aria-selected="false"></button>
@@ -435,6 +455,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="pane" id="pane-play" hidden></div>
     </aside>
   </div>
+  <nav class="dock" id="dock" role="tablist" aria-label="Panels"></nav>
 </div>
 <div class="toast" id="toast"></div>
 <dialog class="dlg" id="dlg"></dialog>
@@ -1992,7 +2013,7 @@ function addFromCatalog(t){
 }
 
 /* ================= 外框 ================= */
-function showTab(t){if(t==='bal'){openBal();return;}curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+function showTab(t){if(t==='bal'){openBal();return;}curTab=t;if(typeof setSheet==='function'&&isPhone())setSheet(true);document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
   ['add','jar','env','ana','play'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='jar')renderJarList();if(t==='play')renderPlay();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 let toastT;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1900);}
@@ -2005,6 +2026,7 @@ function renderChrome(){
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank'],play:['玩法','Play']};
   document.querySelectorAll('.tabs button').forEach(b=>{b.textContent=N(tabs[b.dataset.tab])+(b.dataset.tab==='jar'?` (${S.items.filter(i=>i.alive).length})`:'');});
+  if(typeof renderDock==='function')renderDock(tabs);
   $('#c').setAttribute('aria-label',L('3D 生態瓶，拖動旋轉，撳生物睇參數','3D jar: drag to rotate, tap a creature to see its settings'));
 }
 const SPEEDS=[[1,['1 小時/秒','1 h/s']],[4,['4 小時/秒','4 h/s']],[24,['1 日/秒','1 day/s']]];
@@ -2601,6 +2623,27 @@ function renderOvToggles(){
 const saveOv=()=>pref.set('ecojar.ov',JSON.stringify(ovOpen));
 function setOv(s,v){ovOpen[s]=v;saveOv();renderOv();if(s==='L'&&v)renderBalance();}
 $('#edgeL').onclick=()=>setOv('L',!ovOpen.L);$('#edgeR').onclick=()=>setOv('R',!ovOpen.R);
+/* ---- 手機版：底部工具列 + 拉起面板 ----
+   闊度 700px 以下：右邊面板變成由底部拉起嘅面板（半高／全高），用底部工具列揀分頁。 */
+const isPhone=()=>matchMedia('(max-width:700px)').matches;
+const DOCK_ICON={add:'＋',jar:'🫙',env:'⚙︎',ana:'🔍',play:'🏆'};
+const sheet={open:false,full:false};
+function renderDock(tabs){const d=$('#dock');if(!d)return;const short={add:['加入','Add'],jar:['瓶內','In jar'],env:['環境','Setup'],ana:['分析','Analyse'],play:['玩法','Play']};
+  d.innerHTML=Object.keys(short).map(k=>`<button role="tab" data-dock="${k}" aria-selected="${sheet.open&&curTab===k}"><i aria-hidden="true">${DOCK_ICON[k]}</i><span>${N(short[k])}${k==='jar'?` ${S.items.filter(i=>i.alive).length}`:''}</span></button>`).join('');
+  d.querySelectorAll('[data-dock]').forEach(b=>b.onclick=()=>{const k=b.dataset.dock;if(sheet.open&&curTab===k){setSheet(false);return;}showTab(k);});}
+function setSheet(open,full){const p=$('#panel');sheet.open=open;if(full!=null)sheet.full=full;if(!open)sheet.full=false;
+  p.classList.toggle('open',open);p.classList.toggle('full',sheet.full);p.style.height='';document.body.classList.toggle('sheet-open',open);
+  $('#grab').setAttribute('aria-label',open?(sheet.full?L('縮細面板','Shrink panel'):L('拉大面板','Expand panel')):L('打開面板','Open panel'));
+  document.querySelectorAll('#dock [data-dock]').forEach(b=>b.setAttribute('aria-selected',open&&curTab===b.dataset.dock));}
+{const g=$('#grab'),p=$('#panel');let y0=null,h0=0,moved=false;
+  g.addEventListener('pointerdown',e=>{if(!isPhone())return;y0=e.clientY;h0=p.getBoundingClientRect().height;moved=false;g.setPointerCapture(e.pointerId);p.classList.add('drag');});
+  g.addEventListener('pointermove',e=>{if(y0==null)return;const dy=e.clientY-y0;if(Math.abs(dy)>6)moved=true;p.style.height=clamp(h0-dy,innerHeight*.15,innerHeight*.92)+'px';});
+  const end=e=>{if(y0==null)return;p.classList.remove('drag');const h=p.getBoundingClientRect().height/innerHeight;y0=null;
+    if(!moved){setSheet(true,!sheet.full);return;}if(h<.3)setSheet(false);else setSheet(true,h>.7);};
+  g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end);
+  g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSheet(true,!sheet.full);}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sheet.open&&isPhone()&&!document.querySelector('dialog[open]'))setSheet(false);});
+  matchMedia('(max-width:700px)').addEventListener('change',()=>setSheet(false));}
 /* 頂部「⋯」選單：分享、語言等少用嘅掣 */
 {const btn=$('#moreBtn'),menu=$('#moreMenu');const set=o=>{menu.hidden=!o;btn.setAttribute('aria-expanded',o);};
   btn.onclick=e=>{e.stopPropagation();set(menu.hidden);};menu.addEventListener('click',()=>set(false));
