@@ -1,5 +1,5 @@
 /* ================= 狀態 ================= */
-const S={mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,feedHour:9,pump:false,filter:false,heater:false,wc:0,mist:0,heat:false,
+const S={mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:true,light:12,feed:0,feedHour:9,pump:false,filter:false,heater:false,fan:false,wc:0,mist:0,heat:false,
   water:'fresh',filled:true,level:0,hillH:6,breed:true,wL:0,wFrac:0,region:'hk',real:false,customRegion:null,
   wxMode:'auto',wx:'sunny',wxLeft:6,hour:6,day:1,c:{},items:[],hist:[],log:[],running:true,speed:4,uid:1,sel:null,report:null,
   jarName:'',cur:0,jars:[null,null,null],ana:null};
@@ -45,7 +45,7 @@ function die(it,why,st,by){
   if(!it.alive)return;it.alive=false;it.deadT=0;it.why=why;
   const k=CAT[it.type].kind,c=st.c,wL=wLOf(st);
   if(why!=='eaten'){if(isWater(it)&&wL>0)c.detritus+=k==='plant'?5:k==='animal'?3:0;else if(st.mode==='rain')c.waste+=k==='plant'?3:k==='animal'?2:0;}
-  if(st.trial){st.deaths.push({type:it.type,why});return;}
+  if(st.trial){st.deaths.push({type:it.type,why,uid:it.uid});return;}
   const zh=`${label(it)}${it.name?'（'+CAT[it.type].name[0]+'）':''} ${k==='microbe'?'失效':'死亡'}（${why==='eaten'&&by?'俾'+by+'食咗':why==='attacked'&&by?'俾'+by+'咬死':STR[why]?STR[why][0]:why}）`;
   const en=`${it.name||CAT[it.type].name[1]+' #'+it.n}${it.name?' ('+CAT[it.type].name[1]+')':''} ${k==='microbe'?'stopped working':'died'} (${why==='eaten'&&by?'eaten by '+by:why==='attacked'&&by?'killed by '+by:STR[why]?STR[why][1]:why})`;
   logEv(zh,en,'bad');
@@ -59,6 +59,7 @@ function step(st){
   const RG=regionOf(st),c=st.c,light=isLight(st,st.hour),w=WX[st.wx]||WX.cloudy,tr=MATS[st.mat].tr,lm=light?w.light*RG.light*tr:0,E=envInfo(st),wL=wLOf(st);
   const amb=RG.t+(w.d+(st.hour>=8&&st.hour<18?RG.sw/2:-RG.sw/2))*.6;
   let tgt=amb+(light?1.5:0)+(st.mode==='rain'&&st.heat&&light?5:0)+(st.sealed?.5:0);
+  if(st.fan&&!st.sealed)tgt-=st.mode==='aqua'||wL>0?3:2; // 風扇：開口時靠蒸發降溫
   if(st.heater&&wL>0)tgt=Math.max(tgt,st.mode==='aqua'?25.5:23);
   c.T+=(tgt-c.T)*.15*(MATS[st.mat].therm||1);
   const q=clamp(1+.04*(c.T-25),.5,1.6);
@@ -210,6 +211,7 @@ function stepLand(st,c,wL,light,lm,q,E,w){
   if(st.mist>0){for(let i=0;i<st.mist;i++)if(st.hour===8+Math.floor(i*12/st.mist)){c.hum+=12*hf;if(!st.trial)mistFx=1.5;}}
   if(wL>0)c.hum+=.5*(st.wFrac||0)*hf;
   if(st.heat&&light)c.hum-=.8;
+  if(st.fan&&!st.sealed)c.hum-=.5*hf;
   const kh=st.sealed?.01:.12*Math.max(.3,op);c.hum+=(clamp(RG.hum+w.dh*.6,10,100)-c.hum)*kh;
   if(!st.sealed&&w.rain)c.hum+=.3*w.rain*op;
   c.hum=clamp(c.hum,15,100);
@@ -258,7 +260,7 @@ function breedStep(st){
 }
 
 /* ================= 試算：預測 & 一鍵平衡 ================= */
-const ST_KEYS=['customRegion','terra','region','mode','V','shape','mat','sealed','light','feed','feedHour','pump','filter','heater','wc','mist','heat','water','filled','level','hillH','breed','wL','wFrac'];
+const ST_KEYS=['customRegion','terra','region','mode','V','shape','mat','sealed','light','feed','feedHour','pump','filter','heater','fan','wc','mist','heat','water','filled','level','hillH','breed','wL','wFrac'];
 function trialState(cfg){
   const st={wx:S.wxMode==='auto'?typicalWx(S.region):S.wxMode,wxMode:'fixed',hour:S.hour,day:S.day,trial:true,t:0,deaths:[],c:Object.assign({},S.c),hist:[],
     items:S.items.filter(i=>i.alive).map(i=>({type:i.type,uid:i.uid,n:i.n,params:Object.assign({},i.params),alive:true,health:i.health,satiety:i.satiety,wt:i.wt,nShort:i.nShort,stress:'',lastProd:0,age:i.age}))};
@@ -275,14 +277,18 @@ function runTrial(st,h){
   return{mn,mx,stress,deaths:st.deaths,st};
 }
 const forecast=h=>runTrial(trialState(null),h);
-function balanceScore(cfg){
+/* 試算用固定隨機數，令唔同方案喺同一套天氣同捕食運氣下比較 */
+function seeded(seed,f){const R=Math.random;let a=seed>>>0;Math.random=()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};try{return f();}finally{Math.random=R;}}
+const BAL_SEED=20261019;
+function balanceScore(cfg){return seeded(BAL_SEED,()=>scoreRun(cfg));}
+function scoreRun(cfg){
   const st=trialState(cfg),wL=wLOf(st);let s=0;
   for(let i=0;i<120;i++){step(st);
     for(const it of st.items){if(!it.alive||!it.stress)continue;const k=CAT[it.type].kind;s+=k==='animal'?3:k==='plant'?.3:.1;}
     const c=st.c;if(wL>0){if(c.algae>35)s+=.5;if(c.NH3/wL>.25)s+=1;if(c.O2/wL<3)s+=1;}if(st.mode==='rain'&&c.mould>15)s+=.5;}
   for(const d of st.deaths)s+=CAT[d.type].kind==='animal'?1000:CAT[d.type].kind==='plant'?40:10;
   const e=cfg.env,b=cfg.base;let cost=cfg.add.length*.5+(cfg.wcNow?.6:0);
-  for(const k of ['pump','filter','heater','heat','sealed'])if(e[k]!==b[k])cost+=1;
+  for(const k of ['pump','filter','heater','fan','heat','sealed'])if(e[k]!==b[k])cost+=1;
   cost+=Math.abs(e.feed-b.feed)*.25+Math.abs(e.light-b.light)*.15+Math.abs(e.mist-b.mist)*.25+Math.abs(e.wc-b.wc)*.03;
   return{s:s+cost,deaths:st.deaths};
 }
@@ -299,10 +305,9 @@ function autoBalance(){
   const wL=wLOf(S),E=envInfo(S),alive=S.items.filter(i=>i.alive),salt=aq&&S.water==='salt';
   if(wL>0&&!E.sub&&alive.some(i=>CAT[i.type].kind==='plant'&&CAT[i.type].root==='sand'||CAT[i.type].burrow)){if(real)pre.push(L('鋪細沙','Lay sand'));else{addSubstrate('sand');pre.push(L('鋪細沙','Laid sand'));}}
   if(wL>0&&!E.rocks&&alive.some(i=>CAT[i.type].root==='rock')){if(real)pre.push(L('加石頭','Add stones'));else{addItem('stone',null,true);pre.push(L('加石頭','Added stones'));}}
-  const before=forecast(120);
-  const base={light:S.light,feed:S.feed,pump:S.pump,filter:S.filter,heater:S.heater,sealed:S.sealed,mist:S.mist,heat:S.heat,wc:S.wc};
-  let cfg={env:Object.assign({},base),base,add:[],wcNow:false},best=balanceScore(cfg);
-  const greedy=gen=>{for(let it=0;it<10;it++){let imp=null,bs=best;for(const c2 of gen(cfg)){const r=balanceScore(c2);if(r.s<bs.s-.3){bs=r;imp=c2;}}if(!imp)break;cfg=imp;best=bs;}};
+  const base={light:S.light,feed:S.feed,pump:S.pump,filter:S.filter,heater:S.heater,fan:!!S.fan,sealed:S.sealed,mist:S.mist,heat:S.heat,wc:S.wc};
+  let cfg={env:Object.assign({},base),base,add:[],wcNow:false},best=balanceScore(cfg);const before=best;
+  const greedy=gen=>{for(let it=0;it<14;it++){let imp=null,bs=best;for(const c2 of gen(cfg)){const r=balanceScore(c2);if(r.s<bs.s-.3){bs=r;imp=c2;}}if(!imp)break;cfg=imp;best=bs;}};
   const mk=(c,ch,add,extra)=>Object.assign({env:Object.assign({},c.env,ch),base,add:add?[...c.add,add]:c.add.slice(),wcNow:c.wcNow},extra||{});
   // 1. 先加水草同微生物
   const plantOpts=[...(wL>0?(salt?['caulerpa']:['hornwort','elodea','duckweed']):[]),...(!aq?['pothos','fern']:[]),...(wL>0?['nitri','decomp']:[]),...(!aq?['soilmic']:[])];
@@ -310,18 +315,18 @@ function autoBalance(){
   // 2. 再調環境同水質
   greedy(c=>{const e=c.env,Ls=[];
     if(e.light<16)Ls.push(mk(c,{light:e.light+2}));if(e.light>4)Ls.push(mk(c,{light:e.light-2}));
-    Ls.push(mk(c,{feed:e.feed+.5}));if(e.feed>0)Ls.push(mk(c,{feed:Math.max(0,e.feed-.5)}));
-    Ls.push(mk(c,{sealed:!e.sealed}));
+    if(e.feed<6){Ls.push(mk(c,{feed:e.feed+.5}));Ls.push(mk(c,{feed:Math.min(6,e.feed+1)}));}if(e.feed>0){Ls.push(mk(c,{feed:Math.max(0,e.feed-.5)}));Ls.push(mk(c,{feed:Math.max(0,e.feed-1)}));}
+    Ls.push(mk(c,{sealed:!e.sealed}));Ls.push(mk(c,{fan:!e.fan}));if(!e.fan&&e.sealed)Ls.push(mk(c,{fan:true,sealed:false}));
     if(wL>0){Ls.push(mk(c,{pump:!e.pump}));Ls.push(mk(c,{filter:!e.filter}));Ls.push(mk(c,{heater:!e.heater}));
       if(e.wc<50)Ls.push(mk(c,{wc:e.wc+10}));if(e.wc>0)Ls.push(mk(c,{wc:e.wc-10}));if(!c.wcNow)Ls.push(mk(c,{},null,{wcNow:true}));}
-    if(!aq){if(e.mist<6)Ls.push(mk(c,{mist:e.mist+1}));if(e.mist>0)Ls.push(mk(c,{mist:e.mist-1}));Ls.push(mk(c,{heat:!e.heat}));}
+    if(!aq){if(e.mist<6)Ls.push(mk(c,{mist:e.mist+1}));if(e.mist<5)Ls.push(mk(c,{mist:e.mist+2}));if(e.mist>0)Ls.push(mk(c,{mist:e.mist-1}));Ls.push(mk(c,{heat:!e.heat}));}
     return Ls;});
   // 結果
   const e=cfg.env,plantCh=[],envCh=[];
   const ad={};cfg.add.forEach(t=>{ad[t]=(ad[t]||0)+1;});
   Object.entries(ad).forEach(([t,n])=>plantCh.push(L(`${real?'加':'加入'} ${CAT[t].name[0]} ×${n}`,`${real?'Add':'Added'} ${CAT[t].name[1]} ×${n}`)));
   const lab={light:v=>L(`光照 ${S.light} → ${v} 小時`,`Light ${S.light} → ${v} h`),feed:v=>L(`每日餵食 ${S.feed} → ${v} 份`,`Daily food ${S.feed} → ${v}`),
-    pump:v=>v?L('開氧氣泵','Air pump on'):L('關氧氣泵','Air pump off'),filter:v=>v?L('開過濾','Filter on'):L('關過濾','Filter off'),heater:v=>v?L('開加熱棒','Heater on'):L('關加熱棒','Heater off'),
+    pump:v=>v?L('開氧氣泵','Air pump on'):L('關氧氣泵','Air pump off'),filter:v=>v?L('開過濾','Filter on'):L('關過濾','Filter off'),heater:v=>v?L('開加熱棒','Heater on'):L('關加熱棒','Heater off'),fan:v=>v?L('開風扇降溫','Fan on to cool'):L('關風扇','Fan off'),
     sealed:v=>v?L('密封','Seal the jar'):L('打開瓶口通風','Open the lid'),mist:v=>L(`每日噴霧 ${S.mist} → ${v} 次`,`Misting ${S.mist} → ${v} a day`),heat:v=>v?L('開加熱燈','Heat lamp on'):L('關加熱燈','Heat lamp off'),
     wc:v=>L(`每週換水 ${S.wc}% → ${v}%`,`Weekly water change ${S.wc}% → ${v}%`)};
   for(const k of Object.keys(e))if(e[k]!==base[k])envCh.push(lab[k](e[k]));
@@ -333,7 +338,9 @@ function autoBalance(){
     if(cfg.wcNow&&wLOf(S)>0){const c=S.c;c.NH3*=.7;c.NO3*=.7;c.detritus*=.85;c.algae*=.9;freshWater(c,wLOf(S)*.3,false);c.O2=Math.min(c.O2,sat(c.T)*wLOf(S));}
     buildJar({keepCam:true,keepChem:true});
   }
-  S.reportOpen=true;S.report={suggest:real,pre,plantCh,envCh,beforeDead,afterDead,changes:[...pre,...plantCh,...envCh]};
+  // 改完都保唔住嘅動物（包括俾其他生物食嘅），記低 uid，俾用家一撳搬去另一個瓶
+  const doomed=[...new Set(best.deaths.filter(d=>CAT[d.type].kind==='animal').map(d=>d.uid))].filter(u=>S.items.some(i=>i.uid===u&&i.alive));
+  S.reportOpen=true;S.report={suggest:real,pre,plantCh,envCh,beforeDead,afterDead,doomed,changes:[...pre,...plantCh,...envCh]};
   const all=S.report.changes;
   logEv((real?'一鍵平衡建議：':'一鍵平衡：')+(all.length?all.map(x=>x).join('、'):'冇需要改'),(real?'Auto-balance suggestions: ':'Auto-balance: ')+(all.length?all.join(', '):'nothing to change'),real?'muted':'good');
   renderAll();save();showTab('bal');

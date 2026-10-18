@@ -52,9 +52,9 @@ button{cursor:pointer}
 
 .main{display:flex;flex-direction:column;gap:12px}
 .stage{position:relative;height:56vh;min-height:320px;border-radius:14px;overflow:hidden;background:#0f1d22;border:1px solid var(--line)}
-.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
-.stage canvas:active{cursor:grabbing}
-@media (pointer:coarse){.stage canvas{touch-action:pan-y}}
+.stage>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.stage>canvas:active{cursor:grabbing}
+@media (pointer:coarse){.stage>canvas{touch-action:pan-y}}
 .hud{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none;z-index:4}
 .hud-l{display:flex;gap:6px;flex-wrap:wrap}
 .pill{font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(6px);display:flex;gap:6px;align-items:center;white-space:nowrap}
@@ -212,9 +212,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .ov{position:absolute;top:84px;bottom:var(--mh,120px);width:200px;overflow:auto;display:flex;flex-direction:column;gap:2px;padding:8px;border-radius:12px;background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--line);font-size:12px;z-index:2}
 .ovL{left:10px;width:min(360px,42%);padding:0;gap:0}
 .ovR{right:10px}
+/* 兩邊嘅箭咀：收埋／打開左右欄 */
+.edge{position:absolute;top:84px;bottom:var(--mh,120px);margin:auto 0;height:56px;width:22px;z-index:3;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(6px);color:var(--ink);font-size:18px;line-height:1;cursor:pointer}
+.edge:hover{border-color:var(--accent);color:var(--accent)}
+.edgeL{left:0;border-left:0;border-radius:0 10px 10px 0}
+.edgeL.open{left:calc(10px + var(--ovLw,0px))}
+.edgeR{right:0;border-right:0;border-radius:10px 0 0 10px}
+.edgeR.open{right:calc(10px + var(--ovRw,0px))}
 .ovhead{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:8px 10px 6px;background:var(--glass);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .ovhead h4{margin:0}
 .ovbody{padding:10px;display:flex;flex-direction:column;gap:10px;font-size:12.5px}
+.ov>*,.ovbody>*{flex:none} /* 疊埋一齊嘅元凶：捲動嘅 flex 欄入面子項會被壓扁 */
 .ovbody .verdict{font-size:12.5px;padding:10px}
 .ovbody .verdict b{font-size:14.5px}
 .ovbody .bud{padding:8px 10px;background:var(--surface)}
@@ -287,8 +295,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .bb-sl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:1;min-width:140px}
 .bb-sl input{flex:1;min-width:60px}
 /* 窄螢幕：數值放喺個瓶下面，唔遮住畫面 */
-@media (max-width:919px){.stage{height:calc(56vh + var(--mh,0px));min-height:calc(320px + var(--mh,0px));background:var(--surface-2)}.stage canvas{bottom:auto;height:calc(100% - var(--mh,0px) + 4px)}}
-@media (max-width:700px){.ov{width:150px;top:96px}.ovL{width:calc(100% - 20px);z-index:5}.hint{display:none}}
+@media (max-width:919px){.stage{height:calc(56vh + var(--mh,0px));min-height:calc(320px + var(--mh,0px));background:var(--surface-2)}.stage>canvas{bottom:auto;height:calc(100% - var(--mh,0px) + 4px)}}
+@media (max-width:700px){.ov{width:150px;top:96px}.ovL{width:calc(100% - 20px);z-index:5}.hint{display:none}.edge{top:96px}.edgeL.open{display:none}}
 @media (prefers-reduced-motion:reduce){.flash{animation:none}}
 @media (min-width:920px){
   html,body{overflow:hidden}

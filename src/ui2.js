@@ -30,10 +30,15 @@ try{const o=JSON.parse(localStorage.getItem('ecojar.ov')||'null');if(o)ovOpen=o;
 function renderOvToggles(){
   const l=$('#tglL'),r=$('#tglR');l.textContent=L('平衡分析','Balance');r.textContent=L('清單','List');
   l.setAttribute('aria-pressed',ovOpen.L);r.setAttribute('aria-pressed',ovOpen.R);
+  const eL=$('#edgeL'),eR=$('#edgeR');eL.textContent=ovOpen.L?'‹':'›';eR.textContent=ovOpen.R?'›':'‹';
+  eL.classList.toggle('open',!!ovOpen.L);eR.classList.toggle('open',!!ovOpen.R);
+  eL.setAttribute('aria-label',ovOpen.L?L('收埋平衡分析','Hide balance'):L('打開平衡分析','Show balance'));eR.setAttribute('aria-label',ovOpen.R?L('收埋清單','Hide list'):L('打開清單','Show list'));
+  eL.setAttribute('aria-expanded',!!ovOpen.L);eR.setAttribute('aria-expanded',!!ovOpen.R);
 }
 $('#tglL').onclick=()=>{ovOpen.L=!ovOpen.L;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();if(ovOpen.L)renderBalance();};
+$('#edgeL').onclick=()=>$('#tglL').click();$('#edgeR').onclick=()=>$('#tglR').click();
 $('#tglR').onclick=()=>{ovOpen.R=!ovOpen.R;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
-function renderOv(){renderOvToggles();renderOvL();renderOvR();}
+function renderOv(){renderOvToggles();renderOvL();renderOvR();fitOverlays();}
 function renderOvL(){
   const el=$('#ovL');el.hidden=!ovOpen.L;$('#ovLT').textContent=L('平衡分析','Balance');
   $('#ovLX').setAttribute('aria-label',L('收起平衡分析','Close balance'));
@@ -47,7 +52,8 @@ function renderOvR(){
     return`<button class="ovrow${S.sel===it?' on':''}" data-u="${it.uid}" title="${esc(t)}"><i class="${c}"></i><span>${esc(label(it))}</span><em>${it.alive?Math.round(it.health*100)+'%':'✕'}</em><span class="mini"><b style="width:${it.health*100}%;background:var(--${c==='bad'?'bad':c==='warn'?'warn':'good'})"></b></span></button>`;}).join(''):`<p class="ovnote">${L('空嘅','Empty')}</p>`);
   el.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const it=S.items.find(i=>i.uid==b.dataset.u);if(it)select(it,null,b);});
 }
-function fitOverlays(){const m=$('#meters');if(m)$('#stage').style.setProperty('--mh',(m.offsetHeight+20)+'px');}
+function fitOverlays(){const m=$('#meters'),st=$('#stage');if(m)st.style.setProperty('--mh',(m.offsetHeight+20)+'px');
+  for(const s of ['L','R']){const o=$('#ov'+s);if(!o.hidden)st.style.setProperty('--ov'+s+'w',o.offsetWidth+'px');}}
 
 /* ================= 點選位置嘅彈出選單 ================= */
 let popIt=null;
@@ -130,7 +136,7 @@ const FIX={
   lightLess:[['光照減 2 小時','2 h less light'],()=>{S.light=Math.max(4,S.light-2);}],
   lightMore:[['光照加 2 小時','2 h more light'],()=>{S.light=Math.min(18,S.light+2);}],
   heat:[['開加熱','Heating on'],()=>{if(wLOf(S)>0)S.heater=true;if(S.mode==='rain')S.heat=true;}],
-  cool:[['關加熱、開蓋','Heating off, lid open'],()=>{S.heater=false;S.heat=false;S.sealed=false;}],
+  cool:[['開風扇、開蓋、關加熱','Fan on, lid open, heating off'],()=>{S.heater=false;S.heat=false;S.sealed=false;S.fan=true;}],
   mistMore:[['多啲噴霧','Mist more'],()=>{S.mist=Math.min(6,S.mist+1);}],
   mistLess:[['少啲噴霧','Mist less'],()=>{S.mist=Math.max(0,S.mist-1);}],
   flowOff:[['關泵同過濾','Pump & filter off'],()=>{S.pump=false;S.filter=false;}],
@@ -195,12 +201,25 @@ function reportHtml(){
     ${life}
     ${none?`<p class="lede" style="margin-top:6px">${L('而家嘅設定已經係最平衡。','The current setup is already the most balanced.')}</p>`:''}
     ${sec(L('保命必需','Essentials'),R.pre)}${sec(L('水草同微生物','Plants & microbes'),R.plantCh)}${sec(L('環境同水質','Environment & water'),R.envCh)}
-    ${R.afterDead&&R.afterDead.length?`<p class="lede" style="margin-top:6px">${L('有啲生物同呢個瓶嘅條件唔夾（例如溫度、水質），可以考慮搬去另一個瓶。','Some creatures do not suit this jar (temperature or water type, for example); consider moving them to another jar.')}</p>`:''}
+    ${R.afterDead&&R.afterDead.length?`<p class="lede" style="margin-top:6px">${L('有啲生物同呢個瓶嘅條件唔夾（例如溫度、會食其他生物），可以搬去另一個瓶，分開養。','Some creatures do not suit this jar (temperature, or eating each other, for example); move them to another jar and keep them apart.')}</p>${!R.suggest&&R.doomed&&R.doomed.length?`<div class="ed-actions" style="margin-top:6px"><button class="btn primary" id="moveDoomed">${L(`將呢 ${R.doomed.length} 隻搬去空瓶`,`Move these ${R.doomed.length} to an empty jar`)}</button></div>`:''}`:''}
     ${R.suggest&&!none?`<p class="lede" style="margin-top:6px">${L('呢個係真實嘅瓶，所以只係列出建議。','This is a real tank, so these are only suggestions.')}</p><div class="ed-actions" style="margin-top:6px"><button class="btn primary" id="tryCopy">${L('複製去另一個瓶試','Try in another jar')}</button></div>`:''}</details>`;
 }
-function bindReport(){const b=$('#tryCopy');if(b)b.onclick=copyToTrial;
+function bindReport(){const b=$('#tryCopy');if(b)b.onclick=copyToTrial;const mvb=$('#moveDoomed');if(mvb)mvb.onclick=moveDoomed;
   const d=$('#repBox');if(d)d.ontoggle=()=>{S.reportOpen=d.open;};
   const x=$('#repX');if(x)x.onclick=e=>{e.preventDefault();e.stopPropagation();S.report=null;renderBalance();};}
+/* 一鍵平衡都保唔住嘅動物：連同造景、植物、微生物同設定，搬去一個空瓶分開養 */
+function moveDoomed(){
+  const R=S.report;if(!R||S.real)return;const ids=new Set(R.doomed||[]),alive=S.items.filter(i=>i.alive),mv=alive.filter(i=>ids.has(i.uid));if(!mv.length)return;
+  const slot=[0,1,2].find(i=>i!==S.cur&&!(S.jars[i]&&(S.jars[i].items||[]).length)&&!(S.jars[i]&&S.jars[i].real));
+  if(slot==null){toast(L('冇空瓶：先清空另一個瓶','No empty jar: empty another jar first'));return;}
+  const snap=snapshot(),name=(S.jarName||jarNames()[S.cur])+L('（分出）',' (split)');
+  snap.items=snap.items.filter((o,k)=>CAT[o.type].kind!=='animal'||ids.has(alive[k].uid));
+  S.jars[slot]=Object.assign(snap,{name,real:false,log:[],hist:[]});
+  mv.forEach(i=>{disposeObj(i.g);if(S.sel===i)S.sel=null;});S.items=S.items.filter(i=>!mv.includes(i));
+  const names=[...new Set(mv.map(i=>N(CAT[i.type].name)))].join(L('、',', '));
+  logEv(`將 ${names} 搬咗去「${name}」`,`Moved ${names} to "${name}"`,'muted');S.report=null;
+  renderAll();save();toast(L(`搬咗 ${mv.length} 隻去「${name}」；去嗰個瓶再撳一鍵平衡`,`Moved ${mv.length} to "${name}"; open that jar and auto-balance it`));
+}
 function copyToTrial(){
   const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j);if(slot<0)slot=(S.cur+1)%3;
   const name=(S.jarName||jarNames()[S.cur])+L('（試）',' (trial)');

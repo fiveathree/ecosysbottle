@@ -162,7 +162,7 @@ function setLevel(v){if(v===S.level)return;const before=S.level;S.level=v;buildJ
 function emptyJar(){
   S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
   S.terra=null;
-  Object.assign(S,{filled:false,level:0,feed:0,pump:false,filter:false,heater:false,mist:0,heat:false,wc:0,hour:6,day:1});
+  Object.assign(S,{filled:false,level:0,feed:0,pump:false,filter:false,heater:false,fan:false,mist:0,heat:false,wc:0,hour:6,day:1});
   buildJar({keepCam:true});resetChem(S);S.log=[];logEv('清空咗個瓶','Emptied the jar','muted');
   renderAll();save();toast(S.mode==='aqua'?L('已清空，連水都冇','Emptied: no water, nothing inside'):L('已清空，連泥都冇','Emptied: no soil, nothing inside'));
 }
@@ -407,7 +407,7 @@ function drawChart(){
 function loadPreset(key){
   const p=PRESETS[S.mode][key];S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;S.report=null;
   S.terra=null;S.build=false;
-  Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat||'glass',sealed:p.sealed,light:p.light,feed:p.feed,pump:!!p.pump,filter:!!p.filter,heater:!!p.heater,wc:p.wc||0,mist:p.mist||0,heat:!!p.heat,
+  Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat||'glass',sealed:p.sealed,light:p.light,feed:p.feed,pump:!!p.pump,filter:!!p.filter,heater:!!p.heater,fan:!!p.fan,wc:p.wc||0,mist:p.mist||0,heat:!!p.heat,
     region:p.region||'hk',real:false,water:p.water||'fresh',filled:p.filled!==false,level:p.level||0,hillH:p.hillH??6,log:[],hour:6,day:1});
   p.items.forEach(([t,n,par])=>{for(let i=0;i<n;i++){const it=makeItem(t,par);it.n=nextN(t);S.items.push(it);}});
   buildJar({keepChem:true});resetChem(S);renderAll();save();toast(L('已載入：','Loaded: ')+N(p.n));
@@ -449,6 +449,7 @@ function renderEnv(){
    <div data-sec="water">${hasW?sw('e-P',S.pump,L('氧氣泵','Air pump'),L('打氣入水，補氧同趕走 CO₂。','Bubbles air into the water, adding O₂ and removing CO₂.'))+sw('e-Fi',S.filter,L('過濾','Filter'),L('海綿入面住咗大量硝化菌，分解氨同隔走殘渣。','The sponge hosts lots of bacteria that remove ammonia and trap detritus.'))
      +sw('e-Ht',S.heater,L('加熱棒','Heater'),L('保持水溫，熱帶魚需要。','Keeps the water warm for tropical fish.'))
      +sl('e-WC',L('每週換水','Weekly water change'),S.wc,0,50,5,'%',L('每 7 日朝早 10 點換水，沖淡氨同硝酸鹽。','Every 7 days at 10 am, diluting ammonia and nitrate.')):''}</div>
+   <div data-sec="care">${sw('e-Fan',S.fan,L('風扇','Fan'),S.sealed?L('對住水面或者瓶口吹，靠蒸發降溫約 2–3°C。而家密封緊，要開蓋先有效。','Blows across the water or opening to cool it by 2–3°C through evaporation. The jar is sealed now, so it only works once the lid is open.'):L('對住水面或者瓶口吹，靠蒸發降溫約 2–3°C，空氣會乾少少。','Blows across the water or opening to cool it by 2–3°C through evaporation; the air gets a little drier.'))}</div>
    <div data-sec="care">${aq?'':sl('e-M',L('每日噴霧','Misting per day'),S.mist,0,6,1,L('次','×'),L('每次噴霧即刻提高濕度。','Each misting raises humidity at once.'))+sw('e-H',S.heat,L('加熱燈','Heat lamp'),L('開燈時加熱約 5°C，同時令空氣乾啲。','Adds about 5°C while lit and dries the air.'))}</div>
    <div data-sec="jar">${sw('e-S',S.sealed,aq?L('密封瓶口','Sealed'):L('密封（唔用網蓋）','Sealed (no mesh lid)'),aq?L('密封＝完全靠瓶內循環；開口＝空氣會補氧。','Sealed relies on its own cycles; open lets air add oxygen.'):L('密封＝濕度高、空氣唔流通；網蓋＝通風。','Sealed keeps humidity high but traps air; a mesh lid ventilates.'))}
    ${sw('e-Real',S.real,L('呢個係真實嘅瓶','This is a real tank'),L('一鍵平衡只會俾建議，唔會自動改或者刪任何嘢。','Auto-balance only suggests; it never changes or removes anything.'))}</div>
@@ -461,7 +462,7 @@ function renderEnv(){
   bind('e-Lv',(v,done)=>{if(done)setLevel(v);},'cm');
   bind('e-Hill',(v,done)=>{S.hillH=v;if(done){buildJar({keepCam:true});renderEnv();}},'cm');
   const chk=(id,k)=>{const e=$('#'+id);if(e)e.onchange=()=>{S[k]=e.checked;save();};};
-  chk('e-Real','real');const er=$('#e-Real');if(er)er.addEventListener('change',renderJarSeg);chk('e-P','pump');chk('e-Fi','filter');chk('e-Ht','heater');chk('e-H','heat');chk('e-S','sealed');chk('e-B','breed');
+  chk('e-Real','real');const er=$('#e-Real');if(er)er.addEventListener('change',renderJarSeg);chk('e-P','pump');chk('e-Fi','filter');chk('e-Ht','heater');chk('e-Fan','fan');chk('e-H','heat');chk('e-S','sealed');{const es=$('#e-S');if(es)es.addEventListener('change',renderEnv);}chk('e-B','breed');
   const ew=$('#e-W');if(ew)ew.onchange=()=>fillWater(ew.checked);
   const en=$('#e-name');en.oninput=()=>{S.jarName=en.value.trim().slice(0,16);renderJarSeg();save();};
   const pe=$('#pane-env');bindPaneTags('env',pe);bindCustomRegion();
@@ -476,20 +477,20 @@ function renderEnv(){
 function renderAll(){if(S.build)renderBuildBar();if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(ovOpen.L)renderBalance();}
 
 /* ================= 三個瓶 & 儲存 ================= */
-const SNAP_KEYS=['customRegion','terra','region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day'];
+const SNAP_KEYS=['customRegion','terra','region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','fan','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day'];
 function snapshot(){if(S.terra)delete S.terra._info;const o={name:S.jarName,c:Object.assign({},S.c),log:S.log.slice(0,40),hist:S.hist.slice(-120),
   items:S.items.filter(i=>i.alive).map(i=>({type:i.type,params:i.params,name:i.name||'',n:i.n,health:+i.health.toFixed(3),satiety:+i.satiety.toFixed(3),rx:+i.rx.toFixed(3),rz:+i.rz.toFixed(3),age:i.age,up:i.userPlaced?1:0}))};
   SNAP_KEYS.forEach(k=>o[k]=S[k]);return o;}
 function restoreSnap(d){
   S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
-  SNAP_KEYS.forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});S.jarName=d.name||'';
+  SNAP_KEYS.forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});S.jarName=d.name||'';if(d.fan===undefined)S.fan=false;
   if(S.terra){S.terra=JSON.parse(JSON.stringify(S.terra));delete S.terra._info;}S.build=false;
   if(!SHAPES[S.shape])S.shape='jar';if(!MATS[S.mat])S.mat='glass';if(!PRESETS[S.mode])S.mode='aqua';if(S.wxMode!=='auto'&&!WX[S.wxMode])S.wxMode='auto';if(!WX[S.wx])S.wx='sunny';
   (d.items||[]).forEach(o=>{if(!CAT[o.type])return;const it=makeItem(o.type,o.params);Object.assign(it,{n:o.n||nextN(o.type),name:o.name||'',health:o.health??1,satiety:o.satiety??1});
     if(o.rx!=null){it.rx=o.rx;it.rz=o.rz;}if(o.age!=null)it.age=o.age;if(o.up)it.userPlaced=true;S.items.push(it);});
   buildJar({keepChem:true});resetChem(S);if(d.c)Object.assign(S.c,d.c);S.log=d.log||[];S.hist=d.hist||[];
 }
-const blankSnap=i=>({terra:null,name:'',region:'hk',real:false,mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:false,light:12,feed:0,pump:false,filter:false,heater:false,wc:0,mist:0,heat:false,water:'fresh',filled:false,level:0,hillH:6,breed:true,wxMode:'auto',wx:'sunny',hour:6,day:1,items:[]});
+const blankSnap=i=>({terra:null,name:'',region:'hk',real:false,mode:'aqua',V:4,shape:'jar',mat:'glass',sealed:false,light:12,feed:0,pump:false,filter:false,heater:false,fan:false,wc:0,mist:0,heat:false,water:'fresh',filled:false,level:0,hillH:6,breed:true,wxMode:'auto',wx:'sunny',hour:6,day:1,items:[]});
 function switchJar(i){if(i===S.cur)return;S.jars[S.cur]=snapshot();S.cur=i;restoreSnap(S.jars[i]||blankSnap(i));renderAll();save();toast(L('轉咗去 ','Switched to ')+jarNames()[i]);}
 const KEY='ecojar.v4';
 let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{const jars=S.jars.slice();jars[S.cur]=snapshot();S.jars=jars;localStorage.setItem(KEY,JSON.stringify({cur:S.cur,jars,ana:S.ana}));}catch(e){}},500);}
