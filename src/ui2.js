@@ -74,22 +74,26 @@ function renderDn(){const b=$('#dnBtn');b.textContent=N(DN[viewLight]);b.setAttr
 $('#dnBtn').onclick=()=>{viewLight={auto:'day',day:'night',night:'auto'}[viewLight];pref.set('ecojar.dn',viewLight);renderDn();
   toast(viewLight==='auto'?L('畫面跟隨模擬時間轉日夜','The view follows the simulated time again'):L('只是鎖住畫面；模擬照樣有日夜','Only the view is locked; the simulation still has day and night'));};
 /* 頂部「預設組合」：揀一個取代而家呢個瓶 */
-/* 預設組合清單：可以用標籤篩選（水族：淡水／海水；雨林：雨林／水陸） */
-const presetTag={aqua:'all',rain:'all'};
-const PRESET_TAGS={aqua:[['all',['全部','All']],['fresh',['淡水','Fresh']],['salt',['海水','Salt']]],rain:[['all',['全部','All']],['rain',['雨林','Rainforest']],['palu',['水陸','Paludarium']]]};
+/* 預設組合清單：包晒水族同雨林嘅預設，用標籤篩選（淡水／海水／雨林／水陸）。
+   揀咗另一個模式嘅預設，會順手轉埋模式；鎖住嘅照樣顯示解鎖條件。 */
+const PRESET_TAGS=[['all',['全部','All']],['fresh',['淡水','Fresh']],['salt',['海水','Salt']],['rain',['雨林','Rainforest']],['palu',['水陸','Paludarium']]];
 const presetKind=(mode,p)=>mode==='aqua'?(p.water==='salt'?'salt':'fresh'):(p.level>0?'palu':'rain');
-$('#presetBtn').onclick=()=>{const mode=S.mode,ps=PRESETS[mode],real=S.real;
-  const list=()=>{const t=presetTag[mode];return Object.entries(ps).filter(([,p])=>t==='all'||presetKind(mode,p)===t).map(([k,p])=>[k,p,presetLock(mode,k,p)]).sort((a,b)=>!!a[2]-!!b[2])
-    .map(([k,p,lk])=>`<button class="preset" data-pp="${k}" ${real||lk?'disabled':''}><b>${lk?'🔒 ':''}${N(p.n)}</b><span>${lk?esc(lockText(lk)):N(p.d)}</span></button>`).join('')||`<p class="lede">${L('這個分類沒有預設。','No presets in this group.')}</p>`;};
-  const tags=()=>PRESET_TAGS[mode].map(([k,n])=>{const cnt=k==='all'?Object.keys(ps).length:Object.values(ps).filter(p=>presetKind(mode,p)===k).length;return`<button data-ptg="${k}" aria-pressed="${presetTag[mode]===k}">${N(n)} ${cnt}</button>`;}).join('');
-  const d=openDlg(`<h4>${L('預設組合','Presets')} · ${N({aqua:['水族','Aquatic'],rain:['雨林／水陸','Rainforest / paludarium']}[mode])}</h4>
-    <p class="lede">${real?L('這是真實的瓶，不可以用預設取代。請先轉到另一個瓶。','This is a real tank and cannot be replaced by a preset. Switch to another jar first.'):L('選一個會取代現在這個瓶裡面所有東西。想保留現在這個瓶，請先轉到一個空瓶。','Picking one replaces everything in this jar. To keep this jar, switch to an empty one first.')}</p>
-    <div class="tagrow" id="presetTags" role="group" aria-label="${L('篩選','Filter')}">${tags()}</div>
+const allPresets=()=>Object.entries(PRESETS).flatMap(([m,ps])=>Object.entries(ps).map(([k,p])=>({m,k,p,kind:presetKind(m,p)})));
+let presetTag=null;
+$('#presetBtn').onclick=()=>{const real=S.real,all=allPresets();
+  if(!presetTag)presetTag=S.mode==='aqua'?(S.water==='salt'?'salt':'fresh'):(S.level>0?'palu':'rain');
+  const list=()=>all.filter(x=>presetTag==='all'||x.kind===presetTag).map(x=>Object.assign(x,{lk:presetLock(x.m,x.k,x.p)})).sort((a,b)=>!!a.lk-!!b.lk)
+    .map(x=>`<button class="preset" data-pp="${x.m}.${x.k}" ${real||x.lk?'disabled':''}><b>${x.lk?'🔒 ':''}${N(x.p.n)}</b><span>${x.lk?esc(lockText(x.lk)):N(x.p.d)}</span></button>`).join('')||`<p class="lede">${L('這個分類沒有預設。','No presets in this group.')}</p>`;
+  const tags=()=>PRESET_TAGS.map(([k,n])=>`<button data-ptg="${k}" aria-pressed="${presetTag===k}">${N(n)} ${k==='all'?all.length:all.filter(x=>x.kind===k).length}</button>`).join('');
+  const d=openDlg(`<h4>${L('預設組合','Presets')}</h4>
+    <p class="lede">${real?L('這是真實的瓶，不可以用預設取代。請先轉到另一個瓶。','This is a real tank and cannot be replaced by a preset. Switch to another jar first.'):L('選一個會取代現在這個瓶裡面所有東西；選其他模式的預設會一併轉換模式。想保留現在這個瓶，請先轉到一個空瓶。','Picking one replaces everything in this jar, switching mode if needed. To keep this jar, switch to an empty one first.')}</p>
+    <div class="tagrow ptagdlg" id="presetTags" role="group" aria-label="${L('篩選','Filter')}">${tags()}</div>
     <div class="plist" id="presetList">${list()}</div>
     <div class="acts"><button class="btn" data-close>${L('取消','Cancel')}</button></div>`);
-  const bind=()=>{d.querySelectorAll('[data-pp]').forEach(b=>b.onclick=()=>{d.close();loadPreset(b.dataset.pp);});};
-  function rebindTags(){d.querySelectorAll('[data-ptg]').forEach(b=>b.onclick=()=>{presetTag[mode]=b.dataset.ptg;$('#presetTags').innerHTML=tags();$('#presetList').innerHTML=list();rebindTags();bind();});}
-  rebindTags();bind();};
+  d.classList.add('presetdlg');
+  const bind=()=>{d.querySelectorAll('[data-pp]').forEach(b=>b.onclick=()=>{const [m,k]=b.dataset.pp.split('.');d.close();if(S.build)exitBuild();S.mode=m;loadPreset(k);});
+    d.querySelectorAll('[data-ptg]').forEach(b=>b.onclick=()=>{presetTag=b.dataset.ptg;$('#presetTags').innerHTML=tags();$('#presetList').innerHTML=list();$('#presetList').scrollTop=0;bind();});};
+  bind();d.addEventListener('close',()=>d.classList.remove('presetdlg'),{once:true});};
 function renderOv(){renderCamBar();renderDn();renderOvToggles();renderOvL();renderOvR();fitOverlays();}
 function renderOvL(){
   const el=$('#ovL');el.hidden=!ovOpen.L;$('#ovLT').textContent=L('平衡分析','Balance');

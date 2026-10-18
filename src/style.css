@@ -442,3 +442,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .feedbtn{white-space:nowrap;pointer-events:auto;font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;border:1px solid var(--accent);background:var(--glass);color:var(--accent);backdrop-filter:blur(6px);cursor:pointer}
 .feedbtn:hover{background:var(--accent);color:var(--on-accent)}
 @media (max-width:700px){.hud-l{flex:1;min-width:0}.pill.wx{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}.hud-r{flex:none}}
+
+/* 預設組合：固定大細，揀標籤時唔會跳 */
+.dlg.presetdlg{width:min(460px,calc(100vw - 32px))}
+.presetdlg .plist{height:min(52vh,430px);max-height:none;align-content:start}
+.presetdlg .ptagdlg{flex:none;margin-top:8px;flex-wrap:wrap;overflow:visible;-webkit-mask-image:none;mask-image:none}
