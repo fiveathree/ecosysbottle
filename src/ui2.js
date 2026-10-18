@@ -266,7 +266,7 @@ function moveDoomed(){
   renderAll();save();toast(L(`搬了 ${mv.length} 隻去「${name}」；到那個瓶再按一鍵平衡`,`Moved ${mv.length} to "${name}"; open that jar and auto-balance it`));
 }
 function copyToTrial(){
-  const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j&&!jarLock(i));if(slot<0)slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i));if(slot==null){toast(L('還沒有其他瓶可用：完成新手任務可解鎖瓶 2','No other jar yet: finish the starter missions to unlock Jar 2'));return;}
+  const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j&&!jarLock(i));if(slot<0)slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i));if(slot==null){toast(L('還沒有其他瓶可用：完成新手任務可解鎖瓶2','No other jar yet: finish the starter missions to unlock Jar 2'));return;}
   const name=(S.jarName||jarNames()[S.cur])+L('（試）',' (trial)');
   S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false,chal:null,deathN:0}));S.report=null;
   renderAll();save();toast(L(`複製了去「${name}」，現在套用建議`,`Copied to "${name}" and applying the suggestions`));setTimeout(autoBalance,60);
@@ -329,7 +329,7 @@ const TOUR=[
   {sel:['#balBtn'],t:['一鍵平衡','Auto-balance'],d:['不知道怎麼調？按「一鍵平衡」，它會試算未來幾天，加水草、調整光照和餵食，盡量保住每一隻生物。','Not sure what to change? Auto-balance simulates the next few days and adjusts plants, light and food to keep everything alive.']},
   {sel:['#playBtn'],t:['時間','Time'],d:['暫停或者加快時間。1 日／秒最快，可以看到生物生 BB。','Pause or speed up time. At 1 day per second you can watch animals have young.']},
   {sel:['[data-dock="play"]','.tabs [data-tab="play"]'],t:['挑戰和解鎖','Challenges and unlocks'],d:['完成挑戰、成就和收藏，會解鎖雨林、水陸、海水和更多生物。想分析自己真實的缸，可以在「環境」開啟「這是真實的瓶」，所有功能都可以使用。','Challenges, achievements and your collection unlock rainforest, paludarium, salt water and more species. To analyse your real tank, turn on "This is a real tank" in Setup and everything is available.']},
-  {t:['準備好了！','You are ready!'],d:['跟著畫面左上角的「📋 任務」，一步步打造你的第一個瓶：完成任務 1 會解鎖「自訂造景」，之後還有瓶 2 和瓶 3。想再看教學，可以在右上角「⋯」選「新手教學」。','Follow the 📋 Mission chip at the top left to build your first jar step by step. Mission 1 unlocks Build, and the next ones unlock Jar 2 and Jar 3. To see this guide again, choose "Quick guide" from the ⋯ menu.']},
+  {t:['準備好了！','You are ready!'],d:['跟著畫面左上角的「📋 任務」，一步步打造你的第一個瓶：完成任務 1 會解鎖「自訂造景」，之後還有瓶2和瓶3。想再看教學，可以在右上角「⋯」選「新手教學」。','Follow the 📋 Mission chip at the top left to build your first jar step by step. Mission 1 unlocks Build, and the next ones unlock Jar 2 and Jar 3. To see this guide again, choose "Quick guide" from the ⋯ menu.']},
 ];
 const tour={i:-1};
 function tourTarget(st){for(const s of st.sel||[]){const el=$(s);if(el&&el.offsetParent!==null&&el.getBoundingClientRect().width>0)return el;}return null;}

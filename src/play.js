@@ -70,8 +70,8 @@ const FEAT={salt:{n:['海水','Salt water'],i:'🌊',d:['水族缸可以轉做�
   ff:{n:['時間旅行快轉','Time-travel fast-forward'],i:'⏩',d:['在「玩法 › 時間旅行」預覽未來之後，可以直接把瓶子快轉到那一天。','After previewing the future in Play › Time travel, you can jump the jar straight to that day.']},
   rain:{n:['雨林模式','Rainforest mode'],i:'🌿',d:['沒有水的陸缸：泥土、苔蘚、蕨類，養跳蟲、鼠婦，之後還有箭毒蛙和守宮。要顧住濕度和霉菌。','A dry-land terrarium with soil, moss and ferns, home to springtails and isopods, and later dart frogs and geckos. Watch the humidity and mould.']},
   build:{n:['自訂造景','Build'],i:'🏗️',d:['用筆刷在瓶底鋪沙、泥、碎石，堆高或挖低，打造自己的地形。按頂部「自訂造景」開始。','Brush sand, soil and gravel onto the floor and raise or dig the ground to shape your own landscape. Start from the Build button at the top.']},
-  jar2:{n:['瓶 2','Jar 2'],i:'🫙',d:['多一個瓶，可以同時養第二個生態系統；按頂部的「瓶 2」轉過去。','A second jar for another ecosystem; tap Jar 2 at the top to switch.']},
-  jar3:{n:['瓶 3','Jar 3'],i:'🫙',d:['第三個瓶。一鍵平衡保不住的動物，可以搬到空瓶分開飼養。','A third jar. Animals that auto-balance cannot save can move to an empty jar.']},
+  jar2:{n:['瓶2','Jar 2'],i:'🫙',d:['多一個瓶，可以同時養第二個生態系統；按頂部的「瓶2」轉過去。','A second jar for another ecosystem; tap Jar 2 at the top to switch.']},
+  jar3:{n:['瓶3','Jar 3'],i:'🫙',d:['第三個瓶。一鍵平衡保不住的動物，可以搬到空瓶分開飼養。','A third jar. Animals that auto-balance cannot save can move to an empty jar.']},
   palu:{n:['水陸模式','Paludarium mode'],i:'🐸',d:['雨林加水區：後面陸地、前面水，魚和兩棲動物一起養。','A rainforest with a water area: land at the back, water at the front, fish and amphibians together.']}};
 const FEAT_N=Object.fromEntries(Object.entries(FEAT).map(([k,v])=>[k,v.n]));
 const FREE_PRESETS=['aqua.eco','aqua.tank','aqua.betta','aqua.zero'];

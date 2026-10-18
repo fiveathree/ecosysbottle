@@ -69,9 +69,9 @@ const SPEEDS=[[1,['1 小時/秒','1 h/s']],[4,['4 小時/秒','4 h/s']],[24,['1 
 function renderSpeed(){$('#speedSeg').innerHTML=SPEEDS.map(([v,l])=>`<button aria-pressed="${S.speed===v}" data-v="${v}">${N(l)}</button>`).join('');
   $('#speedSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;if(S.speed>=24)taskFlag('fast');renderSpeed();});}
 
-const jarNames=()=>S.jars.map((j,i)=>i===S.cur?(S.jarName||L(`瓶 ${i+1}`,`Jar ${i+1}`)):(j&&j.name?j.name:L(`瓶 ${i+1}`,`Jar ${i+1}`)));
+const jarNames=()=>S.jars.map((j,i)=>i===S.cur?(S.jarName||L(`瓶${i+1}`,`Jar ${i+1}`)):(j&&j.name?j.name:L(`瓶${i+1}`,`Jar ${i+1}`)));
 function jarLock(i){if(!i||i===S.cur)return null;const j=S.jars[i];if(j&&(j.items||[]).length)return null;return lockOf('feature','jar'+(i+1));}
-function renderJarSeg(){$('#jarSeg').innerHTML=jarNames().map((n,i)=>{const real=i===S.cur?S.real:(S.jars[i]&&S.jars[i].real),lk=jarLock(i);return`<button aria-pressed="${i===S.cur}" data-j="${i}" title="${esc(lk?lockText(lk):n)}" ${lk?'class="locked"':''}>${lk?'🔒 ':''}${esc(n)}${real?`<span class="realtag">${L('真','REAL')}</span>`:''}</button>`;}).join('');
+function renderJarSeg(){$('#jarSeg').innerHTML=jarNames().map((n,i)=>{const real=i===S.cur?S.real:(S.jars[i]&&S.jars[i].real),lk=jarLock(i);return`<button aria-pressed="${i===S.cur}" data-j="${i}" title="${esc(lk?lockText(lk):n)}" ${lk?'class="locked"':''}>${esc(n)}${lk?L(' (鎖)',' (locked)'):''}${real?`<span class="realtag">${L('真','REAL')}</span>`:''}</button>`;}).join('');
   $('#jarSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>switchJar(+b.dataset.j));}
 $('#playBtn').onclick=()=>{S.running=!S.running;$('#playBtn').classList.toggle('primary',S.running);renderChrome();};
 $('#feedBtn').onclick=()=>{taskFlag('feed');const n=Math.max(1,S.feed),wL=wLOf(S);
