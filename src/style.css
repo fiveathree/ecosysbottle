@@ -207,7 +207,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tglbtn{pointer-events:auto;cursor:pointer;font-size:11.5px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(6px);color:var(--muted)}
 .tglbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:700}
 .ov{position:absolute;top:84px;bottom:var(--mh,120px);width:200px;overflow:auto;display:flex;flex-direction:column;gap:2px;padding:8px;border-radius:12px;background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--line);font-size:12px;z-index:2}
-.ovL{left:10px} .ovR{right:10px}
+.ovL{left:10px;width:min(360px,42%);padding:0;gap:0}
+.ovR{right:10px}
+.ovhead{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:8px 10px 6px;background:var(--glass);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.ovhead h4{margin:0}
+.ovbody{padding:10px;display:flex;flex-direction:column;gap:10px;font-size:12.5px}
+.ovbody .verdict{font-size:12.5px;padding:10px}
+.ovbody .verdict b{font-size:14.5px}
+.ovbody .bud{padding:8px 10px;background:var(--surface)}
+.ovbody .chartbox{background:var(--surface)}
+.ovbody .chartbox canvas{height:140px}
+.ovbody .report{background:var(--surface)}
 .ov h4{margin:0 0 4px;font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:700}
 .ovnote{margin:0;color:var(--muted)}
 .ovrow{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:3px 6px;align-items:center;border:0;background:none;padding:4px;text-align:left;border-radius:6px;width:100%;font-size:12px;color:var(--ink)}
@@ -255,7 +265,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .bb-sl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:1;min-width:140px}
 .bb-sl input{flex:1;min-width:60px}
 .card.build{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
-@media (max-width:700px){.ov{width:150px;top:96px}.hint{display:none}}
+@media (max-width:700px){.ov{width:150px;top:96px}.ovL{width:calc(100% - 20px);z-index:5}.hint{display:none}}
 @media (prefers-reduced-motion:reduce){.flash{animation:none}}
 @media (min-width:920px){
   html,body{overflow:hidden}

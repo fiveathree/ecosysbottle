@@ -27,8 +27,8 @@ function addFromCatalog(t){
 }
 
 /* ================= 外框 ================= */
-function showTab(t){curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
-  ['add','jar','bal','env','ana'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='bal')renderBalance();if(t==='jar')renderJarList();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
+function showTab(t){if(t==='bal'){openBal();return;}curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  ['add','jar','env','ana'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='jar')renderJarList();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 let toastT;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1900);}
 function renderChrome(){
@@ -363,7 +363,7 @@ function renderBalance(){
   drawChart();
 }
 function drawChart(){
-  const cv=$('#chart');if(!cv)return;const w=cv.clientWidth,h=170,dpr=Math.min(devicePixelRatio,2);cv.width=w*dpr;cv.height=h*dpr;
+  const cv=$('#chart');if(!cv)return;const w=cv.clientWidth,h=cv.clientHeight||170,dpr=Math.min(devicePixelRatio,2);cv.width=w*dpr;cv.height=h*dpr;
   const x=cv.getContext('2d');x.scale(dpr,dpr);const cs=getComputedStyle(document.documentElement);const col=k=>cs.getPropertyValue(k).trim();
   const H=S.hist.slice(-168),pl=30,pr=34,pt=8,pb=18,iw=w-pl-pr,ih=h-pt-pb;
   x.font='10px '+col('--f-mono');x.fillStyle=col('--muted');
@@ -447,7 +447,7 @@ function renderEnv(){
   pe.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>loadPreset(b.dataset.p));
   $('#e-restart').onclick=()=>{S.items=S.items.filter(i=>{if(!i.alive){disposeObj(i.g);return false;}return true;});resetChem(S);S.hour=6;S.day=1;S.log=[];S.items.forEach(i=>{i.health=1;i.satiety=1;});renderAll();toast(L('時間重新開始','Time restarted'));};
 }
-function renderAll(){if(S.build)renderBuildBar();if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(curTab==='bal')renderBalance();}
+function renderAll(){if(S.build)renderBuildBar();if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(ovOpen.L)renderBalance();}
 
 /* ================= 三個瓶 & 儲存 ================= */
 const SNAP_KEYS=['terra','region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day'];

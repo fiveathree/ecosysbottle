@@ -28,20 +28,18 @@ function renderModeSeg(){$('#modeSeg').innerHTML=[['aqua',['水族','Aquatic']],
 let ovOpen={L:innerWidth>=920,R:innerWidth>=920};
 try{const o=JSON.parse(localStorage.getItem('ecojar.ov')||'null');if(o)ovOpen=o;}catch(e){}
 function renderOvToggles(){
-  const l=$('#tglL'),r=$('#tglR');l.textContent=L('平衡','Balance');r.textContent=L('清單','List');
+  const l=$('#tglL'),r=$('#tglR');l.textContent=L('平衡分析','Balance');r.textContent=L('清單','List');
   l.setAttribute('aria-pressed',ovOpen.L);r.setAttribute('aria-pressed',ovOpen.R);
 }
-$('#tglL').onclick=()=>{ovOpen.L=!ovOpen.L;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
+$('#tglL').onclick=()=>{ovOpen.L=!ovOpen.L;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();if(ovOpen.L)renderBalance();};
 $('#tglR').onclick=()=>{ovOpen.R=!ovOpen.R;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
 function renderOv(){renderOvToggles();renderOvL();renderOvR();}
 function renderOvL(){
-  const el=$('#ovL');el.hidden=!ovOpen.L;if(!ovOpen.L)return;
-  if(S.mode==='aqua'&&!wLOf(S)){el.hidden=true;return;}
-  const items=budgets();
-  if(!items.length){el.hidden=true;return;}
-  el.innerHTML=`<h4>${L('平衡','Balance')}</h4>`+(items.length?items.map((b,i)=>`<button class="ovrow" data-bi="${i}"><i class="${b.cls==='good'?'':b.cls}"></i><span>${b.title}</span><em>${b.right}</em></button>`).join(''):`<p class="ovnote">${L('未有生物','Nothing living')}</p>`);
-  el.querySelectorAll('[data-bi]').forEach(b=>b.onclick=()=>{showTab('bal');const t=$('#bud-'+b.dataset.bi);if(t){t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.remove('flash');void t.offsetWidth;t.classList.add('flash');}});
+  const el=$('#ovL');el.hidden=!ovOpen.L;$('#ovLT').textContent=L('平衡分析','Balance');
+  $('#ovLX').setAttribute('aria-label',L('收起平衡分析','Close balance'));
 }
+function openBal(){ovOpen.L=true;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();renderBalance();$('#ovL').scrollTop=0;}
+$('#ovLX').onclick=()=>{ovOpen.L=false;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
 function renderOvR(){
   const el=$('#ovR');el.hidden=!ovOpen.R;if(!ovOpen.R)return;
   const its=S.items.filter(i=>['plant','animal'].includes(CAT[i.type].kind)).sort((a,b)=>(CAT[a.type].kind==='animal'?0:1)-(CAT[b.type].kind==='animal'?0:1)||a.uid-b.uid);
@@ -163,7 +161,7 @@ function renderIssuePop(){
   pop.querySelectorAll('[data-see]').forEach(b=>b.onclick=()=>{const x=list[+b.dataset.see],it=x.items[0];issueOpen=false;pop.hidden=true;
     const r=$('#stage').getBoundingClientRect(),v=it.m?it.m.p.clone():new THREE.Vector3();if(it.g)v.copy(it.g.position);v.project(camera);
     select(it,{clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height});});
-  pop.querySelectorAll('[data-bal]').forEach(b=>b.onclick=()=>{issueOpen=false;pop.hidden=true;showTab('bal');});
+  pop.querySelectorAll('[data-bal]').forEach(b=>b.onclick=()=>{issueOpen=false;pop.hidden=true;openBal();});
 }
 
 /* ================= 真實嘅瓶：建議 & 副本試 ================= */

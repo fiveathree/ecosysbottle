@@ -220,7 +220,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tglbtn{pointer-events:auto;cursor:pointer;font-size:11.5px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(6px);color:var(--muted)}
 .tglbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:700}
 .ov{position:absolute;top:84px;bottom:var(--mh,120px);width:200px;overflow:auto;display:flex;flex-direction:column;gap:2px;padding:8px;border-radius:12px;background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--line);font-size:12px;z-index:2}
-.ovL{left:10px} .ovR{right:10px}
+.ovL{left:10px;width:min(360px,42%);padding:0;gap:0}
+.ovR{right:10px}
+.ovhead{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:8px 10px 6px;background:var(--glass);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.ovhead h4{margin:0}
+.ovbody{padding:10px;display:flex;flex-direction:column;gap:10px;font-size:12.5px}
+.ovbody .verdict{font-size:12.5px;padding:10px}
+.ovbody .verdict b{font-size:14.5px}
+.ovbody .bud{padding:8px 10px;background:var(--surface)}
+.ovbody .chartbox{background:var(--surface)}
+.ovbody .chartbox canvas{height:140px}
+.ovbody .report{background:var(--surface)}
 .ov h4{margin:0 0 4px;font-size:11px;letter-spacing:.06em;color:var(--muted);font-weight:700}
 .ovnote{margin:0;color:var(--muted)}
 .ovrow{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:3px 6px;align-items:center;border:0;background:none;padding:4px;text-align:left;border-radius:6px;width:100%;font-size:12px;color:var(--ink)}
@@ -268,7 +278,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .bb-sl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:1;min-width:140px}
 .bb-sl input{flex:1;min-width:60px}
 .card.build{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
-@media (max-width:700px){.ov{width:150px;top:96px}.hint{display:none}}
+@media (max-width:700px){.ov{width:150px;top:96px}.ovL{width:calc(100% - 20px);z-index:5}.hint{display:none}}
 @media (prefers-reduced-motion:reduce){.flash{animation:none}}
 @media (min-width:920px){
   html,body{overflow:hidden}
@@ -299,7 +309,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <canvas id="c"></canvas>
       <div class="hud"><div class="hud-l"><button class="pill click" id="status" aria-haspopup="dialog"><i></i><span></span></button><div class="pill wx" id="wxPill"></div><button class="tglbtn" id="tglL"></button></div>
         <div class="hud-r"><div class="hud-rr"><button class="tglbtn" id="tglR"></button><button class="clearbtn" id="clearBtn"></button></div><span class="hint" id="hint"></span></div></div>
-      <div class="ov ovL" id="ovL" hidden></div><div class="ov ovR" id="ovR" hidden></div>
+      <div class="ov ovL" id="ovL" hidden><div class="ovhead"><h4 id="ovLT"></h4><button class="x" id="ovLX" aria-label="Close">×</button></div><div class="ovbody" id="pane-bal"></div></div><div class="ov ovR" id="ovR" hidden></div>
       <div class="pop" id="pop" hidden></div><div class="pop issues" id="issuePop" hidden></div>
       <div class="meters" id="meters"></div>
       <div class="buildbar" id="buildBar" hidden></div>
@@ -308,13 +318,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <nav class="tabs" role="tablist">
         <button role="tab" data-tab="add" aria-selected="true"></button>
         <button role="tab" data-tab="jar" aria-selected="false"></button>
-        <button role="tab" data-tab="bal" aria-selected="false"></button>
         <button role="tab" data-tab="env" aria-selected="false"></button>
         <button role="tab" data-tab="ana" aria-selected="false"></button>
       </nav>
       <div class="pane" id="pane-add"></div>
       <div class="pane" id="pane-jar" hidden></div>
-      <div class="pane" id="pane-bal" hidden></div>
       <div class="pane" id="pane-env" hidden></div>
       <div class="pane" id="pane-ana" hidden></div>
     </aside>
@@ -1710,8 +1718,8 @@ function addFromCatalog(t){
 }
 
 /* ================= 外框 ================= */
-function showTab(t){curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
-  ['add','jar','bal','env','ana'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='bal')renderBalance();if(t==='jar')renderJarList();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
+function showTab(t){if(t==='bal'){openBal();return;}curTab=t;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  ['add','jar','env','ana'].forEach(k=>$('#pane-'+k).hidden=k!==t);if(t==='jar')renderJarList();if(t==='ana'&&!$('#anaGo'))renderAnalyze();}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 let toastT;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1900);}
 function renderChrome(){
@@ -2046,7 +2054,7 @@ function renderBalance(){
   drawChart();
 }
 function drawChart(){
-  const cv=$('#chart');if(!cv)return;const w=cv.clientWidth,h=170,dpr=Math.min(devicePixelRatio,2);cv.width=w*dpr;cv.height=h*dpr;
+  const cv=$('#chart');if(!cv)return;const w=cv.clientWidth,h=cv.clientHeight||170,dpr=Math.min(devicePixelRatio,2);cv.width=w*dpr;cv.height=h*dpr;
   const x=cv.getContext('2d');x.scale(dpr,dpr);const cs=getComputedStyle(document.documentElement);const col=k=>cs.getPropertyValue(k).trim();
   const H=S.hist.slice(-168),pl=30,pr=34,pt=8,pb=18,iw=w-pl-pr,ih=h-pt-pb;
   x.font='10px '+col('--f-mono');x.fillStyle=col('--muted');
@@ -2130,7 +2138,7 @@ function renderEnv(){
   pe.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>loadPreset(b.dataset.p));
   $('#e-restart').onclick=()=>{S.items=S.items.filter(i=>{if(!i.alive){disposeObj(i.g);return false;}return true;});resetChem(S);S.hour=6;S.day=1;S.log=[];S.items.forEach(i=>{i.health=1;i.satiety=1;});renderAll();toast(L('時間重新開始','Time restarted'));};
 }
-function renderAll(){if(S.build)renderBuildBar();if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(curTab==='bal')renderBalance();}
+function renderAll(){if(S.build)renderBuildBar();if(typeof renderOv==='function'){renderOv();renderIssuePop();}if(popIt)renderPop();renderChrome();renderJarSeg();renderModeSeg();renderSpeed();renderCatalog();renderJarList();renderEditor();renderEnv();renderMeters();if(ovOpen.L)renderBalance();}
 
 /* ================= 三個瓶 & 儲存 ================= */
 const SNAP_KEYS=['terra','region','real','mode','V','shape','mat','sealed','light','feed','pump','filter','heater','wc','mist','heat','water','filled','level','hillH','breed','wxMode','wx','hour','day'];
@@ -2297,20 +2305,18 @@ function renderModeSeg(){$('#modeSeg').innerHTML=[['aqua',['水族','Aquatic']],
 let ovOpen={L:innerWidth>=920,R:innerWidth>=920};
 try{const o=JSON.parse(localStorage.getItem('ecojar.ov')||'null');if(o)ovOpen=o;}catch(e){}
 function renderOvToggles(){
-  const l=$('#tglL'),r=$('#tglR');l.textContent=L('平衡','Balance');r.textContent=L('清單','List');
+  const l=$('#tglL'),r=$('#tglR');l.textContent=L('平衡分析','Balance');r.textContent=L('清單','List');
   l.setAttribute('aria-pressed',ovOpen.L);r.setAttribute('aria-pressed',ovOpen.R);
 }
-$('#tglL').onclick=()=>{ovOpen.L=!ovOpen.L;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
+$('#tglL').onclick=()=>{ovOpen.L=!ovOpen.L;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();if(ovOpen.L)renderBalance();};
 $('#tglR').onclick=()=>{ovOpen.R=!ovOpen.R;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
 function renderOv(){renderOvToggles();renderOvL();renderOvR();}
 function renderOvL(){
-  const el=$('#ovL');el.hidden=!ovOpen.L;if(!ovOpen.L)return;
-  if(S.mode==='aqua'&&!wLOf(S)){el.hidden=true;return;}
-  const items=budgets();
-  if(!items.length){el.hidden=true;return;}
-  el.innerHTML=`<h4>${L('平衡','Balance')}</h4>`+(items.length?items.map((b,i)=>`<button class="ovrow" data-bi="${i}"><i class="${b.cls==='good'?'':b.cls}"></i><span>${b.title}</span><em>${b.right}</em></button>`).join(''):`<p class="ovnote">${L('未有生物','Nothing living')}</p>`);
-  el.querySelectorAll('[data-bi]').forEach(b=>b.onclick=()=>{showTab('bal');const t=$('#bud-'+b.dataset.bi);if(t){t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.remove('flash');void t.offsetWidth;t.classList.add('flash');}});
+  const el=$('#ovL');el.hidden=!ovOpen.L;$('#ovLT').textContent=L('平衡分析','Balance');
+  $('#ovLX').setAttribute('aria-label',L('收起平衡分析','Close balance'));
 }
+function openBal(){ovOpen.L=true;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();renderBalance();$('#ovL').scrollTop=0;}
+$('#ovLX').onclick=()=>{ovOpen.L=false;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
 function renderOvR(){
   const el=$('#ovR');el.hidden=!ovOpen.R;if(!ovOpen.R)return;
   const its=S.items.filter(i=>['plant','animal'].includes(CAT[i.type].kind)).sort((a,b)=>(CAT[a.type].kind==='animal'?0:1)-(CAT[b.type].kind==='animal'?0:1)||a.uid-b.uid);
@@ -2432,7 +2438,7 @@ function renderIssuePop(){
   pop.querySelectorAll('[data-see]').forEach(b=>b.onclick=()=>{const x=list[+b.dataset.see],it=x.items[0];issueOpen=false;pop.hidden=true;
     const r=$('#stage').getBoundingClientRect(),v=it.m?it.m.p.clone():new THREE.Vector3();if(it.g)v.copy(it.g.position);v.project(camera);
     select(it,{clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height});});
-  pop.querySelectorAll('[data-bal]').forEach(b=>b.onclick=()=>{issueOpen=false;pop.hidden=true;showTab('bal');});
+  pop.querySelectorAll('[data-bal]').forEach(b=>b.onclick=()=>{issueOpen=false;pop.hidden=true;openBal();});
 }
 
 /* ================= 真實嘅瓶：建議 & 副本試 ================= */
@@ -2480,7 +2486,7 @@ function frame(t){
   if(t-lastUI>250){lastUI=t;renderMeters();fitOverlays();
     if(dirtyList&&!editing()){renderJarList();updateCatCounts();if(S.sel&&!S.items.includes(S.sel)){S.sel=null;}renderOvR();}else updateJarLive();
     if(popIt)updatePop();
-    if(curTab==='bal'&&t-lastBal>2500&&!document.activeElement?.closest?.('#pane-bal')){lastBal=t;renderBalance();}}
+    if(ovOpen.L&&t-lastBal>2500&&!document.activeElement?.closest?.('#pane-bal')&&!($('#repBox')&&$('#repBox').matches(':hover'))){lastBal=t;renderBalance();}}
   if(t-lastOv>1000){lastOv=t;renderOvL();if(!dirtyList)renderOvR();if(issueOpen)renderIssuePop();}
   if(t-lastSave>15000){lastSave=t;save();}
   requestAnimationFrame(frame);
