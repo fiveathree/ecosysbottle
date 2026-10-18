@@ -242,8 +242,8 @@ function lizardModel(bc,tc,spot,belly){
   if(spot!=null){const sm=mat(spot);for(let i=0;i<10;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.006,6,4),sm);s.position.set(rnd(-.06,.05),.036,rnd(-.018,.018));inner.add(s);}}
   g.userData={inner};return g;
 }
-function frogModel(){
-  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const m=mat(0x2a6fd6),k=mat(0x0d1530);
+function frogModel(bc=0x2a6fd6,sc=0x0d1530){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const m=mat(bc),k=mat(sc);
   const body=new THREE.Mesh(new THREE.SphereGeometry(.03,12,10),m);body.scale.set(1.25,.85,1);body.position.y=.025;inner.add(body);
   for(let i=0;i<6;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.006,6,4),k);const a=rnd(0,6.28);s.position.set(Math.cos(a)*.022,.045,Math.sin(a)*.02);inner.add(s);}
   [[.02,.028],[.02,-.028],[-.025,.03],[-.025,-.03]].forEach(([x,z])=>{const l=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),m);l.position.set(x,.008,z);l.scale.set(1.5,.5,1);inner.add(l);});
@@ -259,13 +259,13 @@ function jellyModel(color,r){
   for(let i=0;i<10;i++){const a=i/10*6.28,t=new THREE.Mesh(new THREE.CylinderGeometry(.0015,.0015,r*2.2,3),tm);t.position.set(Math.cos(a)*r*.85,-r*1.1,Math.sin(a)*r*.85);inner.add(t);}
   g.userData={inner,bell};return g;
 }
-function seahorseModel(){
-  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const m=mat(0xe0a43a);
+function seahorseModel(bc=0xe0a43a,fc=0xf2c86a){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const m=mat(bc);
   const pts=[[0,.1,0],[.012,.07,0],[.008,.035,0],[-.008,0,0],[-.004,-.035,0],[.014,-.055,0],[.022,-.045,0]].map(p=>new THREE.Vector3(p[0],p[1],p[2]));
   inner.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),24,.012,8,false),m));
   const head=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),m);head.position.set(.004,.108,0);inner.add(head);
   const snout=new THREE.Mesh(new THREE.CylinderGeometry(.005,.006,.04,6),m);snout.rotation.z=Math.PI/2;snout.position.set(.03,.104,0);inner.add(snout);
-  const fin=new THREE.Mesh(new THREE.CircleGeometry(.014,8),mat(0xf2c86a,{side:THREE.DoubleSide,transparent:true,opacity:.8}));fin.position.set(-.018,.05,0);inner.add(fin);
+  const fin=new THREE.Mesh(new THREE.CircleGeometry(.014,8),mat(fc,{side:THREE.DoubleSide,transparent:true,opacity:.8}));fin.position.set(-.018,.05,0);inner.add(fin);
   const em=mat(0x111111);[1,-1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.004,6,6),em);e.position.set(.01,.112,s*.012);inner.add(e);});
   g.userData={inner};return g;
 }
@@ -277,8 +277,8 @@ function crabModel(color,shell){
   if(shell){const sh=new THREE.Mesh(new THREE.ConeGeometry(.04,.08,10),mat(0xe8dcc0));sh.rotation.z=Math.PI/2;sh.position.set(-.05,.045,0);inner.add(sh);}
   g.userData={inner};return g;
 }
-function eelModel(){
-  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const m=mat(0xe8e2d2),k=mat(0x1a1a1a);
+function eelModel(bc=0xe8e2d2,sc=0x1a1a1a){
+  const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);const m=mat(bc),k=mat(sc);
   // 比以前高少少、粗少少，唔好溶入沙度睇唔到
   const pts=[[0,0,0],[.008,.075,0],[-.005,.15,0],[.01,.225,0],[.025,.262,0]].map(p=>new THREE.Vector3(p[0],p[1],p[2]));
   inner.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),24,.011,7,false),m));
@@ -362,6 +362,15 @@ function itemModel(it){
       const disc=new THREE.Mesh(new THREE.CylinderGeometry(s,s*.8,.012,14),dm);d.add(disc);const dot=new THREE.Mesh(new THREE.CircleGeometry(s*.25,10),cm);dot.rotation.x=-Math.PI/2;dot.position.y=.0065;d.add(dot);
       d.position.set(Math.cos(a)*r,.015+rnd(0,.02),Math.sin(a)*r);d.rotation.set(rnd(-.4,.4),0,rnd(-.4,.4));g.add(d);}
     g.userData.top=.06;}
+  else if(t==='anemone'){const v=variantOf(it);g=new THREE.Group();const cm=mat(v.c),tm=mat(v.p);
+    const col=new THREE.Mesh(new THREE.CylinderGeometry(.05,.06,.05,12),cm);col.position.y=.025;g.add(col);g.userData.blades=[];
+    for(let i=0;i<34;i++){const a=i/34*6.28+rnd(-.1,.1),r=rnd(.01,.05),len=rnd(.06,.09),tc=new THREE.Group();
+      const tn=new THREE.Mesh(new THREE.CylinderGeometry(.004,.007,len,5),cm);tn.position.y=len/2;tc.add(tn);const tip=new THREE.Mesh(new THREE.SphereGeometry(.007,6,4),tm);tip.position.y=len;tc.add(tip);
+      tc.position.set(Math.cos(a)*r,.05,Math.sin(a)*r);tc.rotation.set(Math.sin(a)*.8,0,-Math.cos(a)*.8);tc.userData.ph=rnd(0,6);g.add(tc);g.userData.blades.push(tc);}
+    g.userData.top=.14;}
+  else if(t==='bubble'){const v=variantOf(it);g=new THREE.Group();const bm=new THREE.MeshPhongMaterial({color:v.c,shininess:120,specular:0xffffff,transparent:true,opacity:.92});
+    for(let i=0;i<9;i++){const r=rnd(.012,.026),b=new THREE.Mesh(new THREE.SphereGeometry(r,12,10),bm);const a=rnd(0,6.28),d=rnd(0,.05);b.position.set(Math.cos(a)*d,r+rnd(0,.02),Math.sin(a)*d);g.add(b);}
+    g.userData.top=.07;}
   else if(t==='seagrass')g=blades(C.color,12,Math.min(wH*.45,.35),.014,.3);
   else if(t==='redalgae'){const v=variantOf(it);g=clump(v.cs,40,.16,.028,.16);}
   else if(t==='duckweed'){g=new THREE.Group();const m=mat(C.color,{side:THREE.DoubleSide});
@@ -376,26 +385,28 @@ function itemModel(it){
   else if(t==='fittonia')g=clump(variantOf(it).cs,30,.13,.04,.1);
   else if(t==='guppy'){const v=variantOf(it);g=fishModel(v.b,v.f,.055,false);}
   else if(t==='medaka'){const v=variantOf(it);g=fishModel(v.b,v.f,.045,true);}
-  else if(t==='minnow')g=fishModel(0xc9d3c2,0xd3473a,.05,true);
+  else if(t==='minnow'){const v=variantOf(it);g=fishModel(v.b,v.f,.05,true);}
   else if(t==='betta'){const v=variantOf(it);g=fishModel(v.b,v.f,.055,false,true);}
-  else if(t==='pleco')g=fishModel(0x5a4a35,0x3d3226,.06,false);
+  else if(t==='pleco'){const v=variantOf(it);g=fishModel(v.b,v.f,.06,false);}
+  else if(t==='clown'){const v=variantOf(it);g=fishModel(v.b,v.f,.045,false);const inn=g.userData.inner||g.children[0],sm=mat(v.st);
+    [.055,0,-.05].forEach((x,i)=>{const r=new THREE.Mesh(new THREE.SphereGeometry(.045,14,10),sm);r.scale.set(.09,i===1?.8:.72,.55);r.position.x=x;inn.add(r);});}
   else if(t==='shrimp')g=shrimpModel(variantOf(it).c,.92);
   else if(t==='amano')g=shrimpModel(0xb9b2a0,.6);
   else if(t==='snail'||t==='nerite'){const v=variantOf(it);g=snailModel(v.c,v.s);}
   else if(t==='daphnia')g=swarmPoints(40,0xd9b46a,.022,.12);
   else if(t==='jelly')g=jellyModel(0xe9eef2,.035);
-  else if(t==='moonjelly')g=jellyModel(0xdfe6ff,.06);
-  else if(t==='seahorse')g=seahorseModel();
-  else if(t==='gardeneel')g=eelModel();
-  else if(t==='crab')g=crabModel(0xc4502c,false);
-  else if(t==='hermit')g=crabModel(0xd06a3a,true);
+  else if(t==='moonjelly')g=jellyModel(variantOf(it).c,.06);
+  else if(t==='seahorse'){const v=variantOf(it);g=seahorseModel(v.c,v.f);}
+  else if(t==='gardeneel'){const v=variantOf(it);g=eelModel(v.c,v.s);}
+  else if(t==='crab')g=crabModel(variantOf(it).c,false);
+  else if(t==='hermit')g=crabModel(variantOf(it).c,true);
   else if(t==='slider')g=turtleModel(0x4f7a3a,0x7a9a3a,1.1);
   else if(t==='turtle')g=turtleModel(0x4b4a2c,0x5d6b4a,1);
-  else if(t==='newt')g=lizardModel(0x2b2b2b,0x222222,null,0xe0542a);
-  else if(t==='gecko')g=lizardModel(0xc9893f,0x8e5a22,null,null);
-  else if(t==='leopard')g=lizardModel(0xe8c23a,0xd9b030,0x3a2a1a,null);
-  else if(t==='frog')g=frogModel();
-  else if(t==='isopod'){g=new THREE.Group();it.agents=[];const m=mat(0x6f6a66);
+  else if(t==='newt'){const v=variantOf(it);g=lizardModel(v.b,v.t,null,v.bl);}
+  else if(t==='gecko'){const v=variantOf(it);g=lizardModel(v.b,v.t,null,null);}
+  else if(t==='leopard'){const v=variantOf(it);g=lizardModel(v.b,v.t,v.sp,null);}
+  else if(t==='frog'){const v=variantOf(it);g=frogModel(v.b,v.s);}
+  else if(t==='isopod'){g=new THREE.Group();it.agents=[];const m=mat(variantOf(it).c);
     for(let i=0;i<8;i++){const b=new THREE.Mesh(new THREE.SphereGeometry(.013,8,6),m);b.scale.set(1.7,.55,1.1);g.add(b);it.agents.push({mesh:b,p:new THREE.Vector3(),hd:rnd(0,6.28)});}}
   else if(t==='springtail')g=swarmPoints(70,0xeeeeea,.014,.2);
   else {g=new THREE.Group();g.add(new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.02,24),new THREE.MeshBasicMaterial({visible:false})));}
@@ -506,7 +517,8 @@ function camTrack(dt){
   if(!ptrs.size){camF.yaw*=1-Math.min(1,dt*.8);camF.pitch*=1-Math.min(1,dt*.8);}
   if(it.g)it.g.visible=false;
   const d=camF.dir.clone().applyAxisAngle(new THREE.Vector3(0,1,0),camF.yaw);d.y=clamp(d.y+camF.pitch,-.9,.9);d.normalize();
-  camera.position.copy(it.m.p).add(new THREE.Vector3(0,.018,0));camera.lookAt(camera.position.clone().add(d));
+  const mvT=CAT[it.type].move,eye=mvT==='eel'?Math.max(.15,.27*((it.g&&it.g.userData.inner)?it.g.userData.inner.scale.y:1)):mvT==='seahorse'?.1:.018;
+  camera.position.copy(it.m.p).add(new THREE.Vector3(0,eye,0));camera.lookAt(camera.position.clone().add(d));
   stage.classList.toggle('pov-water',J.waterTop!=null&&camera.position.y<J.waterTop&&inWater(camera.position.x,camera.position.z,0));return true;}
 function updateCam(){const {theta,phi,dist,target}=cam;camera.position.set(target.x+dist*Math.sin(phi)*Math.sin(theta),target.y+dist*Math.cos(phi),target.z+dist*Math.sin(phi)*Math.cos(theta));camera.lookAt(target);}
 const ray=new THREE.Raycaster();ray.params.Points.threshold=.04;
@@ -562,6 +574,9 @@ function lightLevel(hf){const on=7,off=7+S.light;if(S.light>=24)return 1;if(S.li
 function face(g,v,pitchMax){if(v.lengthSq()>1e-8){g.rotation.y=Math.atan2(-v.z,v.x);const hz=Math.hypot(v.x,v.z);g.rotation.z=clamp(Math.atan2(v.y,hz),-pitchMax,pitchMax);}}
 function steer(m,spd,dt,rate){const d=m.tgt.clone().sub(m.p),l=d.length();if(l>1e-4)d.multiplyScalar(spd/l);m.v.lerp(d,Math.min(1,dt*rate));}
 function hasLand(){if(J.waterTop==null)return false;for(let i=0;i<12;i++){const [x,z]=randIn(J.sTop,.8);if(!inWater(x,z,-.01))return true;}return false;}
+/* 小丑魚：有海葵就喺佢附近游 */
+function clownHome(m){const an=S.items.find(i=>i.alive&&i.type==='anemone'&&i.g);if(!an||J.waterTop==null)return false;const p=an.g.position,a=rnd(0,6.28),r=rnd(.04,.16);
+  m.tgt.set(p.x+Math.cos(a)*r,clamp(p.y+rnd(.06,.22),p.y+.04,J.waterTop-.06),p.z+Math.sin(a)*r);return true;}
 function swimTarget(m,lo,hi){const p=waterPoint(.06);if(!p){m.tgt.copy(m.p);return;}const gy=groundY(p[0],p[1]),a=gy+(lo??.08),b=Math.max(a,J.waterTop-(hi??.06));m.tgt.set(p[0],rnd(a,b),p[1]);}
 const SWIMMERS=['swim','swarm','jelly','seahorse','aqturtle'],BOTTOM=['crawl','pleco','crab'];
 function animate(dt,hf){
@@ -628,7 +643,7 @@ function animate(dt,hf){
       m.p.y=groundY(m.p.x,m.p.z);g.position.copy(m.p);continue;
     }
     if(mv==='swim'){
-      m.tt-=dt;if(m.tt<=0||m.p.distanceTo(m.tgt)<.08){swimTarget(m);m.tt=rnd(2.5,6);}
+      m.tt-=dt;if(m.tt<=0||m.p.distanceTo(m.tgt)<.08){if(!(it.type==='clown'&&clownHome(m)))swimTarget(m);m.tt=rnd(2.5,6);}
       if(oc<p.o2Min+.6){m.tgt.y=wt-.07;}
       steer(m,(it.stress?.14:.24)*hb,dt,1.6);
       u.tail.rotation.y=Math.sin(tAll*(8+m.v.length()*30)+m.ph)*.45;

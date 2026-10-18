@@ -62,7 +62,7 @@ const UNLOCKS=[
   {id:'u_week',t:['平安一星期','A calm week'],cond:()=>!!PLAY.ach.week,
     features:['palu','ff'],types:['jelly','pleco','crab'],regions:['amazon','amazonriver','borneo','pantanal','mekong'],presets:['aqua.jelly','rain.palu','rain.amazon']},
   {id:'u_col12',t:['收藏 12 種生物','Collect 12 species'],prog:()=>`${Math.min(12,colN())}/12`,cond:()=>colN()>=12,
-    features:['salt'],types:['caulerpa','softcoral','mushroom','seagrass','redalgae','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],presets:['aqua.sea','aqua.reef','aqua.moon','aqua.eel']},
+    features:['salt'],types:['caulerpa','softcoral','mushroom','seagrass','redalgae','anemone','bubble','clown','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],presets:['aqua.sea','aqua.reef','aqua.moon','aqua.eel']},
   {id:'u_ch3',t:['完成 3 個挑戰','Complete 3 challenges'],prog:()=>`${Math.min(3,chN())}/3`,cond:()=>chN()>=3,
     types:['gecko','newt','turtle','slider','leopard'],regions:['sahara','cloudforest','tanganyika','baikal'],presets:['rain.gecko','rain.newt','rain.turtle','rain.desert']},
 ];
