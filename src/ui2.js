@@ -43,7 +43,20 @@ function renderCamBar(){const b=$('#camBar'),it=camF.it;b.hidden=!camF.mode;if(!
   b.innerHTML=`<span class="dot" style="background:${CAT[it.type].color}"></span><b>${esc(label(it))}</b><div class="seg" role="group" aria-label="${L('鏡頭','Camera')}"><button aria-pressed="${camF.mode==='follow'}" data-cm="follow">${L('以佢為中心','Centred')}</button><button aria-pressed="${camF.mode==='pov'}" data-cm="pov">${L('第一視角','Its view')}</button></div><button class="x" id="camX" aria-label="${L('停止跟住','Stop following')}">×</button>`;
   b.querySelectorAll('[data-cm]').forEach(x=>x.onclick=()=>camFollow(camF.it,x.dataset.cm));$('#camX').onclick=camStop;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&camF.mode&&!document.querySelector('dialog[open]'))camStop();});
-function renderOv(){renderCamBar();renderOvToggles();renderOvL();renderOvR();fitOverlays();}
+/* 日夜畫面鎖定：只改 3D 畫面嘅光暗，模擬入面嘅光照同光合作用照舊 */
+let viewLight='auto';try{const v=localStorage.getItem('ecojar.dn');if(v==='day'||v==='night')viewLight=v;}catch(e){}
+const DN={auto:['☀︎☾ 日夜自動','☀︎☾ Auto day/night'],day:['☀︎ 一直日頭','☀︎ Always day'],night:['☾ 一直夜晚','☾ Always night']};
+function renderDn(){const b=$('#dnBtn');b.textContent=N(DN[viewLight]);b.setAttribute('aria-pressed',viewLight!=='auto');b.title=L('只改畫面，唔影響模擬嘅光照同光合作用','Only changes the view; simulated light and photosynthesis are unchanged');}
+$('#dnBtn').onclick=()=>{viewLight={auto:'day',day:'night',night:'auto'}[viewLight];try{localStorage.setItem('ecojar.dn',viewLight);}catch(e){}renderDn();
+  toast(viewLight==='auto'?L('畫面跟返模擬時間轉日夜','The view follows the simulated time again'):L('只係鎖住畫面；模擬照樣有日夜','Only the view is locked; the simulation still has day and night'));};
+/* 頂部「預設組合」：揀一個取代而家呢個瓶 */
+$('#presetBtn').onclick=()=>{const ps=PRESETS[S.mode],real=S.real;
+  const d=openDlg(`<h4>${L('預設組合','Presets')} · ${N({aqua:['水族','Aquatic'],rain:['雨林／水陸','Rainforest / paludarium']}[S.mode])}</h4>
+    <p class="lede">${real?L('呢個係真實嘅瓶，唔可以用預設取代。請先轉去另一個瓶。','This is a real tank and cannot be replaced by a preset. Switch to another jar first.'):L('揀一個會取代而家呢個瓶入面所有嘢。想保留而家個瓶，就先轉去一個空瓶。','Picking one replaces everything in this jar. To keep this jar, switch to an empty one first.')}</p>
+    <div class="plist">${Object.entries(ps).map(([k,p])=>`<button class="preset" data-pp="${k}" ${real?'disabled':''}><b>${N(p.n)}</b><span>${N(p.d)}</span></button>`).join('')}</div>
+    <div class="acts"><button class="btn" data-close>${L('取消','Cancel')}</button></div>`);
+  d.querySelectorAll('[data-pp]').forEach(b=>b.onclick=()=>{d.close();loadPreset(b.dataset.pp);});};
+function renderOv(){renderCamBar();renderDn();renderOvToggles();renderOvL();renderOvR();fitOverlays();}
 function renderOvL(){
   const el=$('#ovL');el.hidden=!ovOpen.L;$('#ovLT').textContent=L('平衡分析','Balance');
   $('#ovLX').setAttribute('aria-label',L('收起平衡分析','Close balance'));

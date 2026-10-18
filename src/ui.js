@@ -56,7 +56,7 @@ function renderChrome(){
   document.documentElement.lang=LANG==='en'?'en':'zh-Hant';
   $('#brandT').textContent=L('生態瓶實驗室','Eco Jar Lab');$('#brandS').textContent=L('ECO JAR LAB','生態瓶實驗室');
   $('#playBtn').textContent=S.running?L('暫停','Pause'):L('繼續','Play');
-  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('分享','Share');
+  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('分享','Share');$('#presetBtn').textContent=L('預設組合','Presets');
   $('#langBtn').textContent=LANG==='en'?'中文':'EN';$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank']};

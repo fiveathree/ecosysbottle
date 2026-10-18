@@ -282,6 +282,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .dlg .slots label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
 .dlg .slots label:has(input:disabled){opacity:.55;cursor:not-allowed}
 .dlg .slots small{color:var(--muted)}
+.dlg .plist{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto;margin-top:10px}
+.dlg .plist .preset:disabled{opacity:.5;cursor:not-allowed}
 .dlg .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 .realtag{font-size:10px;padding:0 5px;border-radius:4px;background:var(--warn);color:var(--on-accent);margin-left:5px;font-weight:700}
 .buildbar{position:absolute;left:10px;right:10px;bottom:10px;z-index:5;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:12px;background:var(--glass);backdrop-filter:blur(8px);border:1px solid var(--accent)}
