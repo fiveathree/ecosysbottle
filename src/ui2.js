@@ -257,9 +257,9 @@ function moveDoomed(){
   const R=S.report;if(!R||S.real)return;const ids=new Set(R.doomed||[]),alive=S.items.filter(i=>i.alive),mv=alive.filter(i=>ids.has(i.uid));if(!mv.length)return;
   const slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i)&&!(S.jars[i]&&(S.jars[i].items||[]).length)&&!(S.jars[i]&&S.jars[i].real));
   if(slot==null){toast(L('沒有空瓶：先清空另一個瓶','No empty jar: empty another jar first'));return;}
-  const snap=snapshot(),name=(S.jarName||jarNames()[S.cur])+L('（分出）',' (split)');
+  const snap=snapshot(),name=L(`瓶${slot+1}`,`Jar ${slot+1}`); // 新瓶用預設名，唔再加「（分出）」
   snap.items=snap.items.filter((o,k)=>CAT[o.type].kind!=='animal'||ids.has(alive[k].uid));
-  S.jars[slot]=Object.assign(snap,{name,real:false,log:[],hist:[],chal:null,deathN:0});
+  S.jars[slot]=Object.assign(snap,{name:'',real:false,log:[],hist:[],chal:null,deathN:0});
   mv.forEach(i=>{disposeObj(i.g);if(S.sel===i)S.sel=null;});S.items=S.items.filter(i=>!mv.includes(i));
   const names=[...new Set(mv.map(i=>N(CAT[i.type].name)))].join(L('、',', '));
   logEv(`將 ${names} 搬了去「${name}」`,`Moved ${names} to "${name}"`,'muted');S.report=null;
@@ -267,8 +267,8 @@ function moveDoomed(){
 }
 function copyToTrial(){
   const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j&&!jarLock(i));if(slot<0)slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i));if(slot==null){toast(L('還沒有其他瓶可用：完成新手任務可解鎖瓶2','No other jar yet: finish the starter missions to unlock Jar 2'));return;}
-  const name=(S.jarName||jarNames()[S.cur])+L('（試）',' (trial)');
-  S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false,chal:null,deathN:0}));S.report=null;
+  const name=L(`瓶${slot+1}`,`Jar ${slot+1}`); // 用預設名，唔再加「（試）」
+  S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name:'',real:false,chal:null,deathN:0}));S.report=null;
   renderAll();save();toast(L(`複製了去「${name}」，現在套用建議`,`Copied to "${name}" and applying the suggestions`));setTimeout(autoBalance,60);
 }
 

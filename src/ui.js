@@ -517,10 +517,12 @@ const blankSnap=i=>({terra:null,name:'',region:'hk',real:false,mode:'aqua',V:4,s
 function switchJar(i){if(i===S.cur)return;{const lk=jarLock(i);if(lk){toast(lockText(lk));return;}}S.jars[S.cur]=snapshot();S.cur=i;restoreSnap(S.jars[i]||blankSnap(i));renderAll();save();toast(L('轉了去 ','Switched to ')+jarNames()[i]);}
 const KEY='ecojar.v4';
 let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{const jars=S.jars.slice();jars[S.cur]=snapshot();S.jars=jars;localStorage.setItem(KEY,JSON.stringify({cur:S.cur,jars,ana:S.ana}));}catch(e){}},500);}
+/* 舊版自動改嘅瓶名（「瓶 1」「瓶 1（分出）」「（試）」）清走，顯示返預設「瓶1」；自己改嘅名保留 */
+function cleanJarName(n){if(!n)return'';const t=String(n).replace(/(（分出）|（試）| \(split\)| \(trial\))+$/,'');return /^(瓶 ?\d+|Jar \d+)$/.test(t)?'':t;}
 function load(){
   {const l=pref.get('ecojar.lang');if(l==='en'||l==='zh')LANG=l;}
   try{const d=JSON.parse(localStorage.getItem(KEY)||'null');
-    if(d&&Array.isArray(d.jars)){S.jars=[0,1,2].map(i=>d.jars[i]||null);S.cur=clamp(d.cur|0,0,2);S.ana=d.ana||null;const j=S.jars[S.cur];if(j){restoreSnap(j);return true;}return false;}
+    if(d&&Array.isArray(d.jars)){S.jars=[0,1,2].map(i=>{const j=d.jars[i]||null;if(j)j.name=cleanJarName(j.name);return j;});S.cur=clamp(d.cur|0,0,2);S.ana=d.ana||null;const j=S.jars[S.cur];if(j){restoreSnap(j);return true;}return false;}
     const o=JSON.parse(localStorage.getItem('ecojar.v2')||'null');
     if(o&&o.items&&PRESETS[o.mode]){const snap=Object.assign({},o,{name:'',level:o.mode==='rain'?0:0,items:o.items.filter(([t])=>CAT[t]).map(([type,params,name])=>({type,params,name}))});restoreSnap(snap);return true;}
   }catch(e){}

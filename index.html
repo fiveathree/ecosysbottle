@@ -2521,10 +2521,12 @@ const blankSnap=i=>({terra:null,name:'',region:'hk',real:false,mode:'aqua',V:4,s
 function switchJar(i){if(i===S.cur)return;{const lk=jarLock(i);if(lk){toast(lockText(lk));return;}}S.jars[S.cur]=snapshot();S.cur=i;restoreSnap(S.jars[i]||blankSnap(i));renderAll();save();toast(L('轉了去 ','Switched to ')+jarNames()[i]);}
 const KEY='ecojar.v4';
 let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{const jars=S.jars.slice();jars[S.cur]=snapshot();S.jars=jars;localStorage.setItem(KEY,JSON.stringify({cur:S.cur,jars,ana:S.ana}));}catch(e){}},500);}
+/* 舊版自動改嘅瓶名（「瓶 1」「瓶 1（分出）」「（試）」）清走，顯示返預設「瓶1」；自己改嘅名保留 */
+function cleanJarName(n){if(!n)return'';const t=String(n).replace(/(（分出）|（試）| \(split\)| \(trial\))+$/,'');return /^(瓶 ?\d+|Jar \d+)$/.test(t)?'':t;}
 function load(){
   {const l=pref.get('ecojar.lang');if(l==='en'||l==='zh')LANG=l;}
   try{const d=JSON.parse(localStorage.getItem(KEY)||'null');
-    if(d&&Array.isArray(d.jars)){S.jars=[0,1,2].map(i=>d.jars[i]||null);S.cur=clamp(d.cur|0,0,2);S.ana=d.ana||null;const j=S.jars[S.cur];if(j){restoreSnap(j);return true;}return false;}
+    if(d&&Array.isArray(d.jars)){S.jars=[0,1,2].map(i=>{const j=d.jars[i]||null;if(j)j.name=cleanJarName(j.name);return j;});S.cur=clamp(d.cur|0,0,2);S.ana=d.ana||null;const j=S.jars[S.cur];if(j){restoreSnap(j);return true;}return false;}
     const o=JSON.parse(localStorage.getItem('ecojar.v2')||'null');
     if(o&&o.items&&PRESETS[o.mode]){const snap=Object.assign({},o,{name:'',level:o.mode==='rain'?0:0,items:o.items.filter(([t])=>CAT[t]).map(([type,params,name])=>({type,params,name}))});restoreSnap(snap);return true;}
   }catch(e){}
@@ -2898,9 +2900,9 @@ function moveDoomed(){
   const R=S.report;if(!R||S.real)return;const ids=new Set(R.doomed||[]),alive=S.items.filter(i=>i.alive),mv=alive.filter(i=>ids.has(i.uid));if(!mv.length)return;
   const slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i)&&!(S.jars[i]&&(S.jars[i].items||[]).length)&&!(S.jars[i]&&S.jars[i].real));
   if(slot==null){toast(L('沒有空瓶：先清空另一個瓶','No empty jar: empty another jar first'));return;}
-  const snap=snapshot(),name=(S.jarName||jarNames()[S.cur])+L('（分出）',' (split)');
+  const snap=snapshot(),name=L(`瓶${slot+1}`,`Jar ${slot+1}`); // 新瓶用預設名，唔再加「（分出）」
   snap.items=snap.items.filter((o,k)=>CAT[o.type].kind!=='animal'||ids.has(alive[k].uid));
-  S.jars[slot]=Object.assign(snap,{name,real:false,log:[],hist:[],chal:null,deathN:0});
+  S.jars[slot]=Object.assign(snap,{name:'',real:false,log:[],hist:[],chal:null,deathN:0});
   mv.forEach(i=>{disposeObj(i.g);if(S.sel===i)S.sel=null;});S.items=S.items.filter(i=>!mv.includes(i));
   const names=[...new Set(mv.map(i=>N(CAT[i.type].name)))].join(L('、',', '));
   logEv(`將 ${names} 搬了去「${name}」`,`Moved ${names} to "${name}"`,'muted');S.report=null;
@@ -2908,8 +2910,8 @@ function moveDoomed(){
 }
 function copyToTrial(){
   const snap=snapshot();let slot=S.jars.findIndex((j,i)=>i!==S.cur&&!j&&!jarLock(i));if(slot<0)slot=[0,1,2].find(i=>i!==S.cur&&!jarLock(i));if(slot==null){toast(L('還沒有其他瓶可用：完成新手任務可解鎖瓶2','No other jar yet: finish the starter missions to unlock Jar 2'));return;}
-  const name=(S.jarName||jarNames()[S.cur])+L('（試）',' (trial)');
-  S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name,real:false,chal:null,deathN:0}));S.report=null;
+  const name=L(`瓶${slot+1}`,`Jar ${slot+1}`); // 用預設名，唔再加「（試）」
+  S.jars[S.cur]=snap;S.cur=slot;restoreSnap(Object.assign({},snap,{name:'',real:false,chal:null,deathN:0}));S.report=null;
   renderAll();save();toast(L(`複製了去「${name}」，現在套用建議`,`Copied to "${name}" and applying the suggestions`));setTimeout(autoBalance,60);
 }
 
