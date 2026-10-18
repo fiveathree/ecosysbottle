@@ -37,6 +37,10 @@ function renderOvToggles(){
 const saveOv=()=>pref.set('ecojar.ov',JSON.stringify(ovOpen));
 function setOv(s,v){ovOpen[s]=v;saveOv();renderOv();if(s==='L'&&v)renderBalance();}
 $('#edgeL').onclick=()=>setOv('L',!ovOpen.L);$('#edgeR').onclick=()=>setOv('R',!ovOpen.R);
+/* 頂部「⋯」選單：分享、語言等少用嘅掣 */
+{const btn=$('#moreBtn'),menu=$('#moreMenu');const set=o=>{menu.hidden=!o;btn.setAttribute('aria-expanded',o);};
+  btn.onclick=e=>{e.stopPropagation();set(menu.hidden);};menu.addEventListener('click',()=>set(false));
+  document.addEventListener('click',e=>{if(!menu.hidden&&!menu.contains(e.target))set(false);});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){set(false);btn.focus();}});}
 /* 跟住生物時嘅鏡頭列 */
 function renderCamBar(){const b=$('#camBar'),it=camF.it;b.hidden=!camF.mode;if(!camF.mode)return;
   b.innerHTML=`<span class="dot" style="background:${CAT[it.type].color}"></span><b>${esc(label(it))}</b><div class="seg" role="group" aria-label="${L('鏡頭','Camera')}"><button aria-pressed="${camF.mode==='follow'}" data-cm="follow">${L('以佢為中心','Centred')}</button><button aria-pressed="${camF.mode==='pov'}" data-cm="pov">${L('第一視角','Its view')}</button></div><button class="x" id="camX" aria-label="${L('停止跟住','Stop following')}">×</button>`;

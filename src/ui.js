@@ -57,8 +57,8 @@ function renderChrome(){
   document.documentElement.lang=LANG==='en'?'en':'zh-Hant';
   $('#brandT').textContent=L('生態瓶實驗室','Eco Jar Lab');$('#brandS').textContent=L('ECO JAR LAB','生態瓶實驗室');
   $('#playBtn').textContent=S.running?L('暫停','Pause'):L('繼續','Play');
-  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('分享','Share');$('#presetBtn').textContent=L('預設組合','Presets');
-  $('#langBtn').textContent=LANG==='en'?'中文':'EN';$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
+  $('#feedBtn').textContent=L('即刻餵食','Feed now');$('#buildHdr').textContent=S.build?L('完成砌缸','Finish building'):L('自己砌缸','Build');$('#buildHdr').classList.toggle('on',!!S.build);$('#balBtn').textContent=L('一鍵平衡','Auto-balance');$('#shareBtn').textContent=L('🔗 分享呢個瓶','🔗 Share this jar');$('#presetBtn').textContent=L('預設組合','Presets');
+  $('#langBtn').textContent=LANG==='en'?'🌐 中文':'🌐 English';$('#moreBtn').setAttribute('aria-label',L('更多','More'));$('#langBtn').setAttribute('aria-label',L('Switch to English','切換到中文'));
   if(!clearArm)$('#clearBtn').textContent=L('一鍵清空','Empty jar');
   const tabs={add:['加入','Add'],jar:['瓶內','In jar'],bal:['平衡分析','Balance'],env:['環境同天氣','Setup & weather'],ana:['分析水缸','Analyse a tank'],play:['玩法','Play']};
   document.querySelectorAll('.tabs button').forEach(b=>{b.textContent=N(tabs[b.dataset.tab])+(b.dataset.tab==='jar'?` (${S.items.filter(i=>i.alive).length})`:'');});
@@ -421,44 +421,48 @@ function shapeIcon(k){const sh=SHAPES[k];
   const d='M'+pts.map(([x,y])=>`${(20+x).toFixed(1)} ${y.toFixed(1)}`).join('L')+'L'+[...pts].reverse().map(([x,y])=>`${(20-x).toFixed(1)} ${y.toFixed(1)}`).join('L')+'Z';
   return`<svg viewBox="0 0 40 50" aria-hidden="true"><path d="${d}"/></svg>`;}
 const matHex=k=>'#'+MATS[k].c.toString(16).padStart(6,'0');
+let envAdv=pref.get('ecojar.envAdv')==='1'; // 環境設定：false＝簡易（預設），true＝進階
 function renderEnv(){
   const aq=S.mode==='aqua',wL=wLOf(S);
   const sw=(id,on,t,d)=>`<label class="switch" for="${id}"><span><b>${t}</b><br><span class="lede">${d}</span></span><input type="checkbox" id="${id}" ${on?'checked':''}></label>`;
   const sl=(id,l,v,min,max,step,u,h)=>`<div class="field param"><div class="ph"><label for="${id}">${l}</label><output id="o${id}">${v} ${u}</output></div><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${v}"><small>${h}</small></div>`;
-  const hasW=aq?S.filled:S.level>0;
+  const hasW=aq?S.filled:S.level>0,adv=x=>`<div data-adv>${x}</div>`;
   $('#pane-env').innerHTML=`
+   <div class="envmode"><div class="seg" role="group" aria-label="${L('設定數量','How many settings')}"><button data-envm="0" aria-pressed="${!envAdv}">${L('簡易','Simple')}</button><button data-envm="1" aria-pressed="${envAdv}">${L('進階','Advanced')}</button></div><span class="lede">${envAdv?L('顯示晒全部設定','Showing every setting'):L('只顯示常用設定；形狀、材質、天氣、風扇、換水等等喺「進階」','Common settings only; shape, material, weather, fan, water changes and more are under Advanced')}</span></div>
    ${paneTagBar('env',ENV_TAGS)}
    <div class="field" data-sec="jar"><label for="e-name"><b>${L('呢個瓶嘅名','Name of this jar')}</b></label><input type="text" id="e-name" class="txt" maxlength="16" value="${esc(S.jarName)}" placeholder="${esc(jarNames()[S.cur])}"></div>
    <section class="field" data-sec="place"><h3>${L('地區氣候','Region')}</h3>
      <p class="subhead">${L('城市／地方（可以自訂）','Cities and places (customisable)')}</p>
      <div class="opts">${Object.entries(REGIONS).filter(([,r])=>r.type==='city').map(([k,r])=>{const rr=r.custom?regionOf({region:'custom'}):r;return`<button class="opt" data-region="${k}" aria-pressed="${S.region===k}"><span>${esc(N(rr.n))}</span><em>${rr.t}°C · ${rr.hum}%</em></button>`;}).join('')}</div>
      ${S.region==='custom'?customRegionHtml():''}
-     <p class="subhead">${L('真實生態地域','Real biomes')} · ${N({aqua:['水族','aquatic'],rain:['雨林','rainforest'],palu:['水陸','paludarium']}[modeKey()])}</p>
-     <div class="opts">${Object.entries(REGIONS).filter(([k,r])=>r.type==='biome'&&(r.modes.includes(modeKey())||S.region===k)).map(([k,r])=>{const lk=S.region!==k&&lockOf('region',k);return`<button class="opt" data-region="${k}" aria-pressed="${S.region===k}" ${lk?`disabled title="${esc(lockText(lk))}"`:''}><span>${lk?'🔒 ':''}${N(r.n)}</span><em>${lk?esc(N(lk.t)):`${r.t}°C · ${r.hum}%`}</em></button>`;}).join('')}</div>
+     <p class="subhead" data-adv>${L('真實生態地域','Real biomes')} · ${N({aqua:['水族','aquatic'],rain:['雨林','rainforest'],palu:['水陸','paludarium']}[modeKey()])}</p>
+     <div class="opts" data-adv>${Object.entries(REGIONS).filter(([k,r])=>r.type==='biome'&&(r.modes.includes(modeKey())||S.region===k)).map(([k,r])=>{const lk=S.region!==k&&lockOf('region',k);return`<button class="opt" data-region="${k}" aria-pressed="${S.region===k}" ${lk?`disabled title="${esc(lockText(lk))}"`:''}><span>${lk?'🔒 ':''}${N(r.n)}</span><em>${lk?esc(N(lk.t)):`${r.t}°C · ${r.hum}%`}</em></button>`;}).join('')}</div>
      <small class="lede">${N(regionOf(S).d)} ${L(`平均 ${regionOf(S).t}°C，日夜溫差 ${regionOf(S).sw}°C，濕度 ${regionOf(S).hum}%。`,`Average ${regionOf(S).t}°C, day–night swing ${regionOf(S).sw}°C, humidity ${regionOf(S).hum}%.`)}</small></section>
-   <section class="field" data-sec="place"><h3>${L('天氣','Weather')}</h3><div class="opts">${[['auto',['自動','Auto']],...Object.entries(WX).filter(([k])=>regionOf(S).w[k]>0).map(([k,w])=>[k,w.n])].map(([k,n])=>`<button class="opt" data-wx="${k}" aria-pressed="${S.wxMode===k}"><span>${N(n)}</span></button>`).join('')}</div>
+   <section class="field" data-sec="place" data-adv><h3>${L('天氣','Weather')}</h3><div class="opts">${[['auto',['自動','Auto']],...Object.entries(WX).filter(([k])=>regionOf(S).w[k]>0).map(([k,w])=>[k,w.n])].map(([k,n])=>`<button class="opt" data-wx="${k}" aria-pressed="${S.wxMode===k}"><span>${N(n)}</span></button>`).join('')}</div>
      <small class="lede">${L('個瓶放喺窗邊：天氣會改變光照同溫度；開口時落雨會沖淡氨、提高濕度；雷暴會閃電。','The jar sits by a window: weather changes light and temperature; rain dilutes ammonia and raises humidity when open; storms bring lightning.')}</small></section>
    ${aq?`<section class="field" data-sec="water"><h3>${L('水質','Water type')}</h3><div class="opts">${[['fresh',['淡水','Fresh']],['salt',['海水','Salt']]].map(([k,n])=>{const lk=k==='salt'&&S.water!=='salt'&&lockOf('feature','salt');return`<button class="opt" data-water="${k}" aria-pressed="${S.water===k}" ${lk?`disabled title="${esc(lockText(lk))}"`:''}><span>${lk?'🔒 ':''}${N(n)}</span>${lk?`<em>${esc(N(lk.t))}</em>`:''}</button>`;}).join('')}</div><small class="lede">${L('海馬、海月水母、寄居蟹同海葡萄要海水；其他淡水生物放入海水會死。','Seahorses, moon jellies, hermit crabs and sea grapes need salt water; freshwater life dies in it.')}</small></section>`:''}
-   <section class="field" data-sec="jar"><h3>${L('瓶形狀','Shape')}</h3><div class="opts">${Object.entries(SHAPES).map(([k,sh])=>`<button class="opt" data-shape="${k}" aria-pressed="${S.shape===k}">${shapeIcon(k)}<span>${N(sh.n)}</span></button>`).join('')}</div>
+   <section class="field" data-sec="jar" data-adv><h3>${L('瓶形狀','Shape')}</h3><div class="opts">${Object.entries(SHAPES).map(([k,sh])=>`<button class="opt" data-shape="${k}" aria-pressed="${S.shape===k}">${shapeIcon(k)}<span>${N(sh.n)}</span></button>`).join('')}</div>
      <small class="lede">${L(`開口越窄，打開蓋時換氣越慢。而家開口換氣效率：${Math.round(J.open*100)}%`,`A narrower neck exchanges less air when open. Current opening efficiency: ${Math.round(J.open*100)}%`)}</small></section>
-   <section class="field" data-sec="jar"><h3>${L('瓶材質','Material')}</h3><div class="opts">${Object.entries(MATS).map(([k,m])=>`<button class="opt" data-mat="${k}" aria-pressed="${S.mat===k}"><i class="sw" style="background:${matHex(k)};opacity:${Math.min(1,m.op*2.5+.3)}"></i><span>${N(m.n)}</span><em>${L('透光','light')} ${Math.round(m.tr*100)}%</em></button>`).join('')}</div>
+   <section class="field" data-sec="jar" data-adv><h3>${L('瓶材質','Material')}</h3><div class="opts">${Object.entries(MATS).map(([k,m])=>`<button class="opt" data-mat="${k}" aria-pressed="${S.mat===k}"><i class="sw" style="background:${matHex(k)};opacity:${Math.min(1,m.op*2.5+.3)}"></i><span>${N(m.n)}</span><em>${L('透光','light')} ${Math.round(m.tr*100)}%</em></button>`).join('')}</div>
      <small class="lede">${N(MATS[S.mat].n)}${L('：','. ')}${N(MATS[S.mat].d)}${L('。透光率會直接乘落光合作用。','. Light transmission scales photosynthesis directly.')}</small></section>
    <div data-sec="jar">${sl('e-V',L('瓶容量','Volume'),S.V,1,30,1,'L',L('越大越穩定，變化越慢。','Bigger is more stable and changes more slowly.'))}</div>
    <div data-sec="care">${sl('e-L',L('每日光照','Light per day'),S.light,0,24,1,L('小時','h'),L('朝早 7 點開燈。光照長產氧多，但藻類都長得快。','Lights come on at 7 am. More light means more oxygen, and faster algae.'))}
    ${sl('e-F',L('每日餵食','Food per day'),S.feed,0,10,.5,L('份',''),L('每朝 9 點落飼料；食唔晒會腐爛。','Food goes in at 9 am; leftovers rot.'))}</div>
    <div data-sec="water">${aq?sw('e-W',S.filled,L('已注水','Filled with water'),L('抽乾會令水中生物死亡；新注嘅水未有細菌。','Draining kills water life; fresh water has no bacteria.'))
      :sl('e-Lv',L('水位','Water level'),S.level,0,14,1,'cm',L(`0 = 純陸缸。有泥土土坡時，前面低處係水區。而家約 ${fx(S.wL)} L 水、佔地面 ${Math.round(S.wFrac*100)}%。`,`0 = land only. With a soil slope, the low front is water. Now about ${fx(S.wL)} L covering ${Math.round(S.wFrac*100)}% of the floor.`))
-      +(S.terra?'':sl('e-Hill',L('土坡高度','Slope height'),S.hillH,0,14,1,'cm',L('要有泥土先有土坡；後面高、前面低。想自己揀位就用「自己砌缸」。','Needs soil; high at the back, low at the front. Use Build to shape it yourself.')))}</div>
+      +(S.terra?'':adv(sl('e-Hill',L('土坡高度','Slope height'),S.hillH,0,14,1,'cm',L('要有泥土先有土坡；後面高、前面低。想自己揀位就用「自己砌缸」。','Needs soil; high at the back, low at the front. Use Build to shape it yourself.'))))}</div>
    <div data-sec="water">${hasW?sw('e-P',S.pump,L('氧氣泵','Air pump'),L('打氣入水，補氧同趕走 CO₂。','Bubbles air into the water, adding O₂ and removing CO₂.'))+sw('e-Fi',S.filter,L('過濾','Filter'),L('海綿入面住咗大量硝化菌，分解氨同隔走殘渣。','The sponge hosts lots of bacteria that remove ammonia and trap detritus.'))
      +sw('e-Ht',S.heater,L('加熱棒','Heater'),L('保持水溫，熱帶魚需要。','Keeps the water warm for tropical fish.'))
-     +sl('e-WC',L('每週換水','Weekly water change'),S.wc,0,50,5,'%',L('每 7 日朝早 10 點換水，沖淡氨同硝酸鹽。','Every 7 days at 10 am, diluting ammonia and nitrate.')):''}</div>
-   <div data-sec="care">${sw('e-Fan',S.fan,L('風扇','Fan'),S.sealed?L('對住水面或者瓶口吹，靠蒸發降溫約 2–3°C。而家密封緊，要開蓋先有效。','Blows across the water or opening to cool it by 2–3°C through evaporation. The jar is sealed now, so it only works once the lid is open.'):L('對住水面或者瓶口吹，靠蒸發降溫約 2–3°C，空氣會乾少少。','Blows across the water or opening to cool it by 2–3°C through evaporation; the air gets a little drier.'))}</div>
-   <div data-sec="care">${aq?'':sl('e-M',L('每日噴霧','Misting per day'),S.mist,0,6,1,L('次','×'),L('每次噴霧即刻提高濕度。','Each misting raises humidity at once.'))+sw('e-H',S.heat,L('加熱燈','Heat lamp'),L('開燈時加熱約 5°C，同時令空氣乾啲。','Adds about 5°C while lit and dries the air.'))}</div>
+     +adv(sl('e-WC',L('每週換水','Weekly water change'),S.wc,0,50,5,'%',L('每 7 日朝早 10 點換水，沖淡氨同硝酸鹽。','Every 7 days at 10 am, diluting ammonia and nitrate.'))):''}</div>
+   <div data-sec="care" data-adv>${sw('e-Fan',S.fan,L('風扇','Fan'),S.sealed?L('對住水面或者瓶口吹，靠蒸發降溫約 2–3°C。而家密封緊，要開蓋先有效。','Blows across the water or opening to cool it by 2–3°C through evaporation. The jar is sealed now, so it only works once the lid is open.'):L('對住水面或者瓶口吹，靠蒸發降溫約 2–3°C，空氣會乾少少。','Blows across the water or opening to cool it by 2–3°C through evaporation; the air gets a little drier.'))}</div>
+   <div data-sec="care">${aq?'':sl('e-M',L('每日噴霧','Misting per day'),S.mist,0,6,1,L('次','×'),L('每次噴霧即刻提高濕度。','Each misting raises humidity at once.'))+adv(sw('e-H',S.heat,L('加熱燈','Heat lamp'),L('開燈時加熱約 5°C，同時令空氣乾啲。','Adds about 5°C while lit and dries the air.')))}</div>
    <div data-sec="jar">${sw('e-S',S.sealed,aq?L('密封瓶口','Sealed'):L('密封（唔用網蓋）','Sealed (no mesh lid)'),aq?L('密封＝完全靠瓶內循環；開口＝空氣會補氧。','Sealed relies on its own cycles; open lets air add oxygen.'):L('密封＝濕度高、空氣唔流通；網蓋＝通風。','Sealed keeps humidity high but traps air; a mesh lid ventilates.'))}
    ${sw('e-Real',S.real,L('呢個係真實嘅瓶','This is a real tank'),L('一鍵平衡只會俾建議，唔會自動改或者刪任何嘢。','Auto-balance only suggests; it never changes or removes anything.'))}</div>
-   <div data-sec="care">${sw('e-B',S.breed,L('生物繁殖','Breeding'),L('健康、食得飽、有伴嘅動物會生BB，BB會慢慢長大。','Healthy, well-fed animals with a partner have young that grow up.'))}</div>
+   <div data-sec="care" data-adv>${sw('e-B',S.breed,L('生物繁殖','Breeding'),L('健康、食得飽、有伴嘅動物會生BB，BB會慢慢長大。','Healthy, well-fed animals with a partner have young that grow up.'))}</div>
    <section class="presets" data-sec="preset"><h3>${L('預設組合','Presets')}</h3><p class="lede">${L(`呢個模式有 ${Object.keys(PRESETS[S.mode]).length} 個預設，亦可以喺頂部「預設組合」揀。`,`${Object.keys(PRESETS[S.mode]).length} presets for this mode; also under Presets at the top.`)}</p></section>
-   <div class="ed-actions" data-sec="preset"><button class="btn primary" id="e-presets">${L('揀預設組合','Choose a preset')}</button><button class="btn" id="e-restart">${L('保留生物，重新開始時間','Keep everything, restart time')}</button></div>`;
+   <div class="ed-actions" data-sec="preset"><button class="btn primary" id="e-presets">${L('揀預設組合','Choose a preset')}</button><button class="btn" id="e-restart" data-adv>${L('保留生物，重新開始時間','Keep everything, restart time')}</button></div>`;
+  $('#pane-env').classList.toggle('simple',!envAdv);
+  $('#pane-env').querySelectorAll('[data-envm]').forEach(b=>b.onclick=()=>{envAdv=b.dataset.envm==='1';pref.set('ecojar.envAdv',envAdv?'1':'0');renderEnv();});
   const bind=(id,f,u)=>{const e=$('#'+id);if(!e)return;e.oninput=()=>{$('#o'+id).textContent=e.value+' '+u;f(+e.value,false);save();};e.onchange=()=>f(+e.value,true);};
   bind('e-V',(v,done)=>{if(!done)return;const r=v/S.V;['O2','CO2','NH3','NO3','aO2','aCO2','waste'].forEach(k=>{if(S.c[k]!=null)S.c[k]*=r;});S.V=v;buildJar({keepChem:S.mode==='aqua'});renderEnv();},'L');
   bind('e-L',v=>S.light=v,L('小時','h'));bind('e-F',v=>S.feed=v,L('份',''));bind('e-M',v=>S.mist=v,L('次','×'));bind('e-WC',v=>S.wc=v,'%');
