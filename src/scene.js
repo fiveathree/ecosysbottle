@@ -489,7 +489,7 @@ function swimTarget(m,lo,hi){const p=waterPoint(.06);if(!p){m.tgt.copy(m.p);retu
 const SWIMMERS=['swim','swarm','jelly','seahorse','aqturtle'],BOTTOM=['crawl','pleco','crab'];
 function animate(dt,hf){
   if(terraDirty){terraDirty=false;buildTerraMesh();}if(S.build)cam.idle=0;
-  tAll+=dt;const lv=lightLevel(hf),w=WX[S.wx]||WX.cloudy,c=S.c,wL=wLOf(S);
+  tAll+=dt;const lv=S.build?(S.buildDay?1:0):lightLevel(hf),w=WX[S.wx]||WX.cloudy,c=S.c,wL=wLOf(S);
   flash=Math.max(0,flash-dt*3);boltT=Math.max(0,boltT-dt);bolt.visible=boltT>0;
   if(w.bolt&&Math.random()<dt*.35){flash=1;boltT=.18;makeBolt();}
   dayCol.copy(cDay).lerp(cGray,(1-w.light)*.85);

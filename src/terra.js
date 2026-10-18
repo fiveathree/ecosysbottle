@@ -76,14 +76,15 @@ function exitBuild(){S.build=false;S.running=S._wasRunning!==false;$('#playBtn')
 function renderBuildBar(){
   const b=$('#buildBar');b.hidden=!S.build;$('#meters').hidden=!!S.build;if(!S.build)return;
   const lvl=S.mode==='rain'?`<label class="bb-sl">${L('水位','Water')} <output id="bbLvO">${S.level} cm</output><input type="range" id="bbLv" min="0" max="14" step="1" value="${S.level}"></label>`:'';
-  b.innerHTML=`<div class="bb-head"><b>${L('材質','Material')}</b><span class="lede">${L('揀一樣再喺瓶底掃；同一位置撳多幾下會疊高。','Pick one, then brush the floor; tap the same spot again to stack higher.')}</span></div>
+  b.innerHTML=`<div class="bb-head"><b>${L('材質','Material')}</b><span class="lede">${L('揀一樣再喺瓶底掃；同一位置撳多幾下會疊高。砌緊時間會暫停。','Pick one, then brush the floor; tap the same spot again to stack higher. Time is paused while you build.')}</span></div>
     <div class="bb-tools mats" role="group" aria-label="${L('材質','Material')}">${Object.entries(TMATS).map(([id,t])=>`<button data-mat="${id}" aria-pressed="${buildTool==='paint'&&paintMat==id}"><i class="sw2" style="background:#${t.c.toString(16).padStart(6,'0')}"></i>${N(t.n)}</button>`).join('')}</div>
     <div class="bb-tools" role="group" aria-label="${L('地形工具','Shape tools')}">${BRUSH_TOOLS.filter(([k])=>k!=='water'||S.mode==='rain').map(([k,n])=>`<button data-tool="${k}" aria-pressed="${buildTool===k}"><i class="sw2 t-${k}"></i>${N(n)}</button>`).join('')}
-      <span class="bb-cam"><button data-cam="l" aria-label="${L('向左轉','Rotate left')}">⟲</button><button data-cam="r" aria-label="${L('向右轉','Rotate right')}">⟳</button><button data-cam="top">${L('俯視','Top')}</button><button data-cam="side">${L('側視','Side')}</button></span></div>
+      <span class="bb-cam"><button data-cam="l" aria-label="${L('向左轉','Rotate left')}">⟲</button><button data-cam="r" aria-label="${L('向右轉','Rotate right')}">⟳</button><button data-cam="top">${L('俯視','Top')}</button><button data-cam="side">${L('側視','Side')}</button><button id="bbDay" aria-pressed="${S.buildDay}">${S.buildDay?L('日頭','Day'):L('夜晚','Night')}</button></span></div>
     <div class="bb-row"><label class="bb-sl">${L('筆刷','Brush')} <input type="range" id="bbSz" min=".06" max=".45" step=".01" value="${brushSize}"></label>${lvl}
     <button class="btn" id="bbFlat">${L('全部鋪平','Flatten all')}</button><button class="btn primary" id="bbDone">${L('完成','Done')}</button></div>`;
   b.querySelectorAll('[data-tool]').forEach(x=>x.onclick=()=>{buildTool=x.dataset.tool;renderBuildBar();});
   b.querySelectorAll('[data-mat]').forEach(x=>x.onclick=()=>{buildTool='paint';paintMat=+x.dataset.mat;renderBuildBar();});
+  $('#bbDay').onclick=()=>{S.buildDay=!S.buildDay;renderBuildBar();};
   b.querySelectorAll('[data-cam]').forEach(x=>x.onclick=()=>{const v=x.dataset.cam;if(v==='l')cam.theta+=.5;if(v==='r')cam.theta-=.5;if(v==='top')cam.phi=.3;if(v==='side')cam.phi=1.3;});
   $('#bbSz').oninput=e=>{brushSize=+e.target.value;};
   const lv=$('#bbLv');if(lv){lv.oninput=()=>{$('#bbLvO').textContent=lv.value+' cm';};lv.onchange=()=>{setLevel(+lv.value);renderBuildBar();};}
