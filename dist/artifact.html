@@ -629,7 +629,7 @@ const CAT={
   springtail:{m:'rain',hab:'land',kind:'animal',g:'ranimal',move:'spring',mouldOK:1,name:['跳蟲群','Springtail colony'],sci:'Collembola',color:'#d6d4c8',diet:{mould:1,waste:.7},desc:['小得像白色粉粒，專吃霉菌，防止發霉。','Tiny white specks that eat mould and stop it spreading.'],params:{resp:.1,food:.4,wasteEvery:24,wasteAmt:.01,humMin:70,humMax:100,tMin:15,tMax:30}},
   soilmic:{m:'rain',hab:'land',kind:'microbe',g:'soilm',name:['土壤菌群','Soil microbes'],sci:'Soil microbiome',color:'#8a6a3a',desc:['住在泥土，將排泄物分解成植物養分。','Live in the soil and turn waste into plant food.'],params:{rate:.06,o2Per:2}},
 
-  sand:{m:'both',hab:'none',kind:'sub',g:'sub',name:['細沙','Fine sand'],sci:'',color:'#cab68c',desc:['水草要種在沙裡面先生到根，細菌也住在沙粒之間。','Rooted plants need it; bacteria live between the grains.'],params:{depth:3}},
+  sand:{m:'both',hab:'none',kind:'sub',g:'sub',name:['細沙','Fine sand'],sci:'',color:'#cab68c',desc:['水草要種在沙裡才能生根，細菌也住在沙粒之間。','Rooted plants need it; bacteria live between the grains.'],params:{depth:3}},
   gravel:{m:'both',hab:'none',kind:'sub',g:'sub',name:['碎石','Gravel'],sci:'',color:'#8f8a80',desc:['通水性好，住得多細菌。','Good water flow and lots of bacteria.'],params:{depth:3}},
   soil:{m:'both',hab:'none',kind:'sub',g:'sub',name:['泥土','Soil'],sci:'',color:'#5b4030',desc:['雨林植物一定要有泥土；有泥土才會有陸地土坡。','Rainforest plants need it; soil also builds the land slope.'],params:{depth:4}},
   stone:{m:'both',hab:'none',kind:'decor',g:'decor',rock:1,name:['石頭','Stones'],sci:'',color:'#7d786f',desc:['增加細菌附著面積，黑木蕨和莫絲可以依附。','More surface for bacteria; Java fern and moss can attach.'],params:{x:.45,z:.3,rot:0,rotX:0,rotZ:0,size:1}},
@@ -733,6 +733,8 @@ const PRESETS={
       V:20,shape:'box',water:'salt',sealed:false,light:9,feed:2.5,filter:true,pump:true,heater:true,fan:true,region:'gbr',items:[['sand',1,{depth:5}],['rockmtn',1],['stone',2],['softcoral',2],['mushroom',2],['seagrass',1],['gardeneel',3],['hermit',3],['nitri',1],['decomp',1]]},
     moon:{n:['海月水母缸','Moon jelly tank'],d:['15L 海水圓柱瓶：3 隻海月水母、海葡萄和紅藻，還有一隻寄居蟹清理殘渣。水母怕水流，所以不開氧氣泵和過濾，改用風扇保持涼快，每週換水。','15 L salt-water cylinder: 3 moon jellies, sea grapes, red algae and a hermit crab to clean up. Jellies hate water flow, so there is no pump or filter; a fan keeps it cool and the water is changed weekly.'],
       V:15,shape:'cyl',water:'salt',sealed:false,light:10,feed:1.5,fan:true,wc:20,region:'hk',items:[['sand',1],['caulerpa',2],['redalgae',1],['moonjelly',3],['hermit',1],['nitri',1],['decomp',1]]},
+    eel:{n:['花園鰻沙地缸','Garden eel sand bed'],d:['30L 海水方缸，跟大堡礁天氣：鋪了兩層厚細沙，6 條花園鰻成群從沙裡伸出頭來；只在後面角落放一塊石頭，中間留給牠們。配海草、海葡萄和兩隻寄居蟹清理殘渣；有過濾、加熱棒和風扇，水流柔和。','30 L salt-water box tank in Great Barrier Reef weather: a double layer of deep fine sand with a colony of 6 garden eels poking out, one stone tucked in a back corner so the middle stays open, seagrass, sea grapes and two hermit crabs to tidy up; filter, heater and fan with gentle flow.'],
+      V:30,shape:'box',water:'salt',sealed:false,light:8,feed:3.5,filter:true,heater:true,fan:true,region:'gbr',items:[['sand',2,{depth:5}],['stone',1,{x:-.75,z:-.75}],['seagrass',1],['caulerpa',2],['gardeneel',6],['hermit',2],['nitri',1],['decomp',1]]},
     shrimp:{n:['米蝦水草缸','Shrimp planted tank'],d:['8L 圓柱瓶：沉木、黑木蕨、莫絲、水蘊草、綠藻球、10 隻米蝦和斑馬螺，少量餵食。','8 L cylinder with driftwood, Java fern, moss, waterweed, marimo, 10 cherry shrimp and nerites; light feeding.'],
       V:8,shape:'cyl',sealed:false,light:10,feed:1,items:[['sand',1],['driftwood',1],['javafern',1],['moss',1],['elodea',2],['marimo',1],['shrimp',10],['nerite',2],['nitri',1],['decomp',1]]},
     betta:{n:['鬥魚獨居缸','Betta solo tank'],d:['5L 方缸，有加熱棒：一條鬥魚、黑木蕨、綠藻球同一隻石田螺。','5 L box tank with a heater: one betta, Java fern, marimo and a pond snail.'],
@@ -3087,7 +3089,7 @@ const UNLOCKS=[
   {id:'u_week',t:['平安一星期','A calm week'],cond:()=>!!PLAY.ach.week,
     features:['palu','ff'],types:['jelly','pleco','crab'],regions:['amazon','amazonriver','borneo','pantanal','mekong'],presets:['aqua.jelly','rain.palu','rain.amazon']},
   {id:'u_col12',t:['收藏 12 種生物','Collect 12 species'],prog:()=>`${Math.min(12,colN())}/12`,cond:()=>colN()>=12,
-    features:['salt'],types:['caulerpa','softcoral','mushroom','seagrass','redalgae','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],presets:['aqua.sea','aqua.reef','aqua.moon']},
+    features:['salt'],types:['caulerpa','softcoral','mushroom','seagrass','redalgae','seahorse','moonjelly','gardeneel','hermit'],regions:['gbr','redsea','med'],presets:['aqua.sea','aqua.reef','aqua.moon','aqua.eel']},
   {id:'u_ch3',t:['完成 3 個挑戰','Complete 3 challenges'],prog:()=>`${Math.min(3,chN())}/3`,cond:()=>chN()>=3,
     types:['gecko','newt','turtle','slider','leopard'],regions:['sahara','cloudforest','tanganyika','baikal'],presets:['rain.gecko','rain.newt','rain.turtle','rain.desert']},
 ];
