@@ -219,6 +219,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .ov{position:absolute;top:84px;bottom:var(--mh,120px);width:200px;overflow:auto;display:flex;flex-direction:column;gap:2px;padding:8px;border-radius:12px;background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--line);font-size:12px;z-index:2}
 .ovL{left:10px;width:min(360px,42%);padding:0;gap:0}
 .ovR{right:10px}
+.cambar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--mh,120px) + 6px);z-index:4;display:flex;align-items:center;gap:8px;max-width:calc(100% - 20px);padding:6px 8px 6px 12px;border-radius:99px;border:1px solid var(--accent);background:var(--glass);backdrop-filter:blur(8px);font-size:12.5px;white-space:nowrap}
+.stage.pov-water::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 40%,rgba(90,170,190,.08),rgba(20,80,110,.32));box-shadow:inset 0 0 60px rgba(10,60,90,.35)}
+.cambar b{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cambar .seg button{font-size:12px;padding:3px 9px}
 /* 兩邊嘅箭咀：收埋／打開左右欄 */
 .edge{position:absolute;top:84px;bottom:var(--mh,120px);margin:auto 0;height:56px;width:22px;z-index:3;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(6px);color:var(--ink);font-size:18px;line-height:1;cursor:pointer}
 .edge:hover{border-color:var(--accent);color:var(--accent)}
@@ -302,7 +306,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .bb-sl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:1;min-width:140px}
 .bb-sl input{flex:1;min-width:60px}
 /* 窄螢幕：數值放喺個瓶下面，唔遮住畫面 */
-@media (max-width:919px){.stage{height:calc(56vh + var(--mh,0px));min-height:calc(320px + var(--mh,0px));background:var(--surface-2)}.stage>canvas{bottom:auto;height:calc(100% - var(--mh,0px) + 4px)}}
+@media (max-width:919px){.stage{height:calc(56vh + var(--mh,0px));min-height:calc(320px + var(--mh,0px));background:var(--surface-2)}.stage>canvas{bottom:auto;height:calc(100% - var(--mh,0px) + 4px)}.stage.pov-water::after{bottom:calc(var(--mh,0px) - 4px)}}
 @media (max-width:700px){.ov{width:150px;top:96px}.ovL{width:calc(100% - 20px);z-index:5}.hint{display:none}.edge{top:96px}.edgeL.open{display:none}}
 @media (prefers-reduced-motion:reduce){.flash{animation:none}}
 @media (min-width:920px){
@@ -338,6 +342,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="hud-r"><div class="hud-rr"><button class="tglbtn" id="tglR"></button><button class="clearbtn" id="clearBtn"></button></div><span class="hint" id="hint"></span></div></div>
       <div class="ov ovL" id="ovL" hidden><div class="ovhead"><h4 id="ovLT"></h4><button class="x" id="ovLX" aria-label="Close">×</button></div><div class="ovbody" id="pane-bal"></div></div><div class="ov ovR" id="ovR" hidden></div>
       <button class="edge edgeL" id="edgeL"></button><button class="edge edgeR" id="edgeR"></button>
+      <div class="cambar" id="camBar" hidden></div>
       <div class="pop" id="pop" hidden></div><div class="pop issues" id="issuePop" hidden></div>
       <div class="meters" id="meters"></div>
       <div class="buildbar" id="buildBar" hidden></div>
@@ -1447,6 +1452,33 @@ function makeBolt(){
 
 /* ---- 鏡頭 & 拖動 ---- */
 const cam={theta:.6,phi:1.15,dist:6,target:new THREE.Vector3(0,1,0),idle:0};
+/* 鏡頭跟生物：follow＝以佢為中心（照樣可以轉同縮放）；pov＝第一視角（拖動望四周） */
+const camF={mode:null,it:null,yaw:0,pitch:0,dir:new THREE.Vector3(1,0,0),saved:null};
+const camMin=()=>camF.mode==='follow'?J.H*.2:J.H*1.1;
+function camFollow(it,mode){
+  if(!it||!it.alive||!it.m){camStop();return;}
+  if(!camF.mode)camF.saved={theta:cam.theta,phi:cam.phi,dist:cam.dist,target:cam.target.clone()};
+  if(camF.it&&camF.it!==it&&camF.it.g)camF.it.g.visible=true;
+  camF.mode=mode;camF.it=it;camF.yaw=0;camF.pitch=0;cam.idle=0;
+  const ry=it.g?it.g.rotation.y:0;camF.dir.set(Math.cos(ry),0,-Math.sin(ry));
+  if(mode==='follow'){cam.dist=J.H*.55;if(it.g)it.g.visible=true;camera.fov=38;camera.near=.05;stage.classList.remove('pov-water');}
+  else{camera.fov=70;camera.near=.004;}
+  camera.updateProjectionMatrix();if(typeof renderCamBar==='function')renderCamBar();}
+function camStop(){
+  if(camF.it&&camF.it.g)camF.it.g.visible=true;const was=camF.mode;camF.mode=null;camF.it=null;
+  camera.fov=38;camera.near=.05;camera.updateProjectionMatrix();stage.classList.remove('pov-water');
+  if(was&&camF.saved){Object.assign(cam,{theta:camF.saved.theta,phi:camF.saved.phi,dist:camF.saved.dist});cam.target.copy(camF.saved.target);}camF.saved=null;
+  if(typeof renderCamBar==='function')renderCamBar();}
+function camTrack(dt){
+  const it=camF.it;if(!it)return false;
+  if(!it.alive||!it.m||!S.items.includes(it)){const n=label(it);camStop();toast(L(`${n} 已經唔喺度，鏡頭返回原位`,`${n} is gone; camera reset`));return false;}
+  if(camF.mode==='follow'){cam.target.lerp(it.m.p,Math.min(1,dt*4));return false;}
+  const v=it.m.v;if(v.lengthSq()>1e-6){const h=new THREE.Vector3(v.x,v.y*.5,v.z).normalize();camF.dir.lerp(h,Math.min(1,dt*2.5)).normalize();}
+  if(!ptrs.size){camF.yaw*=1-Math.min(1,dt*.8);camF.pitch*=1-Math.min(1,dt*.8);}
+  if(it.g)it.g.visible=false;
+  const d=camF.dir.clone().applyAxisAngle(new THREE.Vector3(0,1,0),camF.yaw);d.y=clamp(d.y+camF.pitch,-.9,.9);d.normalize();
+  camera.position.copy(it.m.p).add(new THREE.Vector3(0,.018,0));camera.lookAt(camera.position.clone().add(d));
+  stage.classList.toggle('pov-water',J.waterTop!=null&&camera.position.y<J.waterTop&&inWater(camera.position.x,camera.position.z,0));return true;}
 function updateCam(){const {theta,phi,dist,target}=cam;camera.position.set(target.x+dist*Math.sin(phi)*Math.sin(theta),target.y+dist*Math.cos(phi),target.z+dist*Math.sin(phi)*Math.cos(theta));camera.lookAt(target);}
 const ray=new THREE.Raycaster();ray.params.Points.threshold=.04;
 const dragPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),hitP=new THREE.Vector3();let drag=null;
@@ -1478,9 +1510,9 @@ canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)re
     if(drag.moved){setRay(e);dragPlane.constant=-J.sTop;if(ray.ray.intersectPlane(dragPlane,hitP)){hitP.y=J.sTop;clampIn(hitP,.86);setFloorPos(drag.it,hitP.x,hitP.z);}}
     p.x=e.clientX;p.y=e.clientY;cam.idle=0;return;}
   const dx=e.clientX-p.x,dy=e.clientY-p.y;
-  if(ptrs.size===1){cam.theta-=dx*.008;cam.phi=clamp(cam.phi-dy*.006,.25,1.62);}
+  if(ptrs.size===1){if(camF.mode==='pov'){camF.yaw-=dx*.006;camF.pitch=clamp(camF.pitch+dy*.004,-.8,.8);}else{cam.theta-=dx*.008;cam.phi=clamp(cam.phi-dy*.006,.25,1.62);}}
   p.x=e.clientX;p.y=e.clientY;
-  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*6);pinch0=d;
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,camMin(),J.H*6);pinch0=d;
     if(mid0){cam.theta-=(mx-mid0.x)*.008;cam.phi=clamp(cam.phi-(my-mid0.y)*.006,.25,1.62);}mid0={x:mx,y:my};}
   if(downXY&&Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6)downXY.moved=true;cam.idle=0;});
 const up=e=>{
@@ -1488,7 +1520,7 @@ const up=e=>{
   if(drag&&ptrs.size===1){const it=drag.it,moved=drag.moved;drag=null;ptrs.delete(e.pointerId);downXY=null;if(moved){if(S.sel===it)renderEditor();save();}select(it,e);return;}
   if(downXY&&!downXY.moved&&ptrs.size===1)pick(e);ptrs.delete(e.pointerId);if(ptrs.size<2){pinch0=0;mid0=null;}if(!ptrs.size)downXY=null;};
 canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);downXY=null;drag=null;if(painting){painting=false;buildJar({keepCam:true});}mid0=null;pinch0=0;});
-canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=clamp(cam.dist*(1+e.deltaY*.001),J.H*1.1,J.H*6);cam.idle=0;},{passive:false});
+canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=clamp(cam.dist*(1+e.deltaY*.001),camMin(),J.H*6);cam.idle=0;},{passive:false});
 function pick(e){const it=hitItem(e,i=>CAT[i.type].kind!=='microbe');if(it)select(it,e);else closePop();}
 
 
@@ -1661,13 +1693,13 @@ function animate(dt,hf){
   poops.forEach(p=>{if(!p.visible)return;p.userData.age+=dt;const gy=groundY(p.position.x,p.position.z);if(p.position.y>gy+.01)p.position.y-=dt*.08;if(p.userData.age>25)p.visible=false;});
   const want=wt!=null?Math.ceil(c.flake*8):0;let shown=0;
   flakes.forEach(f=>{if(!f.visible)return;shown++;if(shown>want){f.visible=false;return;}if(f.position.y>groundY(f.position.x,f.position.z)+.01){f.position.y-=f.userData.vy*dt;f.rotation.z+=dt;f.position.x+=Math.sin(tAll+f.id)*dt*.02;}});
-  if(S.sel&&S.sel.alive&&S.sel.g){const it=S.sel,k=CAT[it.type].kind;ring.visible=true;
+  if(S.sel&&S.sel.alive&&S.sel.g&&camF.mode!=='pov'){const it=S.sel,k=CAT[it.type].kind;ring.visible=true;
     if(k==='animal'){ring.position.copy(it.m.p);ring.scale.setScalar(['amph','aqturtle'].includes(CAT[it.type].move)?.14:.1);}
     else if(k==='microbe'||k==='sub'){ring.position.set(0,J.sTop+.02,0);ring.scale.setScalar(floorR()*.7);}
     else{ring.position.set(it.g.position.x,it.g.position.y+.02,it.g.position.z);ring.scale.setScalar(k==='decor'?.25*it.params.size*J.k:it.type==='duckweed'?.26:.16);}
     ring.material.opacity=.55+.35*Math.sin(tAll*4);} else ring.visible=false;
   if(!ptrs.size&&!S.build){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
-  updateCam();
+  if(!camTrack(dt))updateCam();
 }
 function resize(){const r=canvas.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(canvas);
@@ -1741,6 +1773,7 @@ function buildTerraMesh(){
 }
 /* 砌缸工具列 */
 function enterBuild(){
+  camStop();
   if(!S.terra){initTerra();buildJar({keepCam:true});}
   S._wasRunning=S.running;S.running=false;S.buildDay=true;$('#playBtn').classList.remove('primary');renderChrome();
   S.build=true;closePop();issueOpen=false;renderIssuePop();buildTool='paint';paintMat=S.mode==='rain'?3:(S.water==='salt'?5:1);
@@ -2175,7 +2208,7 @@ function drawChart(){
 
 /* ================= 環境 ================= */
 function loadPreset(key){
-  const p=PRESETS[S.mode][key];S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;S.report=null;
+  const p=PRESETS[S.mode][key];camStop();S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;S.report=null;
   S.terra=null;S.build=false;
   Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat||'glass',sealed:p.sealed,light:p.light,feed:p.feed,pump:!!p.pump,filter:!!p.filter,heater:!!p.heater,fan:!!p.fan,wc:p.wc||0,mist:p.mist||0,heat:!!p.heat,
     region:p.region||'hk',real:false,water:p.water||'fresh',filled:p.filled!==false,level:p.level||0,hillH:p.hillH??6,log:[],hour:6,day:1});
@@ -2252,7 +2285,7 @@ function snapshot(){if(S.terra)delete S.terra._info;const o={name:S.jarName,c:Ob
   items:S.items.filter(i=>i.alive).map(i=>({type:i.type,params:i.params,name:i.name||'',n:i.n,health:+i.health.toFixed(3),satiety:+i.satiety.toFixed(3),rx:+i.rx.toFixed(3),rz:+i.rz.toFixed(3),age:i.age,up:i.userPlaced?1:0}))};
   SNAP_KEYS.forEach(k=>o[k]=S[k]);return o;}
 function restoreSnap(d){
-  S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
+  camStop();S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
   SNAP_KEYS.forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});S.jarName=d.name||'';if(d.fan===undefined)S.fan=false;
   if(S.terra){S.terra=JSON.parse(JSON.stringify(S.terra));delete S.terra._info;}S.build=false;
   if(!SHAPES[S.shape])S.shape='jar';if(!MATS[S.mat])S.mat='glass';if(!PRESETS[S.mode])S.mode='aqua';if(S.wxMode!=='auto'&&!WX[S.wxMode])S.wxMode='auto';if(!WX[S.wx])S.wx='sunny';
@@ -2422,7 +2455,12 @@ function renderOvToggles(){
 $('#tglL').onclick=()=>{ovOpen.L=!ovOpen.L;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();if(ovOpen.L)renderBalance();};
 $('#edgeL').onclick=()=>$('#tglL').click();$('#edgeR').onclick=()=>$('#tglR').click();
 $('#tglR').onclick=()=>{ovOpen.R=!ovOpen.R;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
-function renderOv(){renderOvToggles();renderOvL();renderOvR();fitOverlays();}
+/* 跟住生物時嘅鏡頭列 */
+function renderCamBar(){const b=$('#camBar'),it=camF.it;b.hidden=!camF.mode;if(!camF.mode)return;
+  b.innerHTML=`<span class="dot" style="background:${CAT[it.type].color}"></span><b>${esc(label(it))}</b><div class="seg" role="group" aria-label="${L('鏡頭','Camera')}"><button aria-pressed="${camF.mode==='follow'}" data-cm="follow">${L('以佢為中心','Centred')}</button><button aria-pressed="${camF.mode==='pov'}" data-cm="pov">${L('第一視角','Its view')}</button></div><button class="x" id="camX" aria-label="${L('停止跟住','Stop following')}">×</button>`;
+  b.querySelectorAll('[data-cm]').forEach(x=>x.onclick=()=>camFollow(camF.it,x.dataset.cm));$('#camX').onclick=camStop;}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&camF.mode&&!document.querySelector('dialog[open]'))camStop();});
+function renderOv(){renderCamBar();renderOvToggles();renderOvL();renderOvR();fitOverlays();}
 function renderOvL(){
   const el=$('#ovL');el.hidden=!ovOpen.L;$('#ovLT').textContent=L('平衡分析','Balance');
   $('#ovLX').setAttribute('aria-label',L('收起平衡分析','Close balance'));
@@ -2494,8 +2532,10 @@ function renderPop(){
       <span>${L('左右傾','Tilt L/R')}</span><button data-r="rotZ,15">◀</button><button data-r="rotZ,-15">▶</button>
       <span>${L('大細','Size')} <b class="mono" id="popSz">${(+it.params.size).toFixed(2)}×</b></span><button data-sz="-.1" aria-label="${L('縮細','Smaller')}">－</button><button data-sz=".1" aria-label="${L('放大','Larger')}">＋</button>
       <button class="rotreset" data-r="reset">${L('擺返正','Level it')}</button></div>`:''}
+    ${k==='animal'&&it.alive?`<div class="ed-actions"><button class="btn" id="popFollow">${L('鏡頭跟住佢','Follow it')}</button><button class="btn" id="popPov">${L('佢嘅第一視角','See as it sees')}</button></div>`:''}
     <div class="ed-actions"><button class="btn primary" id="popMore">${L('詳細設定','Settings')}</button><button class="btn danger" id="popDel">${it.alive?L('移走','Remove'):L('清走','Clear')}</button></div>`;
   $('#popX').onclick=closePop;
+  const pf=$('#popFollow'),pv=$('#popPov');if(pf)pf.onclick=()=>{closePop();camFollow(it,'follow');};if(pv)pv.onclick=()=>{closePop();camFollow(it,'pov');};
   pop.querySelectorAll('[data-sz]').forEach(b=>b.onclick=()=>{const p=it.params;p.size=+clamp((+p.size)+(+b.dataset.sz),.4,2).toFixed(2);placeItem(it);const z=$('#popSz');if(z)z.textContent=p.size.toFixed(2)+'×';save();if(S.sel===it&&$('#editor'))renderEditor();});
   makeDraggable(pop,pop.querySelector('.ed-head'));
   pop.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const v=b.dataset.r;

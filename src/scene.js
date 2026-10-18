@@ -456,6 +456,33 @@ function makeBolt(){
 
 /* ---- 鏡頭 & 拖動 ---- */
 const cam={theta:.6,phi:1.15,dist:6,target:new THREE.Vector3(0,1,0),idle:0};
+/* 鏡頭跟生物：follow＝以佢為中心（照樣可以轉同縮放）；pov＝第一視角（拖動望四周） */
+const camF={mode:null,it:null,yaw:0,pitch:0,dir:new THREE.Vector3(1,0,0),saved:null};
+const camMin=()=>camF.mode==='follow'?J.H*.2:J.H*1.1;
+function camFollow(it,mode){
+  if(!it||!it.alive||!it.m){camStop();return;}
+  if(!camF.mode)camF.saved={theta:cam.theta,phi:cam.phi,dist:cam.dist,target:cam.target.clone()};
+  if(camF.it&&camF.it!==it&&camF.it.g)camF.it.g.visible=true;
+  camF.mode=mode;camF.it=it;camF.yaw=0;camF.pitch=0;cam.idle=0;
+  const ry=it.g?it.g.rotation.y:0;camF.dir.set(Math.cos(ry),0,-Math.sin(ry));
+  if(mode==='follow'){cam.dist=J.H*.55;if(it.g)it.g.visible=true;camera.fov=38;camera.near=.05;stage.classList.remove('pov-water');}
+  else{camera.fov=70;camera.near=.004;}
+  camera.updateProjectionMatrix();if(typeof renderCamBar==='function')renderCamBar();}
+function camStop(){
+  if(camF.it&&camF.it.g)camF.it.g.visible=true;const was=camF.mode;camF.mode=null;camF.it=null;
+  camera.fov=38;camera.near=.05;camera.updateProjectionMatrix();stage.classList.remove('pov-water');
+  if(was&&camF.saved){Object.assign(cam,{theta:camF.saved.theta,phi:camF.saved.phi,dist:camF.saved.dist});cam.target.copy(camF.saved.target);}camF.saved=null;
+  if(typeof renderCamBar==='function')renderCamBar();}
+function camTrack(dt){
+  const it=camF.it;if(!it)return false;
+  if(!it.alive||!it.m||!S.items.includes(it)){const n=label(it);camStop();toast(L(`${n} 已經唔喺度，鏡頭返回原位`,`${n} is gone; camera reset`));return false;}
+  if(camF.mode==='follow'){cam.target.lerp(it.m.p,Math.min(1,dt*4));return false;}
+  const v=it.m.v;if(v.lengthSq()>1e-6){const h=new THREE.Vector3(v.x,v.y*.5,v.z).normalize();camF.dir.lerp(h,Math.min(1,dt*2.5)).normalize();}
+  if(!ptrs.size){camF.yaw*=1-Math.min(1,dt*.8);camF.pitch*=1-Math.min(1,dt*.8);}
+  if(it.g)it.g.visible=false;
+  const d=camF.dir.clone().applyAxisAngle(new THREE.Vector3(0,1,0),camF.yaw);d.y=clamp(d.y+camF.pitch,-.9,.9);d.normalize();
+  camera.position.copy(it.m.p).add(new THREE.Vector3(0,.018,0));camera.lookAt(camera.position.clone().add(d));
+  stage.classList.toggle('pov-water',J.waterTop!=null&&camera.position.y<J.waterTop&&inWater(camera.position.x,camera.position.z,0));return true;}
 function updateCam(){const {theta,phi,dist,target}=cam;camera.position.set(target.x+dist*Math.sin(phi)*Math.sin(theta),target.y+dist*Math.cos(phi),target.z+dist*Math.sin(phi)*Math.cos(theta));camera.lookAt(target);}
 const ray=new THREE.Raycaster();ray.params.Points.threshold=.04;
 const dragPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),hitP=new THREE.Vector3();let drag=null;
@@ -487,9 +514,9 @@ canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)re
     if(drag.moved){setRay(e);dragPlane.constant=-J.sTop;if(ray.ray.intersectPlane(dragPlane,hitP)){hitP.y=J.sTop;clampIn(hitP,.86);setFloorPos(drag.it,hitP.x,hitP.z);}}
     p.x=e.clientX;p.y=e.clientY;cam.idle=0;return;}
   const dx=e.clientX-p.x,dy=e.clientY-p.y;
-  if(ptrs.size===1){cam.theta-=dx*.008;cam.phi=clamp(cam.phi-dy*.006,.25,1.62);}
+  if(ptrs.size===1){if(camF.mode==='pov'){camF.yaw-=dx*.006;camF.pitch=clamp(camF.pitch+dy*.004,-.8,.8);}else{cam.theta-=dx*.008;cam.phi=clamp(cam.phi-dy*.006,.25,1.62);}}
   p.x=e.clientX;p.y=e.clientY;
-  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,J.H*1.1,J.H*6);pinch0=d;
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;if(pinch0)cam.dist=clamp(cam.dist*pinch0/d,camMin(),J.H*6);pinch0=d;
     if(mid0){cam.theta-=(mx-mid0.x)*.008;cam.phi=clamp(cam.phi-(my-mid0.y)*.006,.25,1.62);}mid0={x:mx,y:my};}
   if(downXY&&Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6)downXY.moved=true;cam.idle=0;});
 const up=e=>{
@@ -497,7 +524,7 @@ const up=e=>{
   if(drag&&ptrs.size===1){const it=drag.it,moved=drag.moved;drag=null;ptrs.delete(e.pointerId);downXY=null;if(moved){if(S.sel===it)renderEditor();save();}select(it,e);return;}
   if(downXY&&!downXY.moved&&ptrs.size===1)pick(e);ptrs.delete(e.pointerId);if(ptrs.size<2){pinch0=0;mid0=null;}if(!ptrs.size)downXY=null;};
 canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);downXY=null;drag=null;if(painting){painting=false;buildJar({keepCam:true});}mid0=null;pinch0=0;});
-canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=clamp(cam.dist*(1+e.deltaY*.001),J.H*1.1,J.H*6);cam.idle=0;},{passive:false});
+canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=clamp(cam.dist*(1+e.deltaY*.001),camMin(),J.H*6);cam.idle=0;},{passive:false});
 function pick(e){const it=hitItem(e,i=>CAT[i.type].kind!=='microbe');if(it)select(it,e);else closePop();}
 
 
@@ -670,13 +697,13 @@ function animate(dt,hf){
   poops.forEach(p=>{if(!p.visible)return;p.userData.age+=dt;const gy=groundY(p.position.x,p.position.z);if(p.position.y>gy+.01)p.position.y-=dt*.08;if(p.userData.age>25)p.visible=false;});
   const want=wt!=null?Math.ceil(c.flake*8):0;let shown=0;
   flakes.forEach(f=>{if(!f.visible)return;shown++;if(shown>want){f.visible=false;return;}if(f.position.y>groundY(f.position.x,f.position.z)+.01){f.position.y-=f.userData.vy*dt;f.rotation.z+=dt;f.position.x+=Math.sin(tAll+f.id)*dt*.02;}});
-  if(S.sel&&S.sel.alive&&S.sel.g){const it=S.sel,k=CAT[it.type].kind;ring.visible=true;
+  if(S.sel&&S.sel.alive&&S.sel.g&&camF.mode!=='pov'){const it=S.sel,k=CAT[it.type].kind;ring.visible=true;
     if(k==='animal'){ring.position.copy(it.m.p);ring.scale.setScalar(['amph','aqturtle'].includes(CAT[it.type].move)?.14:.1);}
     else if(k==='microbe'||k==='sub'){ring.position.set(0,J.sTop+.02,0);ring.scale.setScalar(floorR()*.7);}
     else{ring.position.set(it.g.position.x,it.g.position.y+.02,it.g.position.z);ring.scale.setScalar(k==='decor'?.25*it.params.size*J.k:it.type==='duckweed'?.26:.16);}
     ring.material.opacity=.55+.35*Math.sin(tAll*4);} else ring.visible=false;
   if(!ptrs.size&&!S.build){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
-  updateCam();
+  if(!camTrack(dt))updateCam();
 }
 function resize(){const r=canvas.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(canvas);

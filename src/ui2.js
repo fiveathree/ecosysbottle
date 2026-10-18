@@ -38,7 +38,12 @@ function renderOvToggles(){
 $('#tglL').onclick=()=>{ovOpen.L=!ovOpen.L;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();if(ovOpen.L)renderBalance();};
 $('#edgeL').onclick=()=>$('#tglL').click();$('#edgeR').onclick=()=>$('#tglR').click();
 $('#tglR').onclick=()=>{ovOpen.R=!ovOpen.R;try{localStorage.setItem('ecojar.ov',JSON.stringify(ovOpen));}catch(e){}renderOv();};
-function renderOv(){renderOvToggles();renderOvL();renderOvR();fitOverlays();}
+/* 跟住生物時嘅鏡頭列 */
+function renderCamBar(){const b=$('#camBar'),it=camF.it;b.hidden=!camF.mode;if(!camF.mode)return;
+  b.innerHTML=`<span class="dot" style="background:${CAT[it.type].color}"></span><b>${esc(label(it))}</b><div class="seg" role="group" aria-label="${L('鏡頭','Camera')}"><button aria-pressed="${camF.mode==='follow'}" data-cm="follow">${L('以佢為中心','Centred')}</button><button aria-pressed="${camF.mode==='pov'}" data-cm="pov">${L('第一視角','Its view')}</button></div><button class="x" id="camX" aria-label="${L('停止跟住','Stop following')}">×</button>`;
+  b.querySelectorAll('[data-cm]').forEach(x=>x.onclick=()=>camFollow(camF.it,x.dataset.cm));$('#camX').onclick=camStop;}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&camF.mode&&!document.querySelector('dialog[open]'))camStop();});
+function renderOv(){renderCamBar();renderOvToggles();renderOvL();renderOvR();fitOverlays();}
 function renderOvL(){
   const el=$('#ovL');el.hidden=!ovOpen.L;$('#ovLT').textContent=L('平衡分析','Balance');
   $('#ovLX').setAttribute('aria-label',L('收起平衡分析','Close balance'));
@@ -110,8 +115,10 @@ function renderPop(){
       <span>${L('左右傾','Tilt L/R')}</span><button data-r="rotZ,15">◀</button><button data-r="rotZ,-15">▶</button>
       <span>${L('大細','Size')} <b class="mono" id="popSz">${(+it.params.size).toFixed(2)}×</b></span><button data-sz="-.1" aria-label="${L('縮細','Smaller')}">－</button><button data-sz=".1" aria-label="${L('放大','Larger')}">＋</button>
       <button class="rotreset" data-r="reset">${L('擺返正','Level it')}</button></div>`:''}
+    ${k==='animal'&&it.alive?`<div class="ed-actions"><button class="btn" id="popFollow">${L('鏡頭跟住佢','Follow it')}</button><button class="btn" id="popPov">${L('佢嘅第一視角','See as it sees')}</button></div>`:''}
     <div class="ed-actions"><button class="btn primary" id="popMore">${L('詳細設定','Settings')}</button><button class="btn danger" id="popDel">${it.alive?L('移走','Remove'):L('清走','Clear')}</button></div>`;
   $('#popX').onclick=closePop;
+  const pf=$('#popFollow'),pv=$('#popPov');if(pf)pf.onclick=()=>{closePop();camFollow(it,'follow');};if(pv)pv.onclick=()=>{closePop();camFollow(it,'pov');};
   pop.querySelectorAll('[data-sz]').forEach(b=>b.onclick=()=>{const p=it.params;p.size=+clamp((+p.size)+(+b.dataset.sz),.4,2).toFixed(2);placeItem(it);const z=$('#popSz');if(z)z.textContent=p.size.toFixed(2)+'×';save();if(S.sel===it&&$('#editor'))renderEditor();});
   makeDraggable(pop,pop.querySelector('.ed-head'));
   pop.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const v=b.dataset.r;

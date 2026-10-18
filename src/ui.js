@@ -405,7 +405,7 @@ function drawChart(){
 
 /* ================= 環境 ================= */
 function loadPreset(key){
-  const p=PRESETS[S.mode][key];S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;S.report=null;
+  const p=PRESETS[S.mode][key];camStop();S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.uid=1;S.report=null;
   S.terra=null;S.build=false;
   Object.assign(S,{V:p.V,shape:p.shape,mat:p.mat||'glass',sealed:p.sealed,light:p.light,feed:p.feed,pump:!!p.pump,filter:!!p.filter,heater:!!p.heater,fan:!!p.fan,wc:p.wc||0,mist:p.mist||0,heat:!!p.heat,
     region:p.region||'hk',real:false,water:p.water||'fresh',filled:p.filled!==false,level:p.level||0,hillH:p.hillH??6,log:[],hour:6,day:1});
@@ -482,7 +482,7 @@ function snapshot(){if(S.terra)delete S.terra._info;const o={name:S.jarName,c:Ob
   items:S.items.filter(i=>i.alive).map(i=>({type:i.type,params:i.params,name:i.name||'',n:i.n,health:+i.health.toFixed(3),satiety:+i.satiety.toFixed(3),rx:+i.rx.toFixed(3),rz:+i.rz.toFixed(3),age:i.age,up:i.userPlaced?1:0}))};
   SNAP_KEYS.forEach(k=>o[k]=S[k]);return o;}
 function restoreSnap(d){
-  S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
+  camStop();S.items.forEach(i=>disposeObj(i.g));S.items=[];S.sel=null;S.report=null;
   SNAP_KEYS.forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});S.jarName=d.name||'';if(d.fan===undefined)S.fan=false;
   if(S.terra){S.terra=JSON.parse(JSON.stringify(S.terra));delete S.terra._info;}S.build=false;
   if(!SHAPES[S.shape])S.shape='jar';if(!MATS[S.mat])S.mat='glass';if(!PRESETS[S.mode])S.mode='aqua';if(S.wxMode!=='auto'&&!WX[S.wxMode])S.wxMode='auto';if(!WX[S.wx])S.wx='sunny';

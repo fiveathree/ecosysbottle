@@ -212,6 +212,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .ov{position:absolute;top:84px;bottom:var(--mh,120px);width:200px;overflow:auto;display:flex;flex-direction:column;gap:2px;padding:8px;border-radius:12px;background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--line);font-size:12px;z-index:2}
 .ovL{left:10px;width:min(360px,42%);padding:0;gap:0}
 .ovR{right:10px}
+.cambar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--mh,120px) + 6px);z-index:4;display:flex;align-items:center;gap:8px;max-width:calc(100% - 20px);padding:6px 8px 6px 12px;border-radius:99px;border:1px solid var(--accent);background:var(--glass);backdrop-filter:blur(8px);font-size:12.5px;white-space:nowrap}
+.stage.pov-water::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 40%,rgba(90,170,190,.08),rgba(20,80,110,.32));box-shadow:inset 0 0 60px rgba(10,60,90,.35)}
+.cambar b{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cambar .seg button{font-size:12px;padding:3px 9px}
 /* 兩邊嘅箭咀：收埋／打開左右欄 */
 .edge{position:absolute;top:84px;bottom:var(--mh,120px);margin:auto 0;height:56px;width:22px;z-index:3;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(6px);color:var(--ink);font-size:18px;line-height:1;cursor:pointer}
 .edge:hover{border-color:var(--accent);color:var(--accent)}
@@ -295,7 +299,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .bb-sl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:1;min-width:140px}
 .bb-sl input{flex:1;min-width:60px}
 /* 窄螢幕：數值放喺個瓶下面，唔遮住畫面 */
-@media (max-width:919px){.stage{height:calc(56vh + var(--mh,0px));min-height:calc(320px + var(--mh,0px));background:var(--surface-2)}.stage>canvas{bottom:auto;height:calc(100% - var(--mh,0px) + 4px)}}
+@media (max-width:919px){.stage{height:calc(56vh + var(--mh,0px));min-height:calc(320px + var(--mh,0px));background:var(--surface-2)}.stage>canvas{bottom:auto;height:calc(100% - var(--mh,0px) + 4px)}.stage.pov-water::after{bottom:calc(var(--mh,0px) - 4px)}}
 @media (max-width:700px){.ov{width:150px;top:96px}.ovL{width:calc(100% - 20px);z-index:5}.hint{display:none}.edge{top:96px}.edgeL.open{display:none}}
 @media (prefers-reduced-motion:reduce){.flash{animation:none}}
 @media (min-width:920px){

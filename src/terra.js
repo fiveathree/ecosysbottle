@@ -67,6 +67,7 @@ function buildTerraMesh(){
 }
 /* 砌缸工具列 */
 function enterBuild(){
+  camStop();
   if(!S.terra){initTerra();buildJar({keepCam:true});}
   S._wasRunning=S.running;S.running=false;S.buildDay=true;$('#playBtn').classList.remove('primary');renderChrome();
   S.build=true;closePop();issueOpen=false;renderIssuePop();buildTool='paint';paintMat=S.mode==='rain'?3:(S.water==='salt'?5:1);
