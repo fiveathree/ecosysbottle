@@ -66,7 +66,8 @@ function step(st){
   // 餵食：水中動物食飼料，陸上動物食昆蟲
   if(st.hour===st.feedHour&&st.feed>0){
     let nW=0,nL=0;for(const it of aliveIn(st,'animal')){const d=CAT[it.type].diet;if(isWater(it)&&d.flake)nW+=it.params.food;if(!isWater(it)&&d.feed)nL+=it.params.food;}
-    const fw=st.mode==='aqua'?st.feed:(nW+nL>0?st.feed*nW/(nW+nL):0),fl=st.feed-fw;
+    // 水陸缸：陸地動物（昆蟲）先分夠佢哋需要，剩低先落水俾魚；唔會因為魚生多咗，蛙就冇得食
+    const fl=st.mode==='aqua'?0:nW>0?Math.min(st.feed,nL*1.1):st.feed,fw=st.feed-fl;
     if(fw>0){if(wL>0){c.flake+=fw;if(!st.trial)feedFx(fw);}else c.waste+=fw*(st.mode==='rain'?1:0);}
     if(fl>0)c.feed+=fl;
   }
@@ -95,6 +96,7 @@ function step(st){
     }
   }
 }
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function hurt(it,dh,st){it.health=clamp(it.health+dh,0,1);if(it.health<=0)die(it,it.stress||'weak',st);}
 function stepWater(st,c,wL,light,lm,q,E,w){
   const plants=st.items.filter(i=>i.alive&&isWater(i)&&CAT[i.type].kind==='plant'),animals=st.items.filter(i=>i.alive&&isWater(i)&&CAT[i.type].kind==='animal'),mic=st.items.filter(i=>i.alive&&isWater(i)&&CAT[i.type].kind==='microbe');
@@ -124,8 +126,10 @@ function stepWater(st,c,wL,light,lm,q,E,w){
     if(C.root==='rock'&&!E.rocks){dh=Math.min(dh,0)-.002;it.stress='noRock';}
     if(C.root==='mud'&&!E.subTypes.soil){dh=Math.min(dh,0)-.005;it.stress='noMud';}
     if(C.w!=='both'&&C.w!==wt){dh=Math.min(dh,0)-.02;it.stress=wt==='salt'?'needFresh':'needSalt';}
+    c.detritus+=.004*it.health; // 枯葉同老葉慢慢跌落嚟，俾分解者同螺食
     hurt(it,dh,st);
   }
+  shuffle(animals); // 每個鐘輪流食，唔好次次排頭嗰隻食先
   for(const it of animals){
     const p=it.params,C=CAT[it.type];useO2(p.resp*q*(it.age!=null&&it.age<4?.5:1));eat(it,c);
     it.wt+=1;if(it.wt>=p.wasteEvery){it.wt=0;c.NH3+=p.wasteAmt*.5;c.detritus+=p.wasteAmt*.5/.1;if(!st.trial)wasteFx.push(it);}
@@ -154,7 +158,8 @@ function stepWater(st,c,wL,light,lm,q,E,w){
   }
   const shade=Math.min(.7,plants.reduce((a,i)=>a+(CAT[i.type].shade||(CAT[i.type].floating?.04:0))*i.health,0)*Math.min(1,4/Math.sqrt(wL)));
   if(lm>0){
-    const no3c=c.NO3/wL;let g=(.04*c.algae+.01)*(no3c/(no3c+1.5))*Math.max(0,1-c.algae/60)*co2f*lm*(1-shade);
+    // 藻類 = 水中藻（跟現有藻量增長）+ 表面生物膜（石頭、底沙、玻璃上面一直有，俾蝦螺刮嚟食，唔會俾食清光）
+    const no3c=c.NO3/wL,bio=.07*E.surf*Math.pow(wL,2/3)*lm*(1-shade*.5)*(.4+.6*no3c/(no3c+.3));let g=(.04*c.algae+.01)*(no3c/(no3c+1.5))*Math.max(0,1-c.algae/60)*co2f*lm*(1-shade)+bio*Math.max(0,1-c.algae/60);
     g=Math.max(0,Math.min(g,c.NO3/.01));c.algae+=g;c.NO3-=g*.01;c.O2+=g*.6;c.CO2=Math.max(0,c.CO2-g*.8);o2p+=g*.6;grown=g;
   }
   useO2(.003*c.algae);
@@ -173,7 +178,7 @@ function stepLand(st,c,wL,light,lm,q,E,w){
   const a=airL(st),hf=Math.min(2,4/st.V),op=st.openF??J.open,RG=regionOf(st);
   let ppm=c.aCO2/(a*.0018);const co2f=ppm/(ppm+300);
   const useO2=x=>{const t=Math.min(c.aO2,x);c.aO2-=t;c.aCO2+=t*1.375;};
-  for(const it of st.items){
+  for(const it of shuffle(st.items.slice())){
     if(!it.alive||isWater(it))continue;const C=CAT[it.type],k=C.kind,p=it.params;
     if(k==='plant'){
       const h=it.health;useO2(p.resp*Math.max(.3,h)*q);
@@ -186,6 +191,7 @@ function stepLand(st,c,wL,light,lm,q,E,w){
       if(c.mould>40){dh=Math.min(dh,0)-.004;it.stress=it.stress||'mould';}
       if(it.nShort>72){dh=Math.min(dh,0)-.003;it.stress=it.stress||'lowN';}
       if(st.light<5){dh=-.005;it.stress='lowLight';}
+      c.waste+=.008*it.health; // 落葉：跳蟲、鼠婦同泥土菌嘅食物
       hurt(it,dh,st);
     } else if(k==='animal'){
       useO2(p.resp*q*(it.age!=null&&it.age<4?.5:1));eat(it,c);
@@ -241,16 +247,23 @@ function predation(st){
     const prey=st.items.filter(i=>i.alive&&C.preys.includes(i.type));if(!prey.length)continue;
     const v=prey[Math.floor(Math.random()*prey.length)];die(v,'eaten',st,st.trial?'':label(it));it.satiety=Math.min(1,it.satiety+.5);}
 }
-function breedStep(st){
+// 繁殖上限跟瓶大細：細瓶養唔到咁多，免得生到冇嘢食、冇氧
+const breedCap=st=>{const f=st.sealed?.6:1;return{each:clamp(Math.round(2+st.V*1.2*f),4,12),total:Math.round(6+st.V*2*f)};}; // 密封瓶冇新鮮空氣，養得少啲
+// 主要食飼料嘅水中動物（魚）：每日飼料夠多一窩先生，免得生到餓死（蝦螺主要刮藻，唔計）
+const flakeFed=t=>{const d=CAT[t].diet;return CAT[t].hab==='water'&&d.flake>0&&d.flake>=Math.max(...Object.values(d));};
+function breedStep(st){const cap=breedCap(st);
   const types={};for(const it of aliveIn(st,'animal'))(types[it.type]=types[it.type]||[]).push(it);
+  const an=aliveIn(st,'animal'),landNeed=an.filter(i=>!isWater(i)&&CAT[i.type].diet.feed).reduce((s,i)=>s+i.params.food,0);
+  const flakeNeed=an.filter(i=>flakeFed(i.type)).reduce((s,i)=>s+i.params.food*(i.age!=null&&i.age<4?.5:1),0),flakeSupply=st.mode==='aqua'?st.feed:Math.max(0,st.feed-landNeed*1.1);
   let total=Object.values(types).reduce((s,a)=>s+a.length,0);
   for(const [t,list] of Object.entries(types)){
-    const p=list[0].params;if(!(p.breedDays>0)||list.length<2||list.length>=12||total>=45)continue;
+    const p=list[0].params;if(!(p.breedDays>0)||list.length<2||list.length>=cap.each||total>=cap.total)continue;
     if(isWater(list[0])&&wLOf(st)<=0)continue;
-    const adults=list.filter(i=>(i.age==null||i.age>=4)&&i.health>.8&&i.satiety>.6&&!i.stress);
+    if(flakeFed(t)&&flakeNeed+p.food*(p.litter||1)>flakeSupply)continue;
+    const adults=list.filter(i=>(i.age==null||i.age>=4)&&i.health>.8&&i.satiety>.9&&!i.stress);
     if(adults.length<2)continue;
     if(Math.random()<(adults.length/2)/(p.breedDays*24)){
-      const n=Math.min(p.litter||1,12-list.length);total+=n;
+      const n=Math.min(p.litter||1,cap.each-list.length);total+=n;
       for(let k=0;k<n;k++){
         if(st.trial){const b=makeItem(t,p);S.uid--;b.age=0;b.satiety=.8;st.items.push(b);}
         else{const b=addItem(t,Object.assign({},p),true);b.age=0;b.satiety=.8;}
@@ -316,7 +329,7 @@ function autoBalance(){
   // 2. 再調環境同水質
   greedy(c=>{const e=c.env,Ls=[];
     if(e.light<16)Ls.push(mk(c,{light:e.light+2}));if(e.light>4)Ls.push(mk(c,{light:e.light-2}));
-    if(e.feed<6){Ls.push(mk(c,{feed:e.feed+.5}));Ls.push(mk(c,{feed:Math.min(6,e.feed+1)}));}if(e.feed>0){Ls.push(mk(c,{feed:Math.max(0,e.feed-.5)}));Ls.push(mk(c,{feed:Math.max(0,e.feed-1)}));}
+    if(e.feed<10){Ls.push(mk(c,{feed:e.feed+.5}));Ls.push(mk(c,{feed:Math.min(10,e.feed+1)}));}if(e.feed>0){Ls.push(mk(c,{feed:Math.max(0,e.feed-.5)}));Ls.push(mk(c,{feed:Math.max(0,e.feed-1)}));}
     Ls.push(mk(c,{sealed:!e.sealed}));Ls.push(mk(c,{fan:!e.fan}));if(!e.fan&&e.sealed)Ls.push(mk(c,{fan:true,sealed:false}));
     if(wL>0){Ls.push(mk(c,{pump:!e.pump}));Ls.push(mk(c,{filter:!e.filter}));Ls.push(mk(c,{heater:!e.heater}));
       if(e.wc<50)Ls.push(mk(c,{wc:e.wc+10}));if(e.wc>0)Ls.push(mk(c,{wc:e.wc-10}));if(!c.wcNow)Ls.push(mk(c,{},null,{wcNow:true}));}
@@ -341,7 +354,8 @@ function autoBalance(){
     buildJar({keepCam:true,keepChem:true});
   }
   // 改完都保唔住嘅動物（包括俾其他生物食嘅），記低 uid，俾用家一撳搬去另一個瓶
-  const doomed=[...new Set(best.deaths.filter(d=>CAT[d.type].kind==='animal').map(d=>d.uid))].filter(u=>S.items.some(i=>i.uid===u&&i.alive));
+  // 加埋原本會俾食或者俾咬嘅：捕食靠運氣，試算一次冇發生唔代表安全
+  const doomed=[...new Set([...best.deaths.filter(d=>CAT[d.type].kind==='animal'),...before.deaths.filter(d=>d.why==='eaten'||d.why==='attacked')].map(d=>d.uid))].filter(u=>S.items.some(i=>i.uid===u&&i.alive));
   S.reportOpen=true;S.report={suggest:real,pre,plantCh,envCh,beforeDead,afterDead,doomed,changes:[...pre,...plantCh,...envCh]};
   const all=S.report.changes;
   logEv((real?'一鍵平衡建議：':'一鍵平衡：')+(all.length?all.map(x=>x).join('、'):'冇需要改'),(real?'Auto-balance suggestions: ':'Auto-balance: ')+(all.length?all.join(', '):'nothing to change'),real?'muted':'good');

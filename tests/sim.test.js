@@ -1,46 +1,21 @@
 /* 自動測試：用 jsdom（假瀏覽器）+ 真 three.js 行成個網頁嘅程式，唔使開瀏覽器。
    用法：npm test      （會先 build，再行呢個檔）
    測試：
-   1. 每個預設（失衡示範、由零開始除外）模擬 6 日，冇動物死 —— CLAUDE.md 嘅規矩
+   1. 每個預設（失衡示範、由零開始除外）模擬 6 日同 30 日，冇動物死 —— CLAUDE.md 嘅規矩
    2. 一鍵平衡唔會令預設變差，亦唔會出錯
    3. 雜亂嘅缸：一鍵平衡之後，搬走保唔住嘅動物，兩個瓶都要撐到 6 日
    4. 肚餓嘅動物餵咗食會回復
    5. 玩法：時間旅行預覽、挑戰完成同失敗、成就、收藏、真實缸唔快轉
    6. 分享連結：壓縮再解壓，內容一樣 */
-const {JSDOM}=require('jsdom');
-const THREE=require('three');
-const {read,bundleJs}=require('../build.js');
+const {boot,makeSetup,runDays}=require('./harness.js');
 
-const RUNS=+process.env.RUNS||5,HOURS=144;
+const RUNS=+process.env.RUNS||5,RUNS30=+process.env.RUNS30||3;
 let fails=0;const ok=(cond,msg)=>{console.log((cond?'  ✓ ':'  ✗ ')+msg);if(!cond)fails++;};
-
-function boot(){
-  const dom=new JSDOM('<!doctype html><html><body>'+read('body.html')+'</body></html>',{runScripts:'outside-only',url:'http://localhost/'});
-  const w=dom.window;
-  class FakeRenderer{constructor(o){this.domElement=(o&&o.canvas)||w.document.createElement('canvas');this.shadowMap={};this.capabilities={};}
-    setSize(){}setPixelRatio(){}render(){}setClearColor(){}dispose(){}}
-  w.THREE=Object.assign({},THREE,{WebGLRenderer:FakeRenderer});
-  const any=()=>({width:0,height:0,data:new Uint8ClampedArray(4)});
-  w.HTMLCanvasElement.prototype.getContext=function(){return new Proxy({canvas:this},{get:(t,k)=>k in t?t[k]:()=>any(),set:(t,k,v)=>{t[k]=v;return true;}});};
-  w.HTMLCanvasElement.prototype.toDataURL=()=>'data:,';
-  w.ResizeObserver=class{observe(){}disconnect(){}};
-  w.matchMedia=()=>({matches:false,addEventListener(){},addListener(){}});
-  w.requestAnimationFrame=()=>0;
-  if(w.HTMLDialogElement){w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};}
-  w.CompressionStream=globalThis.CompressionStream;w.DecompressionStream=globalThis.DecompressionStream;
-  w.Response=globalThis.Response;w.Blob=globalThis.Blob;w.TextEncoder=globalThis.TextEncoder;w.TextDecoder=globalThis.TextDecoder;
-  w.eval('(()=>{\n'+bundleJs()+'\nwindow.__T={S,CAT,PRESETS,step,trialState,runTrial,autoBalance,addItem,loadPreset,buildJar,resetChem,moveDoomed,packJar,unpackJar,snapshot,switchJar,PLAY,CHAL,startChal,playTick,travelPreview,fastForward,renderPlay};\n})();');
-  return w.__T;
-}
 
 const T=boot(),S=T.S,CAT=T.CAT;
 const animalDeaths=st=>st.deaths.filter(d=>CAT[d.type].kind==='animal');
-function setup(mode,key,zoo){
-  S.mode=mode;T.loadPreset(key);
-  if(zoo){S.items=S.items.filter(i=>CAT[i.type].kind!=='animal');for(const [t,n] of zoo)for(let k=0;k<n;k++)T.addItem(t,null,true);}
-  T.buildJar({keepCam:true});T.resetChem(S);
-}
-function run6(){const st=T.trialState(null);for(let i=0;i<HOURS;i++)T.step(st);return animalDeaths(st);}
+const setup=makeSetup(T);
+const run6=()=>runDays(T,6).dead;
 
 console.log(`\n1. 預設撐到 6 日（每個行 ${RUNS} 次）`);
 for(const mode of Object.keys(T.PRESETS))for(const key of Object.keys(T.PRESETS[mode])){
@@ -48,6 +23,15 @@ for(const mode of Object.keys(T.PRESETS))for(const key of Object.keys(T.PRESETS[
   setup(mode,key);let worst=[];
   for(let r=0;r<RUNS;r++){const d=run6();if(d.length>worst.length)worst=d;}
   ok(!worst.length,`${mode}.${key}`+(worst.length?` 死咗：${worst.map(d=>d.type+'('+d.why+')').join(', ')}`:''));
+}
+
+console.log(`\n1b. 預設撐到 30 日（每個行 ${RUNS30} 次）`);
+for(const mode of Object.keys(T.PRESETS))for(const key of Object.keys(T.PRESETS[mode])){
+  if(key==='bad'||key==='zero')continue;
+  setup(mode,key);let worst=[],day=0;
+  for(let r=0;r<RUNS30;r++){const st=T.trialState(null);let first=null;for(let h=0;h<30*24;h++){T.step(st);if(first==null&&st.deaths.some(d=>CAT[d.type].kind==='animal'))first=Math.floor(h/24)+1;}
+    const d=animalDeaths(st);if(d.length>worst.length){worst=d;day=first;}}
+  ok(!worst.length,`${mode}.${key}`+(worst.length?` 第 ${day} 日開始死：${[...new Set(worst.map(d=>d.type+'('+d.why+')'))].join(', ')}`:''));
 }
 
 console.log('\n2. 一鍵平衡唔會令預設變差');

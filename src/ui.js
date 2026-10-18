@@ -442,7 +442,7 @@ function renderEnv(){
      <small class="lede">${N(MATS[S.mat].n)}${L('：','. ')}${N(MATS[S.mat].d)}${L('。透光率會直接乘落光合作用。','. Light transmission scales photosynthesis directly.')}</small></section>
    <div data-sec="jar">${sl('e-V',L('瓶容量','Volume'),S.V,1,30,1,'L',L('越大越穩定，變化越慢。','Bigger is more stable and changes more slowly.'))}</div>
    <div data-sec="care">${sl('e-L',L('每日光照','Light per day'),S.light,0,24,1,L('小時','h'),L('朝早 7 點開燈。光照長產氧多，但藻類都長得快。','Lights come on at 7 am. More light means more oxygen, and faster algae.'))}
-   ${sl('e-F',L('每日餵食','Food per day'),S.feed,0,6,.5,L('份',''),L('每朝 9 點落飼料；食唔晒會腐爛。','Food goes in at 9 am; leftovers rot.'))}</div>
+   ${sl('e-F',L('每日餵食','Food per day'),S.feed,0,10,.5,L('份',''),L('每朝 9 點落飼料；食唔晒會腐爛。','Food goes in at 9 am; leftovers rot.'))}</div>
    <div data-sec="water">${aq?sw('e-W',S.filled,L('已注水','Filled with water'),L('抽乾會令水中生物死亡；新注嘅水未有細菌。','Draining kills water life; fresh water has no bacteria.'))
      :sl('e-Lv',L('水位','Water level'),S.level,0,14,1,'cm',L(`0 = 純陸缸。有泥土土坡時，前面低處係水區。而家約 ${fx(S.wL)} L 水、佔地面 ${Math.round(S.wFrac*100)}%。`,`0 = land only. With a soil slope, the low front is water. Now about ${fx(S.wL)} L covering ${Math.round(S.wFrac*100)}% of the floor.`))
       +(S.terra?'':sl('e-Hill',L('土坡高度','Slope height'),S.hillH,0,14,1,'cm',L('要有泥土先有土坡；後面高、前面低。想自己揀位就用「自己砌缸」。','Needs soil; high at the back, low at the front. Use Build to shape it yourself.')))}</div>
