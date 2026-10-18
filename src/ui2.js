@@ -175,7 +175,7 @@ function renderIssuePop(){
   $('#issX').onclick=()=>{issueOpen=false;renderIssuePop();};
   pop.querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{const f=FIX[b.dataset.fix];f[1]();toast(L('已處理：','Done: ')+N(f[0]));renderAll();save();renderIssuePop();});
   pop.querySelectorAll('[data-see]').forEach(b=>b.onclick=()=>{const x=list[+b.dataset.see],it=x.items[0];issueOpen=false;pop.hidden=true;
-    const r=$('#stage').getBoundingClientRect(),v=it.m?it.m.p.clone():new THREE.Vector3();if(it.g)v.copy(it.g.position);v.project(camera);
+    const r=$('#c').getBoundingClientRect(),v=it.m?it.m.p.clone():new THREE.Vector3();if(it.g)v.copy(it.g.position);v.project(camera);
     select(it,{clientX:r.left+(v.x+1)/2*r.width,clientY:r.top+(1-v.y)/2*r.height});});
   pop.querySelectorAll('[data-bal]').forEach(b=>b.onclick=()=>{issueOpen=false;pop.hidden=true;openBal();});
 }

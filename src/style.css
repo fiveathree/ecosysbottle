@@ -285,6 +285,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .bb-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .bb-sl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:1;min-width:140px}
 .bb-sl input{flex:1;min-width:60px}
+/* 窄螢幕：數值放喺個瓶下面，唔遮住畫面 */
+@media (max-width:919px){.stage{height:calc(56vh + var(--mh,0px));min-height:calc(320px + var(--mh,0px));background:var(--surface-2)}.stage canvas{bottom:auto;height:calc(100% - var(--mh,0px) + 4px)}}
 @media (max-width:700px){.ov{width:150px;top:96px}.ovL{width:calc(100% - 20px);z-index:5}.hint{display:none}}
 @media (prefers-reduced-motion:reduce){.flash{animation:none}}
 @media (min-width:920px){

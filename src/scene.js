@@ -676,5 +676,5 @@ function animate(dt,hf){
   if(!ptrs.size&&!S.build){cam.idle+=dt;if(cam.idle>4&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cam.theta+=dt*.06;}
   updateCam();
 }
-function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
-new ResizeObserver(resize).observe(stage);
+function resize(){const r=canvas.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(canvas);
